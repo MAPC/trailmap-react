@@ -35,13 +35,14 @@ const Map = () => {
           transitionDuration="1000"
         >
           <ControlPanel ref={mapRef} MAPBOX_TOKEN={MAPBOX_TOKEN} />
-          <NavigationControl />
+          <NavigationControl position="bottom-right" />
           <GeolocateControl 
             positionOptions={{ enableHighAccuracy: true }}
             showUserHeading={false}
             showAccuracyCircle={false}
             showUserLocation={true}
             trackUserLocation={false}
+            position="bottom-right"
           />
         </ReactMapGL>
       </div>

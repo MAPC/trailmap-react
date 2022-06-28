@@ -1,7 +1,7 @@
 {
-  "name": "react-map-gl-geocoder-v2-example",
+  "name": "trailmap-react",
   "version": "1.0.0",
-  "description": "\nExample usage of react-map-gl-geocoder which is  a React wrapper for mapbox-gl-geocoder for use with react-map-gl",
+  "description": "Trailmap V4",
   "keywords": [],
   "main": "src/index.js",
   "dependencies": {
@@ -29,5 +29,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "sass": "^1.53.0"
   }
 }

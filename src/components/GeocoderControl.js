@@ -11,6 +11,7 @@ export default function GeocoderControl(props) {
       const ctrl = new MapboxGeocoder({
         ...props,
         marker: false,
+        countries: 'us',
         accessToken: process.env.REACT_APP_MAPBOX_API_TOKEN
       });
       ctrl.on('loading', props.onLoading);
