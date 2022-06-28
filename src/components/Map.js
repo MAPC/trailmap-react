@@ -1,8 +1,7 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
-import React, { useState, useRef, useCallback, useEffect } from "react";
-import ReactMapGL, {NavigationControl, GeolocateControl} from 'react-map-gl';
-import GeocoderControl from "./GeocoderControl";
+import React, { useState, useRef, useCallback } from "react";
+import ReactMapGL from 'react-map-gl';
 import ControlPanel from "./ControlPanel";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
@@ -35,15 +34,7 @@ const Map = () => {
           scrollZoom={true}
           transitionDuration="1000"
         >
-          <NavigationControl />
-          <GeolocateControl 
-            positionOptions={{ enableHighAccuracy: true }}
-            showUserHeading={false}
-            showAccuracyCircle={false}
-            showUserLocation={true}
-            trackUserLocation={false}
-          />
-          <GeocoderControl mapboxAccessToken={MAPBOX_TOKEN} position="top-left" />
+          <ControlPanel ref={mapRef} MAPBOX_TOKEN={MAPBOX_TOKEN} />
         </ReactMapGL>
       </div>
     </div>

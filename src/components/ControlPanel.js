@@ -1,18 +1,27 @@
-import * as React from 'react';
 import '../styles/control-panel.css'
+import "mapbox-gl/dist/mapbox-gl.css";
+import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import {NavigationControl, GeolocateControl} from 'react-map-gl';
+import GeocoderControl from "./GeocoderControl";
 
-const ControlPanel = () => {
+const ControlPanel = ({mapRef, MAPBOX_TOKEN}) => {
   return (
     <div className="control-panel">
-      <h3>Geocoder</h3>
-      <div className="source-link">
-        <a
-          href="https://github.com/visgl/react-map-gl/tree/7.0-release/examples/geocoder"
-          target="_new"
-        >
-          View Code ↗
-        </a>
-      </div>
+      <GeocoderControl 
+        mapboxAccessToken={MAPBOX_TOKEN} 
+        position="top-left" 
+        ref={mapRef} 
+      />
+      <NavigationControl ref={mapRef} />
+      <GeolocateControl 
+        ref={mapRef}
+        positionOptions={{ enableHighAccuracy: true }}
+        showUserHeading={false}
+        showAccuracyCircle={false}
+        showUserLocation={true}
+        trackUserLocation={false}
+      />
     </div>
   );
 }
