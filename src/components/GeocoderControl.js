@@ -1,22 +1,8 @@
 import * as React from 'react';
 import {useState} from 'react';
-import {useControl, Marker, MarkerProps, ControlPosition} from 'react-map-gl';
-import MapboxGeocoder, {GeocoderOptions} from '@mapbox/mapbox-gl-geocoder';
+import {useControl, Marker} from 'react-map-gl';
+import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 
-// type GeocoderControlProps = Omit<GeocoderOptions, 'accessToken' | 'mapboxgl' | 'marker'> & {
-//   mapboxAccessToken: string;
-//   marker?: boolean | Omit<MarkerProps, 'longitude' | 'latitude'>;
-
-//   position: ControlPosition;
-
-//   onLoading?: (e: object) => void;
-//   onResults?: (e: object) => void;
-//   onResult?: (e: object) => void;
-//   onError?: (e: object) => void;
-// };
-
-/* eslint-disable complexity,max-statements */
-// export default function GeocoderControl(props: GeocoderControlProps) {
 export default function GeocoderControl(props) {
     const [marker, setMarker] = useState(null);
 
@@ -50,7 +36,6 @@ export default function GeocoderControl(props) {
     }
   );
 
-  // @ts-ignore (TS2339) private member
   if (geocoder._map) {
     if (geocoder.getProximity() !== props.proximity && props.proximity !== undefined) {
       geocoder.setProximity(props.proximity);
@@ -88,19 +73,6 @@ export default function GeocoderControl(props) {
     if (geocoder.getOrigin() !== props.origin && props.origin !== undefined) {
       geocoder.setOrigin(props.origin);
     }
-    // Types missing from @types/mapbox__mapbox-gl-geocoder
-    // if (geocoder.getAutocomplete() !== props.autocomplete && props.autocomplete !== undefined) {
-    //   geocoder.setAutocomplete(props.autocomplete);
-    // }
-    // if (geocoder.getFuzzyMatch() !== props.fuzzyMatch && props.fuzzyMatch !== undefined) {
-    //   geocoder.setFuzzyMatch(props.fuzzyMatch);
-    // }
-    // if (geocoder.getRouting() !== props.routing && props.routing !== undefined) {
-    //   geocoder.setRouting(props.routing);
-    // }
-    // if (geocoder.getWorldview() !== props.worldview && props.worldview !== undefined) {
-    //   geocoder.setWorldview(props.worldview);
-    // }
   }
   return marker;
 }
