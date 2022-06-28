@@ -9,9 +9,9 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-map-gl": "^7.0.16",
+    "react-map-gl-geocoder": "^2.2.0",
     "react-scripts": "3.4.1"
   },
-  "devDependencies": {},
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
