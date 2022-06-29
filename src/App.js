@@ -5,8 +5,10 @@ import './styles/App.scss';
 const App = () => {
   return (
     <div className="App">
-      <Map />
-    </div>
+      <div className="App-wrapper">
+          <Map />
+        </div>
+      </div>
   );
 };
 

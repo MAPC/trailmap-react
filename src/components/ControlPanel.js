@@ -4,21 +4,17 @@ import React from "react";
 import GeocoderControl from "./GeocoderControl";
 import TypeButton from "./TypeButton";
 
-const ControlPanel = ({mapRef, MAPBOX_TOKEN}) => {
+const ControlPanel = ({mapRef, MAPBOX_TOKEN, layerData, handleTrailLayers}) => {
 
-  const layersData = [
-    {
-      id: "paved",
-      label: "Paved Paths"
-    }
-  ]
-
-  const renderLayers = layersData.map((layer, index) => {
-    return <TypeButton key={index} layer={layer} />
+  const renderTypeButton = layerData.map((layer, index) => {
+    return <TypeButton 
+    key={index} 
+    layer={layer} 
+    handleTrailLayers={handleTrailLayers}/>
   })
 
   return (
-    <div className="control-panel">
+    <div className="ControlPanel">
       <GeocoderControl 
         mapboxAccessToken={MAPBOX_TOKEN} 
         position="top-left" 
@@ -29,8 +25,8 @@ const ControlPanel = ({mapRef, MAPBOX_TOKEN}) => {
         <p>Select from various trail types to find trails best suited to your needs.</p>
       </div>
       <div>
-        <h2>Type:</h2>
-        {renderLayers}
+        <h2>Existing:</h2>
+        {renderTypeButton}
       </div>
     </div>
   );

@@ -6,7 +6,6 @@
   "main": "src/index.js",
   "dependencies": {
     "deck.gl": "8.1.9",
-    "node-sass": "^4.14.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-map-gl": "^7.0.16",

@@ -1,14 +1,13 @@
 import React from "react";
 
-function toggleLayer() {
-  // reuseable logic to toggle between classes for displaying a given layer
-}
 
-const TypeButton = ({layer}) => {
+const TypeButton = ({layer, handleTrailLayers}) => {
+  const toggleLayer = (layer) => handleTrailLayers(layer);
+
   return(
     <button
-      className={'control-panel__type-button ' + 'control-panel__type-button-' + layer.id}
-      onClick={() => toggleLayer()}
+      className={'TypeButton ' + 'TypeButton__' + layer.id}
+      onClick={() => toggleLayer(layer.id)}
     >
       {layer.label}
    </button>
