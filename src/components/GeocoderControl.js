@@ -1,10 +1,10 @@
 import * as React from 'react';
-import {useState} from 'react';
-import {useControl, Marker} from 'react-map-gl';
+import { useState } from 'react';
+import { useControl, Marker } from 'react-map-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 
 export default function GeocoderControl(props) {
-    const [marker, setMarker] = useState(null);
+  const [marker, setMarker] = useState(null);
 
   const geocoder = useControl(
     () => {
@@ -19,7 +19,7 @@ export default function GeocoderControl(props) {
       ctrl.on('result', evt => {
         props.onResult(evt);
 
-        const {result} = evt;
+        const { result } = evt;
         const location =
           result &&
           (result.center || (result.geometry?.type === 'Point' && result.geometry.coordinates));
@@ -78,7 +78,7 @@ export default function GeocoderControl(props) {
   return marker;
 }
 
-const noop = () => {};
+const noop = () => { };
 
 GeocoderControl.defaultProps = {
   marker: true,

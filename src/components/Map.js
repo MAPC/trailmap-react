@@ -17,7 +17,7 @@ const Map = () => {
 
   const [trailLayers, setTrailLayers] = useState([]);
   // const [baseLayers, setBaseLayers] = useState([]);
-  
+
   const mapRef = useRef();
 
   const handleViewportChange = useCallback(
@@ -25,40 +25,40 @@ const Map = () => {
   );
 
   const handleTrailLayers = (layer) => {
-        trailLayers.includes(layer) ?
-        setTrailLayers(current => current.filter(trailLayer => trailLayer !== layer)) :
-        setTrailLayers(current => [...current, layer]);
+    trailLayers.includes(layer) ?
+      setTrailLayers(current => current.filter(trailLayer => trailLayer !== layer)) :
+      setTrailLayers(current => [...current, layer]);
   };
 
   return (
     <div className="Map">
-        <ReactMapGL
+      <ReactMapGL
+        ref={mapRef}
+        {...viewport}
+        width="100%"
+        height="100%"
+        onMove={() => handleViewportChange()}
+        mapboxAccessToken={MAPBOX_TOKEN}
+        mapStyle="mapbox://styles/mapbox/streets-v9"
+        scrollZoom={true}
+        transitionDuration="1000"
+      >
+        <ControlPanel
           ref={mapRef}
-          {...viewport}
-          width="100%"
-          height="100%"
-          onMove={() => handleViewportChange()}
-          mapboxAccessToken={MAPBOX_TOKEN}
-          mapStyle="mapbox://styles/mapbox/streets-v9"
-          scrollZoom={true}
-          transitionDuration="1000"
-        >
-          <ControlPanel 
-            ref={mapRef} 
-            MAPBOX_TOKEN={MAPBOX_TOKEN} 
-            layerData={LayerData.existing} 
-            handleTrailLayers={handleTrailLayers}/>
-          <NavigationControl position="bottom-right" />
-          <GeolocateControl 
-            positionOptions={{ enableHighAccuracy: true }}
-            showUserHeading={false}
-            showAccuracyCircle={false}
-            showUserLocation={true}
-            trackUserLocation={false}
-            position="bottom-right"
-          />
-        </ReactMapGL>
-      </div>
+          MAPBOX_TOKEN={MAPBOX_TOKEN}
+          layerData={LayerData.existing}
+          handleTrailLayers={handleTrailLayers} />
+        <NavigationControl position="bottom-right" />
+        <GeolocateControl
+          positionOptions={{ enableHighAccuracy: true }}
+          showUserHeading={false}
+          showAccuracyCircle={false}
+          showUserLocation={true}
+          trackUserLocation={false}
+          position="bottom-right"
+        />
+      </ReactMapGL>
+    </div>
   );
 };
 

@@ -1,53 +1,53 @@
 const LayerData = {
   existing: [
     {
-      id: "pavedPaths",
+      id: 'pavedPaths',
       label: 'Paved Shared Use Paths'
     },
     {
-      id: "unimprovedPaths",
+      id: 'unimprovedPaths',
       label: 'Unimproved Shared Use Paths'
     },
     {
-      id: "bikeLane",
+      id: 'bikeLane',
       label: 'Bike Lanes'
     },
     {
-      id: "protectedBikeLane",
+      id: 'protectedBikeLane',
       label: 'Protected Bike Lanes'
     },
     {
-      id: "pavedFootway",
+      id: 'pavedFootway',
       label: 'Paved Footway'
     },
     {
-      id: "naturalSurfaceFootway",
+      id: 'naturalSurfaceFootway',
       label: 'Natural Surface Footways'
     }
   ],
   proposed: [
     {
-      id: "pavedPathsProposed",
+      id: 'pavedPathsProposed',
       label: 'Proposed Paved Shared Use Paths'
     },
-  {
-      id: "unimprovedPathsProposed",
+    {
+      id: 'unimprovedPathsProposed',
       label: 'Proposed Unimproved Shared Use Paths'
     },
-  {
-      id: "protectedBikeLaneProposed",
+    {
+      id: 'protectedBikeLaneProposed',
       label: 'Proposed Protected Bike Lanes'
     },
-  {
-      id: "bikeLaneProposed",
+    {
+      id: 'bikeLaneProposed',
       label: 'Proposed Bike Lanes'
     },
     {
-        id: "naturalSurfaceFootwayProposed",
-        label: 'Proposed Natural Surface Footway'
-      },
-  {
-      id: "pavedFootwayProposed",
+      id: 'naturalSurfaceFootwayProposed',
+      label: 'Proposed Natural Surface Footway'
+    },
+    {
+      id: 'pavedFootwayProposed',
       label: 'Proposed Paved Footway'
     }
   ] 
