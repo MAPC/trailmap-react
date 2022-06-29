@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import BasemapButton from "./BasemapButton";
+import BasemapIcon from "../assets/basemap-icon.svg"
 
 const BasemapPanel = ({ basemaps, handleBaseLayer }) => {
 
@@ -14,13 +15,15 @@ const BasemapPanel = ({ basemaps, handleBaseLayer }) => {
       <button
         onClick={() => togglePanel(!showPanel)}
       >
-        Show all basemaps
+        <img src={BasemapIcon} alt="Select Basemap" />
       </button>
-      {showPanel &&
-        <ul>
-          {renderButtons}
-        </ul>
-      }
+      <div className="BasemapPanel__layer-list">
+        {showPanel &&
+          <ul>
+            {renderButtons}
+          </ul>
+        }
+      </div>
     </div>
   )
 }

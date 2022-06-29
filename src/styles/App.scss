@@ -171,28 +171,40 @@ body {
 }
 
 .BasemapPanel {
-  position: absolute;
-  right: 10px;
-  top: 10px;
 
   & button {
     background-color: white;
-    border-radius: 8px;
-    border: solid 2px;
-    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-    color: black;
+    border: 0;
+    border-radius: 4px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 0px 2px;
+    box-sizing: border-box;
+    width: 29px;
     cursor: pointer;
-    display: inline-block;
-    font-size: 16px;
-    margin: 5px 0;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    transition: all 0.3s ease-in-out;
-    -moz-appearance: none;
+    display: block;
+    height: 29px;
+    padding: 0;
+    position: absolute;
+    outline: none;
+    right: 10px;
+    top: 10px;
 
     &:hover {
       color: gray;
     }
+
+    & img {
+      height: 100%;
+    }
+  }
+
+  &__layer-list {
+    background-color: white;
+    border: 0;
+    border-radius: 4px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 0px 2px;
+    box-sizing: border-box;
+    position: absolute;
+    right: 10px;
+    top: 50px;
   }
 }
