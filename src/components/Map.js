@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback } from "react";
 import ReactMapGL, { NavigationControl, GeolocateControl } from 'react-map-gl';
 import ControlPanel from "./ControlPanel";
 import LayerData from "../data/LayerData";
+import BasemapPanel from "./BasemapPanel";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 
@@ -15,8 +16,10 @@ const Map = () => {
     transitionDuration: 1000
   });
 
+  const basemaps = LayerData.basemap;
+
   const [trailLayers, setTrailLayers] = useState([]);
-  // const [baseLayers, setBaseLayers] = useState([]);
+  const [baseLayer, setBaseLayer] = useState(basemaps[0]);
 
   const mapRef = useRef();
 
@@ -30,6 +33,10 @@ const Map = () => {
       setTrailLayers(current => [...current, layer]);
   };
 
+  const handleBaseLayer = (layer) => {
+    setBaseLayer(layer);
+  }
+
   return (
     <div className="Map">
       <ReactMapGL
@@ -39,7 +46,7 @@ const Map = () => {
         height="100%"
         onMove={() => handleViewportChange()}
         mapboxAccessToken={MAPBOX_TOKEN}
-        mapStyle="mapbox://styles/mapbox/streets-v9"
+        mapStyle={baseLayer.url}
         scrollZoom={true}
         transitionDuration="1000"
       >
@@ -56,6 +63,7 @@ const Map = () => {
           trackUserLocation={false}
           position="bottom-right"
         />
+        <BasemapPanel basemaps={basemaps} handleBaseLayer={handleBaseLayer} />
       </ReactMapGL>
     </div>
   );

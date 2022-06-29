@@ -50,7 +50,39 @@ const LayerData = {
       id: 'pavedFootwayProposed',
       label: 'Proposed Paved Footway'
     }
-  ] 
+  ],
+  basemap: [
+    {
+      id: 'mapboxLight',
+      label: 'Light',
+      url: 'mapbox://styles/mapbox/light-v10'
+    },
+    {
+      id: 'mapboxDark',
+      label: 'Dark',
+      url: 'mapbox://styles/mapbox/dark-v10'
+    },
+    {
+      id: 'terrain',
+      label: 'Terrain',
+      url: 'mapbox://styles/mapbox/outdoors-v11'
+    },
+    {
+      id: 'satellite',
+      label: 'Satellite',
+      url: 'mapbox://sprites/mapbox/satellite-v9'
+    },
+    {
+      id: 'satelliteSteets',
+      label: 'Satellite Streets',
+      url: 'mapbox://styles/mapbox/satellite-streets-v11'
+    },
+    {
+      id: 'streets',
+      label: 'Streets',
+      url: 'mapbox://styles/mapbox/streets-v11'
+    }
+  ]
 };
 
 export default LayerData;
