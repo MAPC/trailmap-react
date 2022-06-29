@@ -44,7 +44,6 @@ const Map = () => {
         transitionDuration="1000"
       >
         <ControlPanel
-          ref={mapRef}
           MAPBOX_TOKEN={MAPBOX_TOKEN}
           layerData={LayerData.existing}
           handleTrailLayers={handleTrailLayers} />
