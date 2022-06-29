@@ -6,9 +6,9 @@ const App = () => {
   return (
     <div className="App">
       <div className="App-wrapper">
-          <Map />
-        </div>
+        <Map />
       </div>
+    </div>
   );
 };
 

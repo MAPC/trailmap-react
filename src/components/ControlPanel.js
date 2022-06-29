@@ -1,17 +1,17 @@
-import "mapbox-gl/dist/mapbox-gl.css";
-import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
-import React from "react";
-import GeocoderControl from "./GeocoderControl";
-import TypeButton from "./TypeButton";
+import 'mapbox-gl/dist/mapbox-gl.css';
+import 'react-map-gl-geocoder/dist/mapbox-gl-geocoder.css';
+import React from 'react';
+import GeocoderControl from './GeocoderControl';
+import TypeButton from './TypeButton';
 
 const ControlPanel = ({mapRef, MAPBOX_TOKEN, layerData, handleTrailLayers}) => {
 
   const renderTypeButton = layerData.map((layer, index) => {
     return <TypeButton 
-    key={index} 
-    layer={layer} 
-    handleTrailLayers={handleTrailLayers}/>
-  })
+      key={index} 
+      layer={layer} 
+      handleTrailLayers={handleTrailLayers}/>;
+  });
 
   return (
     <div className="ControlPanel">
@@ -30,6 +30,6 @@ const ControlPanel = ({mapRef, MAPBOX_TOKEN, layerData, handleTrailLayers}) => {
       </div>
     </div>
   );
-}
+};
 
 export default ControlPanel;

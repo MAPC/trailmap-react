@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 
 const TypeButton = ({layer, handleTrailLayers}) => {
@@ -10,8 +10,8 @@ const TypeButton = ({layer, handleTrailLayers}) => {
       onClick={() => toggleLayer(layer.id)}
     >
       {layer.label}
-   </button>
-  )
-}
+    </button>
+  );
+};
 
 export default TypeButton;
