@@ -4,7 +4,6 @@ body {
 }
 .App {
   height: 100vh;
-  text-align: center;
   width: 100vw;
 }
 .map-wrapper {
@@ -20,7 +19,38 @@ body {
 }
 
 .control-panel {
-    position: absolute;
-    top: 0;
-    right: 0;
+  background-color: aliceblue;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+  height: 100vh;
+  left: 0;
+  padding: 50px 10px;
+  position: absolute;
+  text-align: left;
+  top: 0;
+  width: 240px;
+
+  &__type-button {
+    background-color: white;
+    border-radius: 8px;
+    border: solid 2px;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;  
+    color: black;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 16px;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease-in-out;
+    -moz-appearance: none;
+
+    &-paved {
+      border-color: cadetblue;
+      &:hover {
+        background-color: cadetblue;
+        color: white;
+      }
+    }
+
+  }
 }
