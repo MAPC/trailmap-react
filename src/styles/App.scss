@@ -55,7 +55,8 @@ body {
   &__paved {
     border-color: cadetblue;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: cadetblue;
     }
   }
@@ -63,7 +64,8 @@ body {
   &__pavedPaths {
     color: #214A2D;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #214A2D;
       color: white
     }
@@ -72,7 +74,8 @@ body {
   &__unimprovedPaths {
     color: #4BAA40;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #4BAA40;
       color: white
     }
@@ -81,7 +84,8 @@ body {
   &__protectedBikeLane {
     color: #2166AC;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #2166AC;
       color: white
     }
@@ -90,7 +94,8 @@ body {
   &__bikeLane {
     color: #92C5DE;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #92C5DE;
       color: white
     }
@@ -99,7 +104,8 @@ body {
   &__naturalSurfaceFootway {
     color: #A87196;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #A87196;
       color: white
     }
@@ -108,7 +114,8 @@ body {
   &__pavedFootway {
     color: #903366;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #903366;
       color: white
     }
@@ -117,7 +124,8 @@ body {
   &__pavedPathsProposed {
     color: #214A2D;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #214A2D;
       color: white
     }
@@ -126,7 +134,8 @@ body {
   &__unimprovedPathsProposed {
     color: #4BAA40;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #4BAA40;
       color: white
     }
@@ -135,7 +144,8 @@ body {
   &__protectedBikeLaneProposed {
     color: #2166AC;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #2166AC;
       color: white
     }
@@ -144,7 +154,8 @@ body {
   &__bikeLaneProposed {
     color: #92C5DE;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #92C5DE;
       color: white
     }
@@ -153,7 +164,8 @@ body {
   &__pavedFootwayProposed {
     color: #903366;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #903366;
       color: white
     }
@@ -162,7 +174,8 @@ body {
   &__naturalSurfaceFootwayProposed {
     color: #A87196;
 
-    &:hover {
+    &:hover,
+    &__selected {
       background-color: #A87196;
       color: white
     }

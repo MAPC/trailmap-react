@@ -4,12 +4,13 @@ import React from 'react';
 import GeocoderControl from './GeocoderControl';
 import TypeButton from './TypeButton';
 
-const ControlPanel = React.forwardRef(({ MAPBOX_TOKEN, layerData, handleTrailLayers }, ref) => {
+const ControlPanel = React.forwardRef(({ MAPBOX_TOKEN, layerData, handleTrailLayers, trailLayers }, ref) => {
 
   const renderTypeButton = layerData.map((layer, index) => {
     return <TypeButton
       key={index}
       layer={layer}
+      trailLayers={trailLayers}
       handleTrailLayers={handleTrailLayers} />;
   });
 

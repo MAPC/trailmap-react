@@ -1,12 +1,13 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import React, { useState, useRef, useCallback } from "react";
-import ReactMapGL, { NavigationControl, GeolocateControl } from 'react-map-gl';
+import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer } from 'react-map-gl';
 import ControlPanel from "./ControlPanel";
 import LayerData from "../data/LayerData";
 import BasemapPanel from "./BasemapPanel";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
+const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
 
 const Map = () => {
   const [viewport, setViewport] = useState({
@@ -22,6 +23,25 @@ const Map = () => {
   const [baseLayer, setBaseLayer] = useState(basemaps[0]);
 
   const mapRef = useRef();
+
+  const visibleLayers = () => {
+    const visibleLayers = [];
+    trailLayers.forEach((layer, index) => {
+      const addLayer = LayerData.existing.filter(l => l.id === layer)[0];
+      visibleLayers.push(
+        <Layer
+          key={index}
+          id={addLayer.id}
+          type={addLayer.type}
+          source="MAPC trail vector tiles"
+          source-layer={addLayer['source-layer']}
+          paint={addLayer.paint}
+          layout={addLayer.layout}>
+        </Layer>
+      )
+    });
+    return (visibleLayers);
+  }
 
   const handleViewportChange = useCallback(
     (viewport) => setViewport(viewport), [],
@@ -53,6 +73,7 @@ const Map = () => {
         <ControlPanel
           MAPBOX_TOKEN={MAPBOX_TOKEN}
           layerData={LayerData.existing}
+          trailLayers={trailLayers}
           handleTrailLayers={handleTrailLayers} />
         <NavigationControl position="bottom-right" />
         <GeolocateControl
@@ -63,9 +84,15 @@ const Map = () => {
           trackUserLocation={false}
           position="bottom-right"
         />
+        <Source
+          id="MAPC trail vector tiles"
+          type="vector"
+          tiles={[TRAILMAP_SOURCE]} >
+          {visibleLayers()}
+        </Source>
         <BasemapPanel basemaps={basemaps} handleBaseLayer={handleBaseLayer} />
       </ReactMapGL>
-    </div>
+    </div >
   );
 };
 
