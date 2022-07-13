@@ -1,9 +1,10 @@
 import React from "react";
 
-const BasemapButton = ({ layer, handleBaseLayer }) => {
+const BasemapButton = ({ layer, handleBaseLayer, baseLayer }) => {
+  const isSelected = baseLayer.id === layer.id;
 
   return (
-    <li onClick={() => handleBaseLayer(layer)}>
+    <li className={isSelected ? "BasemapPanel_list__item BasemapPanel_list__item_selected" : "BasemapPanel_list__item"} onClick={() => handleBaseLayer(layer)}>
       {layer.label}
     </li>
   )

@@ -7,7 +7,7 @@ const TypeButton = ({ layer, handleTrailLayers, trailLayers }) => {
 
   return (
     <button
-      className={isSelected ? `TypeButton TypeButton__${layer.id}__selected` : `TypeButton TypeButton__${layer.id}`}
+      className={isSelected ? `ControlPanel_type_button ControlPanel_type_button__${layer.id}__selected` : `ControlPanel_type_button ControlPanel_type_button__${layer.id}`}
       onClick={() => toggleLayer(layer.id)}
     >
       {layer.label}

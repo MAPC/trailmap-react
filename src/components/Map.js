@@ -1,7 +1,9 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
+import FilterIcon from "../assets/filter-icon.svg"
 import React, { useState, useRef, useCallback } from "react";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer } from 'react-map-gl';
+import GeocoderPanel from './GeocoderPanel';
 import ControlPanel from "./ControlPanel";
 import LayerData from "../data/LayerData";
 import BasemapPanel from "./BasemapPanel";
@@ -21,6 +23,8 @@ const Map = () => {
 
   const [trailLayers, setTrailLayers] = useState([]);
   const [baseLayer, setBaseLayer] = useState(basemaps[0]);
+  const [showControlPanel, toggleControlPanel] = useState(true)
+
 
   const mapRef = useRef();
 
@@ -70,13 +74,24 @@ const Map = () => {
         scrollZoom={true}
         transitionDuration="1000"
       >
-        <ControlPanel
+        <GeocoderPanel
           MAPBOX_TOKEN={MAPBOX_TOKEN}
+        />
+        <button className="Map_filter_control"
+          onClick={() => toggleControlPanel(!showControlPanel)}
+        >
+          <img src={FilterIcon} alt="Show Control Panel" />
+        </button>
+        <ControlPanel
           layerData={LayerData.existing}
           trailLayers={trailLayers}
+          showPanel={showControlPanel}
           handleTrailLayers={handleTrailLayers} />
-        <NavigationControl position="bottom-right" />
+        <NavigationControl
+          className="map_navigation"
+          position="bottom-right" />
         <GeolocateControl
+          className="map_geolocate"
           positionOptions={{ enableHighAccuracy: true }}
           showUserHeading={false}
           showAccuracyCircle={false}
@@ -90,7 +105,10 @@ const Map = () => {
           tiles={[TRAILMAP_SOURCE]} >
           {visibleLayers()}
         </Source>
-        <BasemapPanel basemaps={basemaps} handleBaseLayer={handleBaseLayer} />
+        <BasemapPanel
+          basemaps={basemaps}
+          handleBaseLayer={handleBaseLayer}
+          baseLayer={baseLayer} />
       </ReactMapGL>
     </div >
   );

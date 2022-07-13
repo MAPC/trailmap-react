@@ -8,16 +8,90 @@ body {
   width: 100vw;
 
   &-wrapper {
-    position: relative;
     height: 100vh;
+    position: relative;
     width: 100vw;
   }
 }
 
-.Map {
-  position: relative;
-  height: 100%;
+.Header {
+  align-items: center;
+  background-color: rgba(0, 112, 205, .7);
+  display: flex;
+  flex-direction: row;
+  height: 60px;
+  position: absolute;
   width: 100%;
+  z-index: 1;
+
+  &__image {
+    margin: 0 20px;
+    height: 40px;
+  }
+
+  &__title {
+    @media only screen and (max-width: 790px) {
+      font-size: 22px;
+    }
+
+    @media only screen and (max-width: 680px) {
+      font-size: 30px;
+    }
+
+    &--bold {
+      font-weight: 700;
+    }
+
+    &--mobile-remove {
+      @media only screen and (max-width: 680px) {
+        display: none;
+        padding: 0 20px 0 0;
+      }
+    }
+
+    color: #ffffff;
+    font-family: 'Source Sans Pro',
+    sans-serf;
+    font-size: 26px;
+    font-weight: 300;
+    margin: unset;
+  }
+}
+
+.Map {
+  height: 100%;
+  position: relative;
+  width: 100%;
+
+  &_filter_control {
+    background-color: white;
+    border-radius: 4px;
+    border: none;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: block;
+    height: 36px;
+    left: 270px;
+    margin: 0;
+    outline: none;
+    padding: 0;
+    position: absolute;
+    top: 70px;
+    width: 36px;
+
+    img {
+      height: 36px;
+      width: 36px;
+    }
+
+    &:hover {
+      & img {
+        background-color: rgba(0, 0, 0, .05);
+      }
+    }
+
+  }
 }
 
 .ControlPanel {
@@ -28,196 +102,229 @@ body {
   padding: 50px 10px;
   position: absolute;
   text-align: left;
-  top: 0;
+  top: 60px;
   width: 240px;
-}
 
-.TypeButton {
-  background-color: white;
-  border-radius: 8px;
-  border: solid 2px;
-  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-  color: black;
-  cursor: pointer;
-  display: inline-block;
-  font-size: 16px;
-  margin: 5px 0;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  transition: all 0.3s ease-in-out;
-  -moz-appearance: none;
-
-  &:hover {
-    color: white;
-  }
-
-  &__paved {
-    border-color: cadetblue;
-
-    &:hover,
-    &__selected {
-      background-color: cadetblue;
-    }
-  }
-
-  &__pavedPaths {
-    color: #214A2D;
-
-    &:hover,
-    &__selected {
-      background-color: #214A2D;
-      color: white
-    }
-  }
-
-  &__unimprovedPaths {
-    color: #4BAA40;
-
-    &:hover,
-    &__selected {
-      background-color: #4BAA40;
-      color: white
-    }
-  }
-
-  &__protectedBikeLane {
-    color: #2166AC;
-
-    &:hover,
-    &__selected {
-      background-color: #2166AC;
-      color: white
-    }
-  }
-
-  &__bikeLane {
-    color: #92C5DE;
-
-    &:hover,
-    &__selected {
-      background-color: #92C5DE;
-      color: white
-    }
-  }
-
-  &__naturalSurfaceFootway {
-    color: #A87196;
-
-    &:hover,
-    &__selected {
-      background-color: #A87196;
-      color: white
-    }
-  }
-
-  &__pavedFootway {
-    color: #903366;
-
-    &:hover,
-    &__selected {
-      background-color: #903366;
-      color: white
-    }
-  }
-
-  &__pavedPathsProposed {
-    color: #214A2D;
-
-    &:hover,
-    &__selected {
-      background-color: #214A2D;
-      color: white
-    }
-  }
-
-  &__unimprovedPathsProposed {
-    color: #4BAA40;
-
-    &:hover,
-    &__selected {
-      background-color: #4BAA40;
-      color: white
-    }
-  }
-
-  &__protectedBikeLaneProposed {
-    color: #2166AC;
-
-    &:hover,
-    &__selected {
-      background-color: #2166AC;
-      color: white
-    }
-  }
-
-  &__bikeLaneProposed {
-    color: #92C5DE;
-
-    &:hover,
-    &__selected {
-      background-color: #92C5DE;
-      color: white
-    }
-  }
-
-  &__pavedFootwayProposed {
-    color: #903366;
-
-    &:hover,
-    &__selected {
-      background-color: #903366;
-      color: white
-    }
-  }
-
-  &__naturalSurfaceFootwayProposed {
-    color: #A87196;
-
-    &:hover,
-    &__selected {
-      background-color: #A87196;
-      color: white
-    }
-  }
-
-}
-
-.BasemapPanel {
-
-  & button {
+  &_type_button {
     background-color: white;
-    border: 0;
-    border-radius: 4px;
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 0px 2px;
-    box-sizing: border-box;
-    width: 29px;
+    border-radius: 8px;
+    border: solid 2px;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    color: black;
     cursor: pointer;
-    display: block;
-    height: 29px;
-    padding: 0;
-    position: absolute;
-    outline: none;
-    right: 10px;
-    top: 10px;
+    display: inline-block;
+    font-size: 16px;
+    margin: 5px 0;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease-in-out;
+    -moz-appearance: none;
 
     &:hover {
-      color: gray;
+      color: white;
     }
 
-    & img {
-      height: 100%;
+    &__paved {
+      border-color: cadetblue;
+
+      &:hover,
+      &__selected {
+        background-color: cadetblue;
+      }
+    }
+
+    &__pavedPaths {
+      color: #214A2D;
+
+      &:hover,
+      &__selected {
+        background-color: #214A2D;
+        color: white
+      }
+    }
+
+    &__unimprovedPaths {
+      color: #4BAA40;
+
+      &:hover,
+      &__selected {
+        background-color: #4BAA40;
+        color: white
+      }
+    }
+
+    &__protectedBikeLane {
+      color: #2166AC;
+
+      &:hover,
+      &__selected {
+        background-color: #2166AC;
+        color: white
+      }
+    }
+
+    &__bikeLane {
+      color: #92C5DE;
+
+      &:hover,
+      &__selected {
+        background-color: #92C5DE;
+        color: white
+      }
+    }
+
+    &__naturalSurfaceFootway {
+      color: #A87196;
+
+      &:hover,
+      &__selected {
+        background-color: #A87196;
+        color: white
+      }
+    }
+
+    &__pavedFootway {
+      color: #903366;
+
+      &:hover,
+      &__selected {
+        background-color: #903366;
+        color: white
+      }
+    }
+
+    &__pavedPathsProposed {
+      color: #214A2D;
+
+      &:hover,
+      &__selected {
+        background-color: #214A2D;
+        color: white
+      }
+    }
+
+    &__unimprovedPathsProposed {
+      color: #4BAA40;
+
+      &:hover,
+      &__selected {
+        background-color: #4BAA40;
+        color: white
+      }
+    }
+
+    &__protectedBikeLaneProposed {
+      color: #2166AC;
+
+      &:hover,
+      &__selected {
+        background-color: #2166AC;
+        color: white
+      }
+    }
+
+    &__bikeLaneProposed {
+      color: #92C5DE;
+
+      &:hover,
+      &__selected {
+        background-color: #92C5DE;
+        color: white
+      }
+    }
+
+    &__pavedFootwayProposed {
+      color: #903366;
+
+      &:hover,
+      &__selected {
+        background-color: #903366;
+        color: white
+      }
+    }
+
+    &__naturalSurfaceFootwayProposed {
+      color: #A87196;
+
+      &:hover,
+      &__selected {
+        background-color: #A87196;
+        color: white
+      }
     }
   }
+}
 
-  &__layer-list {
+
+.Basemap {
+  &Control {
     background-color: white;
-    border: 0;
     border-radius: 4px;
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 0px 2px;
+    border: none;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
     box-sizing: border-box;
+    cursor: pointer;
+    display: block;
+    height: 30px;
+    right: 10px;
+    margin: 0;
+    outline: none;
+    padding: 0;
+    position: absolute;
+    top: 70px;
+    width: 30px;
+
+    img {
+      height: 30px;
+      width: 30px;
+    }
+
+    &:hover {
+      & img {
+        background-color: rgba(0, 0, 0, .05);
+      }
+    }
+
+  }
+
+  &Panel {
     position: absolute;
     right: 10px;
-    top: 50px;
+    top: 120px;
+
+    &_list {
+      display: contents;
+      list-style: none;
+      text-align: center;
+
+      &__item {
+        background-color: white;
+        border-radius: 8px;
+        border: solid rgba(0, 112, 205, .7) .5px;
+        box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+        color: rgba(0, 112, 205, 1);
+        cursor: pointer;
+        font-size: 12px;
+        margin: 5px 0;
+        padding: 5px 5px;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.3s ease-in-out;
+        -moz-appearance: none;
+
+        &:hover,
+        &_selected {
+          color: white;
+          background-color: rgba(0, 112, 205, 1);
+        }
+      }
+    }
   }
+}
+
+// Overrides
+
+.mapboxgl-ctrl-top-left .mapboxgl-ctrl {
+  margin-top: 70px;
 }
