@@ -12,6 +12,7 @@
     "react-dom": "^18.2.0",
     "react-map-gl": "^7.0.16",
     "react-map-gl-geocoder": "^2.2.0",
+    "react-router-dom": "^6.3.0",
     "react-scripts": "3.4.1"
   },
   "scripts": {
