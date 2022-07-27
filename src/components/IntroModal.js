@@ -10,16 +10,25 @@ const IntroModal = () => {
 
   return (
     <>
-      <Modal className="IntroModal" show={show} onHide={handleClose}>
+      <Modal
+        className="IntroModal"
+        show={show}
+        onHide={handleClose}>
         <Modal.Header closeButton>
         </Modal.Header>
-        <Modal.Title><h1>Welcome to Trailmap!</h1></Modal.Title>
+        <Modal.Title>
+          <h1>Welcome to Trailmap!</h1>
+        </Modal.Title>
         <Modal.Body>
           <h4>Metro Boston's Regional Walking and Cycling Map</h4>
-          <Button variant="primary" onClick={handleClose}>
+          <Button
+            variant="primary"
+            onClick={handleClose}>
             Help Me Get Started
           </Button>
-          <Button variant="primary" onClick={handleClose}>
+          <Button
+            variant="primary"
+            onClick={handleClose}>
             Show me Everything
           </Button>
         </Modal.Body>
@@ -31,4 +40,4 @@ const IntroModal = () => {
   );
 };
 
-export default IntroModal
+export default IntroModal;

@@ -4,12 +4,12 @@ import FilterIcon from "../assets/filter-icon.svg";
 import ShareIcon from "../assets/share-icon.svg";
 import React, { useState, useRef, useEffect } from "react";
 import { useSearchParams } from 'react-router-dom';
-import ShareModal from './ShareModal';
-import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer } from 'react-map-gl';
-import GeocoderPanel from './GeocoderPanel';
-import ControlPanel from "./ControlPanel";
-import LayerData from "../data/LayerData";
+import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl } from 'react-map-gl';
 import BasemapPanel from "./BasemapPanel";
+import ControlPanel from "./ControlPanel";
+import GeocoderPanel from './GeocoderPanel';
+import LayerData from "../data/LayerData";
+import ShareModal from './ShareModal';
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
@@ -24,6 +24,7 @@ const Map = () => {
     transitionDuration: 1000
   });
   const [trailLayers, setTrailLayers] = useState([]);
+  const [proposedLayers, setProposedLayers] = useState([]);
   const [baseLayer, setBaseLayer] = useState(basemaps[0]);
   const [showControlPanel, toggleControlPanel] = useState(true)
   const [showShareModal, toggleShareModal] = useState(false)
@@ -63,8 +64,12 @@ const Map = () => {
 
   const visibleLayers = () => {
     const visibleLayers = [];
-    trailLayers.forEach((layer) => {
-      const addLayer = LayerData.existing.find(l => l.id === layer);
+    const allLayers = [...trailLayers, ...proposedLayers];
+    // console.log('allLayers', [...LayerData.existing, ...LayerData.proposed]);
+    allLayers.forEach((layer) => {
+      const layerType = layer.includes("Proposed") ? "proposed" : "existing";
+      console.log('type', layerType);
+      const addLayer = LayerData[layerType].find(l => l.id === layer);
       visibleLayers.push(
         <Layer
           key={addLayer.id}
@@ -88,6 +93,12 @@ const Map = () => {
     trailLayers.includes(layer) ?
       setTrailLayers(current => current.filter(trailLayer => trailLayer !== layer)) :
       setTrailLayers(current => [...current, layer]);
+  };
+
+  const handleProposedLayers = (layer) => {
+    proposedLayers.includes(layer) ?
+      setProposedLayers(current => current.filter(proposedLayer => proposedLayer !== layer)) :
+      setProposedLayers(current => [...current, layer]);
   };
 
   const handleShareModal = () => {
@@ -122,7 +133,8 @@ const Map = () => {
           <GeocoderPanel
             MAPBOX_TOKEN={MAPBOX_TOKEN}
           />
-          <button className="Map_filter_control"
+          <button
+            className="Map_filter_control"
             onClick={() => toggleControlPanel(!showControlPanel)}
           >
             <img src={FilterIcon} alt="Show Control Panel" />
@@ -134,9 +146,15 @@ const Map = () => {
           </button>
           <ControlPanel
             layerData={LayerData.existing}
+            proposedData={LayerData.proposed}
             trailLayers={trailLayers}
+            proposedLayers={proposedLayers}
             showPanel={showControlPanel}
-            handleTrailLayers={handleTrailLayers} />
+            handleTrailLayers={handleTrailLayers}
+            handleProposedLayers={handleProposedLayers} />
+          <ScaleControl
+            position="bottom-right"
+          />
           <NavigationControl
             className="map_navigation"
             position="bottom-right" />

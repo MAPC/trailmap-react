@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useControl, Marker } from 'react-map-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 
-export default function GeocoderControl(props) {
+const GeocoderControl = (props) => {
   const [marker, setMarker] = useState(null);
 
   const geocoder = useControl(
@@ -87,3 +87,5 @@ GeocoderControl.defaultProps = {
   onResult: noop,
   onError: noop
 };
+
+export default GeocoderControl;

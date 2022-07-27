@@ -1,8 +1,8 @@
 @import "~bootstrap/scss/bootstrap";
 
 body {
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 
 .App {
@@ -18,7 +18,7 @@ body {
 
 .Header {
   align-items: center;
-  background-color: rgba(0, 112, 205, .7);
+  background-color: rgba(0, 112, 205, 0.7);
   display: flex;
   flex-direction: row;
   height: 60px;
@@ -217,66 +217,78 @@ body {
 
     &__pavedPathsProposed {
       color: #214A2D;
+      border-style: dashed;
 
       &:hover,
       &__selected {
         background-color: #214A2D;
-        border-color: #214A2D;
+        border-style: dashed;
+        border-color: white;
         color: white
       }
     }
 
     &__unimprovedPathsProposed {
       color: #4BAA40;
+      border-style: dashed;
 
       &:hover,
       &__selected {
         background-color: #4BAA40;
-        border-color: #4BAA40;
+        border-style: dashed;
+        border-color: white;
         color: white
       }
     }
 
     &__protectedBikeLaneProposed {
       color: #2166AC;
+      border-style: dashed;
 
       &:hover,
       &__selected {
         background-color: #2166AC;
-        border-color: #2166AC;
+        border-style: dashed;
+        border-color: white;
         color: white
       }
     }
 
     &__bikeLaneProposed {
       color: #92C5DE;
+      border-style: dashed;
 
       &:hover,
       &__selected {
         background-color: #92C5DE;
-        border-color: #92C5DE;
+        border-style: dashed;
+        border-color: white;
         color: white
       }
     }
 
     &__pavedFootwayProposed {
       color: #903366;
+      border-style: dashed;
 
       &:hover,
       &__selected {
         background-color: #903366;
-        border-color: #903366;
+        border-style: dashed;
+        border-color: white;
         color: white
       }
     }
 
     &__naturalSurfaceFootwayProposed {
       color: #A87196;
+      border-style: dashed;
 
       &:hover,
       &__selected {
         background-color: #A87196;
-        border-color: #A87196;
+        border-style: dashed;
+        border-color: white;
         color: white
       }
     }
@@ -309,7 +321,7 @@ body {
 
     &:hover {
       & img {
-        background-color: rgba(0, 0, 0, .05);
+        background-color: rgba(0, 0, 0, 0.05);
       }
     }
 
@@ -328,7 +340,7 @@ body {
       &__item {
         background-color: white;
         border-radius: 8px;
-        border: solid rgba(0, 112, 205, .7) .5px;
+        border: solid rgba(0, 112, 205, 0.7) 0.5px;
         box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
         color: rgba(0, 112, 205, 1);
         cursor: pointer;
@@ -343,7 +355,7 @@ body {
         &:hover,
         &_selected {
           color: white;
-          background-color: rgba(0, 112, 205, 1);
+          background-color: rgba(0, 112, 205, 1.0);
         }
       }
     }
@@ -375,7 +387,7 @@ body {
 
     .modal-body {
       .btn {
-        background-color: rgba(0, 112, 205, 1);
+        background-color: rgba(0, 112, 205, 1.0);
         margin: 10px;
       }
     }

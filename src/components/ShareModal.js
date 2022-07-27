@@ -11,13 +11,19 @@ const ShareModal = ({ url, handleClose, show }) => {
 
   return (
     <>
-      <Modal className="ShareModal" show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-        </Modal.Header>
-        <Modal.Title><h1>Share the Map</h1></Modal.Title>
+      <Modal
+        className="ShareModal"
+        show={show}
+        onHide={handleClose}
+      >
+        <Modal.Title>
+          <h1>Share the Map</h1>
+        </Modal.Title>
         <Modal.Body>
           <h4>Click below to copy the map url to share</h4>
-          <Button variant="primary" onClick={copyUrl}>
+          <Button
+            variant="primary"
+            onClick={copyUrl}>
             Copy Link
           </Button>
         </Modal.Body>

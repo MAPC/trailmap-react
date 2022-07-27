@@ -129,22 +129,6 @@ const LayerData = {
       }
     },
     {
-      id: 'protectedBikeLaneProposed',
-      label: 'Proposed Protected Bike Lanes',
-      type: 'line',
-      'source-layer': 'Proposed Protected Bike Lanes',
-      layout: {
-        'line-cap': 'butt',
-        'line-join': 'miter'
-      },
-      paint: {
-        'line-color': '#2166AC',
-        'line-width': 2,
-        'line-opacity': 1,
-        'line-dasharray': [2, 2]
-      }
-    },
-    {
       id: 'bikeLaneProposed',
       label: 'Proposed Bike Lanes',
       type: 'line',
@@ -161,16 +145,16 @@ const LayerData = {
       }
     },
     {
-      id: 'naturalSurfaceFootwayProposed',
-      label: 'Proposed Natural Surface Footway',
+      id: 'protectedBikeLaneProposed',
+      label: 'Proposed Protected Bike Lanes',
       type: 'line',
-      'source-layer': 'Proposed Natural Surface Footway',
+      'source-layer': 'Proposed Protected Bike Lanes',
       layout: {
         'line-cap': 'butt',
         'line-join': 'miter'
       },
       paint: {
-        'line-color': '#A87196',
+        'line-color': '#2166AC',
         'line-width': 2,
         'line-opacity': 1,
         'line-dasharray': [2, 2]
@@ -187,6 +171,22 @@ const LayerData = {
       },
       paint: {
         'line-color': '#903366',
+        'line-width': 2,
+        'line-opacity': 1,
+        'line-dasharray': [2, 2]
+      }
+    },
+    {
+      id: 'naturalSurfaceFootwayProposed',
+      label: 'Proposed Natural Surface Footway',
+      type: 'line',
+      'source-layer': 'Proposed Natural Surface Footway',
+      layout: {
+        'line-cap': 'butt',
+        'line-join': 'miter'
+      },
+      paint: {
+        'line-color': '#A87196',
         'line-width': 2,
         'line-opacity': 1,
         'line-dasharray': [2, 2]

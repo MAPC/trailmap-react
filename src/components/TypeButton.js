@@ -1,6 +1,5 @@
 import React from 'react';
 
-
 const TypeButton = ({ layer, handleTrailLayers, trailLayers }) => {
   const toggleLayer = (layer) => handleTrailLayers(layer);
   const isSelected = trailLayers.includes(layer.id);

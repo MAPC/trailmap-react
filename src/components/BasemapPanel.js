@@ -12,7 +12,8 @@ const BasemapPanel = ({ basemaps, handleBaseLayer, baseLayer }) => {
 
   return (
     <>
-      <button className="BasemapControl"
+      <button
+        className="BasemapControl"
         onClick={() => togglePanel(!showPanel)}
       >
         <img src={BasemapIcon} alt="Select Basemap" />
