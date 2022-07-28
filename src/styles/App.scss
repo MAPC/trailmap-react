@@ -58,6 +58,28 @@ body {
     font-weight: 300;
     margin: unset;
   }
+
+  &__about {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+  }
+}
+
+.IntroModal {
+  &__title {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 400;
+    line-height: 1.75rem;
+    margin: 0.5rem 0;
+  }
+
+  &__subtitle {
+    display: block;
+    font-size: 1.25rem;
+    margin: 0.875rem 0;
+  }
 }
 
 

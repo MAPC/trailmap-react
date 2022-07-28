@@ -65,7 +65,6 @@ const Map = () => {
   const visibleLayers = () => {
     const visibleLayers = [];
     const allLayers = [...trailLayers, ...proposedLayers];
-    // console.log('allLayers', [...LayerData.existing, ...LayerData.proposed]);
     allLayers.forEach((layer) => {
       const layerType = layer.includes("Proposed") ? "proposed" : "existing";
       console.log('type', layerType);

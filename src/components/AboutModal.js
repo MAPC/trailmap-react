@@ -1,36 +1,22 @@
 import React, { useState } from 'react';
-import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 
-const IntroModal = () => {
-  const [show, setShow] = useState(false);
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+const AboutModal = ({ handleAboutModal, showAboutModal }) => {
 
   return (
     <>
       <Modal
         className="IntroModal"
-        show={show}
-        onHide={handleClose}>
+        show={showAboutModal}
+        onHide={handleAboutModal}>
         <Modal.Header closeButton>
         </Modal.Header>
         <Modal.Title>
-          <span class="IntroModal__title">Welcome to Trailmap!</span>
+          <span class="IntroModal__title">About Trailmap</span>
         </Modal.Title>
         <Modal.Body>
           <span class="IntroModal__subtitle">Metro Boston's Regional Walking and Cycling Map</span>
-          <Button
-            variant="primary"
-            onClick={handleClose}>
-            Help Me Get Started
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleClose}>
-            Show me Everything
-          </Button>
+          Text about trailmap goes here.
         </Modal.Body>
         <Modal.Footer>
           Trailmaps is always looking for new and improved data from the community. We encourage everyone to submit up-to-date infomration on individual trails so we can continue to improve this dataset. Learn more about trailmaps and continuing here.
@@ -40,4 +26,4 @@ const IntroModal = () => {
   );
 };
 
-export default IntroModal;
+export default AboutModal;
