@@ -24,21 +24,20 @@ const ControlPanel = ({ layerData, proposedData, showPanel, handleTrailLayers, h
     <>
       {showPanel &&
         <div className="ControlPanel" >
-          <>
-            <div>
-              <h2>Find the trails that work for you!</h2>
-              <p>Select from various trail types to find trails best suited to your needs.</p>
-            </div>
-            <div>
-              <h2>Existing:</h2>
-              {renderTypeButton}
-            </div>
-            <div>
-              <h2>Proposed:</h2>
-              {renderProposedTypeButton}
-            </div>
-          </>
-        </div >
+          <div class="ControlPanel_opacity"></div>
+          <div>
+            <span class="ControlPanel__title">Find the trails that work for you!</span>
+            <p>Select from various trail types to find trails best suited to your needs.</p>
+          </div>
+          <div>
+            <span class="ControlPanel__subtitle">Existing:</span>
+            {renderTypeButton}
+          </div>
+          <div>
+            <span class="ControlPanel__subtitle">Proposed:</span>
+            {renderProposedTypeButton}
+          </div>
+        </div>
       }
     </>
   );

@@ -33,11 +33,11 @@ body {
 
   &__title {
     @media only screen and (max-width: 790px) {
-      font-size: 22px;
+      font-size: 1.25rem;
     }
 
     @media only screen and (max-width: 680px) {
-      font-size: 30px;
+      font-size: 1.625rem;
     }
 
     &--bold {
@@ -54,7 +54,7 @@ body {
     color: #ffffff;
     font-family: 'Source Sans Pro',
     sans-serf;
-    font-size: 26px;
+    font-size: 1.25rem;
     font-weight: 300;
     margin: unset;
   }
@@ -114,11 +114,36 @@ body {
   box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
   height: 100vh;
   left: 0;
-  padding: 70px 10px;
+  overflow: auto;
+  padding: 3rem 0.625rem;
   position: absolute;
   text-align: left;
   top: 60px;
   width: 265px;
+
+  &_opacity {
+    background-color: aliceblue;
+    height: 3.5rem;
+    margin-top: -3rem;
+    opacity: 0.8;
+    position: fixed;
+    width: 245px;
+    z-index: 500;
+  }
+
+  &__title {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 400;
+    line-height: 1.75rem;
+    margin: 0.5rem 0;
+  }
+
+  &__subtitle {
+    display: block;
+    font-size: 1.25rem;
+    margin: 0.875rem 0;
+  }
 
   &_type_button {
     background-color: white;
@@ -128,9 +153,9 @@ body {
     color: black;
     cursor: pointer;
     display: inline-block;
-    font-size: 16px;
-    margin: 5px 0;
-    padding: 10px 20px;
+    font-size: 0.875rem;
+    margin: 0.25rem 0;
+    padding: 0.625rem;
     text-align: center;
     text-decoration: none;
     transition: all 0.3s ease-in-out;
@@ -283,6 +308,7 @@ body {
     &__naturalSurfaceFootwayProposed {
       color: #A87196;
       border-style: dashed;
+      margin-bottom: 3rem;
 
       &:hover,
       &__selected {
@@ -344,7 +370,7 @@ body {
         box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
         color: rgba(0, 112, 205, 1);
         cursor: pointer;
-        font-size: 12px;
+        font-size: 0.75rem;
         margin: 5px 0;
         padding: 5px 5px;
         text-align: center;
@@ -367,6 +393,10 @@ body {
 .mapboxgl-ctrl-top-left .mapboxgl-ctrl {
   margin-top: 70px;
   width: 240px;
+}
+
+.mapboxgl-ctrl-top-left {
+  z-index: 600;
 }
 
 .modal-dialog {
