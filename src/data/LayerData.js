@@ -2,7 +2,7 @@ const LayerData = {
   existing: [
     {
       id: 'pavedPaths',
-      label: 'Paved Shared Use Paths',
+      label: 'Paved Shared Use',
       type: 'line',
       'source-layer': 'Existing Paved Shared Use Paths',
       layout: {
@@ -18,7 +18,7 @@ const LayerData = {
     },
     {
       id: 'unimprovedPaths',
-      label: 'Unimproved Shared Use Paths',
+      label: 'Unimproved Shared Use',
       type: 'line',
       'source-layer': 'Existing Unimproved Shared Use Paths',
       layout: {
@@ -98,7 +98,7 @@ const LayerData = {
   proposed: [
     {
       id: 'pavedPathsProposed',
-      label: 'Proposed Paved Shared Use Paths',
+      label: 'Proposed Paved Shared Use',
       type: 'line',
       'source-layer': 'Proposed Paved Shared Use Paths',
       layout: {
@@ -114,7 +114,7 @@ const LayerData = {
     },
     {
       id: 'unimprovedPathsProposed',
-      label: 'Proposed Unimproved Shared Use Paths',
+      label: 'Proposed Unimproved Shared Use',
       type: 'line',
       'source-layer': 'Proposed Unimproved Shared Use Paths',
       layout: {
@@ -195,6 +195,11 @@ const LayerData = {
   ],
   basemap: [
     {
+      id: 'terrain',
+      label: 'Terrain',
+      url: 'mapbox://styles/mapbox/outdoors-v11'
+    },
+    {
       id: 'mapboxLight',
       label: 'Light',
       url: 'mapbox://styles/mapbox/light-v10'
@@ -203,11 +208,6 @@ const LayerData = {
       id: 'mapboxDark',
       label: 'Dark',
       url: 'mapbox://styles/mapbox/dark-v10'
-    },
-    {
-      id: 'terrain',
-      label: 'Terrain',
-      url: 'mapbox://styles/mapbox/outdoors-v11'
     },
     {
       id: 'satellite',

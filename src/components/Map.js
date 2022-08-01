@@ -20,7 +20,7 @@ const Map = () => {
   const [viewport, setViewport] = useState({
     latitude: 42.3772,
     longitude: -71.0244,
-    zoom: 8.5,
+    zoom: 10,
     transitionDuration: 1000
   });
   const [trailLayers, setTrailLayers] = useState([]);
