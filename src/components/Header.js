@@ -1,6 +1,8 @@
 import React from "react";
+import AboutIcon from "../assets/icons/about-icon.svg";
+import ContributeIcon from "../assets/icons/contribute-icon.svg";
 
-const Header = ({ handleAboutModal }) => {
+const Header = ({ handleAboutModal, handleContributeModal }) => {
   return (
     <header className="Header">
       <img src="https://www.mapc.org/wp-content/themes/mapc/assets/images/mapc-logo.svg"
@@ -15,9 +17,12 @@ const Header = ({ handleAboutModal }) => {
         <span className="Header__title--mobile-remove">
           Metro Boston's Regional Walking and Cycling Map
         </span>
-        <span onClick={handleAboutModal} className="Header__about">
-          About
-        </span>
+        <button onClick={handleContributeModal} className="Header__contribute">
+          <img src={ContributeIcon} alt="Contribute Map" />
+        </button>
+        <button onClick={handleAboutModal} className="Header__about">
+          <img src={AboutIcon} alt="About Map" />
+        </button>
       </div>
     </header>
   )

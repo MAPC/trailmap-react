@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import BasemapButton from "./BasemapButton";
-import BasemapIcon from "../assets/basemap-icon.svg"
+import BasemapIcon from "../../assets/icons/basemap-icon.svg"
 
 const BasemapPanel = ({ basemaps, handleBaseLayer, baseLayer }) => {
 

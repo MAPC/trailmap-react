@@ -59,10 +59,61 @@ body {
     margin: unset;
   }
 
+  &__contribute {
+    right: 50px;
+    top: 15px;
+
+    img {
+      height: 45px;
+      width: 45px;
+
+      svg {
+        fill-opacity: 0.0;
+      }
+    }
+  }
+
   &__about {
-    position: absolute;
     right: 10px;
+    top: 15px;
+
+    img {
+      height: 50px;
+      width: 50px;
+
+      svg {
+        fill-opacity: 0.0;
+      }
+    }
+  }
+
+  &__about,
+  &__contribute {
+    align-items: center;
+    background-color: rgba(0, 112, 205, 0.0);
+    display: flex;
+    height: 30px;
+    justify-content: space-evenly;
+    width: 30px;
+    border-radius: 4px;
+    border: none;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
+    box-sizing: border-box;
     cursor: pointer;
+    margin: 0;
+    outline: none;
+    padding: 0;
+    position: absolute;
+
+
+    // img {
+    //   height: 50px;
+    //   width: 50px;
+
+    //   svg {
+    //     fill-opacity: 0.0;
+    //   }
+    // }
   }
 }
 

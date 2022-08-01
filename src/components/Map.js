@@ -1,15 +1,15 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
-import FilterIcon from "../assets/filter-icon.svg";
-import ShareIcon from "../assets/share-icon.svg";
+import FilterIcon from "../assets/icons/filter-icon.svg";
+import ShareIcon from "../assets/icons/share-icon.svg";
 import React, { useState, useRef, useEffect } from "react";
 import { useSearchParams } from 'react-router-dom';
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl } from 'react-map-gl';
 import BasemapPanel from "./BasemapPanel";
 import ControlPanel from "./ControlPanel";
-import GeocoderPanel from './GeocoderPanel';
+import GeocoderPanel from './Geocoder/GeocoderPanel';
 import LayerData from "../data/LayerData";
-import ShareModal from './ShareModal';
+import ShareModal from './Modals/ShareModal';
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;

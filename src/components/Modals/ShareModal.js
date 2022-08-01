@@ -20,7 +20,7 @@ const ShareModal = ({ url, handleClose, show }) => {
           <h1>Share the Map</h1>
         </Modal.Title>
         <Modal.Body>
-          <h4>Click below to copy the map url to share</h4>
+          Click below to copy the map url to share.
           <Button
             variant="primary"
             onClick={copyUrl}>
