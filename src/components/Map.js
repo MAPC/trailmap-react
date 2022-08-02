@@ -10,6 +10,7 @@ import ControlPanel from "./ControlPanel";
 import GeocoderPanel from './Geocoder/GeocoderPanel';
 import LayerData from "../data/LayerData";
 import ShareModal from './Modals/ShareModal';
+import GlossaryModal from './Modals/GlossaryModal';
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
@@ -28,6 +29,7 @@ const Map = () => {
   const [baseLayer, setBaseLayer] = useState(basemaps[0]);
   const [showControlPanel, toggleControlPanel] = useState(true)
   const [showShareModal, toggleShareModal] = useState(false)
+  const [showGlossaryModal, toggleGlossaryModal] = useState(false)
 
   const mapRef = useRef();
 
@@ -100,6 +102,10 @@ const Map = () => {
       setProposedLayers(current => [...current, layer]);
   };
 
+  const handleGlossaryModal = () => {
+    toggleGlossaryModal(!showGlossaryModal);
+  };
+
   const handleShareModal = () => {
     toggleShareModal(!showShareModal)
   };
@@ -116,6 +122,10 @@ const Map = () => {
         url={generateShareUrl()}
         handleClose={handleShareModal}
         show={showShareModal}
+      />
+      <GlossaryModal
+        handleClose={handleGlossaryModal}
+        show={showGlossaryModal}
       />
       <div className="Map">
         <ReactMapGL
@@ -150,7 +160,9 @@ const Map = () => {
             proposedLayers={proposedLayers}
             showPanel={showControlPanel}
             handleTrailLayers={handleTrailLayers}
-            handleProposedLayers={handleProposedLayers} />
+            handleProposedLayers={handleProposedLayers}
+            handleGlossaryModal={handleGlossaryModal}
+          />
           <ScaleControl
             position="bottom-right"
           />

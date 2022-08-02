@@ -9,6 +9,7 @@ import './styles/App.scss';
 const App = () => {
   const [showAboutModal, toggleAboutModal] = useState(false)
   const [showContributeModal, toggleContributeModal] = useState(false)
+  const [cannedMap, setCannedMap] = useState({ baseLayer: '', trailLayers: [] });
 
   const handleAboutModal = () => {
     toggleAboutModal(!showAboutModal);
@@ -18,14 +19,18 @@ const App = () => {
     toggleContributeModal(!showContributeModal);
   };
 
+  const setMap = (mapLayers) => {
+    setCannedMap(mapLayers);
+  }
+
   return (
     <div className="App">
       <div className="App-wrapper">
         <Header handleAboutModal={handleAboutModal} handleContributeModal={handleContributeModal} />
         <AboutModal handleAboutModal={handleAboutModal} showAboutModal={showAboutModal} />
         <ContributeModal handleContributeModal={handleContributeModal} showContributeModal={showContributeModal} />
-        <IntroModal />
-        <Map />
+        <IntroModal setMap={setMap} />
+        <Map cannedMap={cannedMap} />
       </div>
     </div>
   );

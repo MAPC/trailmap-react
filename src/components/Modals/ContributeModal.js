@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import Modal from 'react-bootstrap/Modal';
 
 const ContributeModal = ({ handleContributeModal, showContributeModal }) => {
@@ -6,18 +7,18 @@ const ContributeModal = ({ handleContributeModal, showContributeModal }) => {
   return (
     <>
       <Modal
-        className="IntroModal"
+        className="Modal"
         show={showContributeModal}
         onHide={handleContributeModal}>
-        <Modal.Header closeButton>
-        </Modal.Header>
         <Modal.Title>
-          <span class="IntroModal__title">Contribute to Trailmap</span>
+          <span className="Modal__title">Contribute to Trailmap</span>
         </Modal.Title>
         <Modal.Body>
-          <span class="IntroModal__subtitle">Metro Boston's Regional Walking and Cycling Map</span>
-          We welcome contributions to this map including adding to and editing the data! We have an online editing tool available for you to use. To found out how to access the editing functions, please contact David Loutzenheiser at: <a href="mailto:dloutzenheiser@mapc.org">dloutzenheiser@mapc.org</a>
+          We welcome contributions to this map including adding to and editing the data! We have an online editing tool available for you to use. To found out how to access the editing functions, please contact David Loutzenheiser at: <Link to={{ pathname: "mailto:dloutzenheiser@mapc.org" }} target="_blank">dloutzenheiser@mapc.org</Link>
         </Modal.Body>
+        <Modal.Footer>
+          <span className="Modal__footer">Disclaimer: The data herein is provided for informational purposes only. MAPC makes no warranties, either expressed or implied, and assumes no responsibility for its completeness or accuracy. Users assume all responsibility and risk associated with use of the map and agree to indemnify and hold harmless MAPC with respect to any and all claims and demands that may arise resulting from use of this map.</span>
+        </Modal.Footer>
       </Modal>
     </>
   );
