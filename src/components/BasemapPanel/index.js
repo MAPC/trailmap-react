@@ -2,12 +2,11 @@ import React, { useState } from "react";
 import BasemapButton from "./BasemapButton";
 import BasemapIcon from "../../assets/icons/basemap-icon.svg"
 
-const BasemapPanel = ({ basemaps, handleBaseLayer, baseLayer }) => {
-
+const BasemapPanel = ({ basemaps }) => {
   const [showPanel, togglePanel] = useState(false)
 
   const renderButtons = basemaps.map((layer, index) => {
-    return <BasemapButton key={index} layer={layer} handleBaseLayer={handleBaseLayer} baseLayer={baseLayer} />
+    return <BasemapButton key={index} layer={layer} />
   })
 
   return (

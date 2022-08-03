@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { createContext, useState } from "react";
 import Map from "./components/Map";
 import Header from "./components/Header";
 import IntroModal from './components/Modals/IntroModal';

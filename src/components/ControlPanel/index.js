@@ -2,22 +2,20 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import React from 'react';
 import TypeButton from './TypeButton';
 
-const ControlPanel = ({ layerData, proposedData, showPanel, handleTrailLayers, handleProposedLayers, trailLayers, proposedLayers, handleGlossaryModal }) => {
+const ControlPanel = ({ layerData, proposedData, showPanel, handleGlossaryModal }) => {
 
   const renderTypeButton = layerData.map((layer, index) => {
     return <TypeButton
       key={index}
       layer={layer}
-      trailLayers={trailLayers}
-      handleTrailLayers={handleTrailLayers} />;
+      type="trail" />;
   });
 
   const renderProposedTypeButton = proposedData.map((layer, index) => {
     return <TypeButton
       key={index}
       layer={layer}
-      trailLayers={proposedLayers}
-      handleTrailLayers={handleProposedLayers} />;
+      type="proposed" />;
   });
 
   return (

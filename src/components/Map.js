@@ -2,7 +2,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import FilterIcon from "../assets/icons/filter-icon.svg";
 import ShareIcon from "../assets/icons/share-icon.svg";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, createContext } from "react";
 import { useSearchParams } from 'react-router-dom';
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl } from 'react-map-gl';
 import BasemapPanel from "./BasemapPanel";
@@ -14,6 +14,8 @@ import GlossaryModal from './Modals/GlossaryModal';
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
+
+export const LayerContext = createContext();
 
 const Map = () => {
   const basemaps = LayerData.basemap;
@@ -69,7 +71,6 @@ const Map = () => {
     const allLayers = [...trailLayers, ...proposedLayers];
     allLayers.forEach((layer) => {
       const layerType = layer.includes("Proposed") ? "proposed" : "existing";
-      console.log('type', layerType);
       const addLayer = LayerData[layerType].find(l => l.id === layer);
       visibleLayers.push(
         <Layer
@@ -86,22 +87,6 @@ const Map = () => {
     return (visibleLayers);
   }
 
-  const handleBaseLayer = (layer) => {
-    setBaseLayer(layer);
-  }
-
-  const handleTrailLayers = (layer) => {
-    trailLayers.includes(layer) ?
-      setTrailLayers(current => current.filter(trailLayer => trailLayer !== layer)) :
-      setTrailLayers(current => [...current, layer]);
-  };
-
-  const handleProposedLayers = (layer) => {
-    proposedLayers.includes(layer) ?
-      setProposedLayers(current => current.filter(proposedLayer => proposedLayer !== layer)) :
-      setProposedLayers(current => [...current, layer]);
-  };
-
   const handleGlossaryModal = () => {
     toggleGlossaryModal(!showGlossaryModal);
   };
@@ -114,7 +99,6 @@ const Map = () => {
     //http://localhost:8080/?baseLayer=mapboxDark&trailLayers=pavedPaths,unimprovedPaths,bikeLane
     return `${window.location.href.split('?')[0]}?baseLayer=${baseLayer.id}&trailLayers=${trailLayers.join(',')}&centroid=${viewport.latitude},${viewport.longitude}&zoom=${viewport.zoom}`;
   }
-
 
   return (
     <>
@@ -153,16 +137,27 @@ const Map = () => {
           >
             <img src={ShareIcon} alt="Share Map" />
           </button>
-          <ControlPanel
-            layerData={LayerData.existing}
-            proposedData={LayerData.proposed}
-            trailLayers={trailLayers}
-            proposedLayers={proposedLayers}
-            showPanel={showControlPanel}
-            handleTrailLayers={handleTrailLayers}
-            handleProposedLayers={handleProposedLayers}
-            handleGlossaryModal={handleGlossaryModal}
-          />
+          <LayerContext.Provider
+            value={{
+              trailLayers, setTrailLayers,
+              proposedLayers, setProposedLayers,
+              baseLayer, setBaseLayer
+            }}>
+            <ControlPanel
+              layerData={LayerData.existing}
+              proposedData={LayerData.proposed}
+              showPanel={showControlPanel}
+              handleGlossaryModal={handleGlossaryModal}
+            />
+            <BasemapPanel
+              basemaps={basemaps} />
+            <Source
+              id="MAPC trail vector tiles"
+              type="vector"
+              tiles={[TRAILMAP_SOURCE]} >
+              {visibleLayers()}
+            </Source>
+          </LayerContext.Provider>
           <ScaleControl
             position="bottom-right"
           />
@@ -178,16 +173,6 @@ const Map = () => {
             trackUserLocation={false}
             position="bottom-right"
           />
-          <Source
-            id="MAPC trail vector tiles"
-            type="vector"
-            tiles={[TRAILMAP_SOURCE]} >
-            {visibleLayers()}
-          </Source>
-          <BasemapPanel
-            basemaps={basemaps}
-            handleBaseLayer={handleBaseLayer}
-            baseLayer={baseLayer} />
         </ReactMapGL >
       </div>
     </>
