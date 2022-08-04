@@ -1,0 +1,222 @@
+.ControlPanel {
+  background-color: aliceblue;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+  height: 100vh;
+  left: 0;
+  overflow: auto;
+  padding: 3rem 0.625rem;
+  position: absolute;
+  text-align: left;
+  top: 60px;
+  width: 265px;
+
+  &_opacity {
+    background-color: aliceblue;
+    height: 3.5rem;
+    margin-top: -3rem;
+    opacity: 0.8;
+    position: fixed;
+    width: 245px;
+    z-index: 500;
+  }
+
+  &__title {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 400;
+    line-height: 1.75rem;
+    margin: 0.5rem 0;
+  }
+
+  &__glossary {
+    color: rgba(0, 112, 205, 1.0);
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__subtitle {
+    display: block;
+    font-size: 1.25rem;
+    margin: 0.875rem 0;
+  }
+
+  &_type_button {
+    background-color: white;
+    border-radius: 8px;
+    border: solid 2px;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    color: black;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 0.75rem;
+    line-height: 0.875rem;
+    margin: 0.25rem;
+    padding: 0.625rem;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease-in-out;
+    width: 110px;
+    -moz-appearance: none;
+
+    &:hover {
+      color: white;
+    }
+
+    &__paved {
+      border-color: cadetblue;
+
+      &:hover,
+      &__selected {
+        background-color: cadetblue;
+      }
+    }
+
+    &__pavedPaths {
+      color: #214A2D;
+
+      &:hover,
+      &__selected {
+        background-color: #214A2D;
+        border-color: #214A2D;
+        color: white
+      }
+    }
+
+    &__unimprovedPaths {
+      color: #4BAA40;
+
+      &:hover,
+      &__selected {
+        background-color: #4BAA40;
+        border-color: #4BAA40;
+        color: white
+      }
+    }
+
+    &__protectedBikeLane {
+      color: #2166AC;
+
+      &:hover,
+      &__selected {
+        background-color: #2166AC;
+        border-color: #2166AC;
+        color: white
+      }
+    }
+
+    &__bikeLane {
+      color: #92C5DE;
+
+      &:hover,
+      &__selected {
+        background-color: #92C5DE;
+        border-color: #92C5DE;
+        color: white
+      }
+    }
+
+    &__naturalSurfaceFootway {
+      color: #A87196;
+
+      &:hover,
+      &__selected {
+        background-color: #A87196;
+        border-color: #A87196;
+        color: white
+      }
+    }
+
+    &__pavedFootway {
+      color: #903366;
+
+      &:hover,
+      &__selected {
+        background-color: #903366;
+        border-color: #903366;
+        color: white
+      }
+    }
+
+    &__pavedPathsProposed {
+      color: #214A2D;
+      border-style: dashed;
+
+      &:hover,
+      &__selected {
+        background-color: #214A2D;
+        border-style: dashed;
+        border-color: white;
+        color: white
+      }
+    }
+
+    &__unimprovedPathsProposed {
+      color: #4BAA40;
+      border-style: dashed;
+
+      &:hover,
+      &__selected {
+        background-color: #4BAA40;
+        border-style: dashed;
+        border-color: white;
+        color: white
+      }
+    }
+
+    &__protectedBikeLaneProposed {
+      color: #2166AC;
+      border-style: dashed;
+
+      &:hover,
+      &__selected {
+        background-color: #2166AC;
+        border-style: dashed;
+        border-color: white;
+        color: white
+      }
+    }
+
+    &__bikeLaneProposed {
+      color: #92C5DE;
+      border-style: dashed;
+
+      &:hover,
+      &__selected {
+        background-color: #92C5DE;
+        border-style: dashed;
+        border-color: white;
+        color: white
+      }
+    }
+
+    &__pavedFootwayProposed {
+      color: #903366;
+      border-style: dashed;
+
+      &:hover,
+      &__selected {
+        background-color: #903366;
+        border-style: dashed;
+        border-color: white;
+        color: white
+      }
+    }
+
+    &__naturalSurfaceFootwayProposed {
+      color: #A87196;
+      border-style: dashed;
+      margin-bottom: 3rem;
+
+      &:hover,
+      &__selected {
+        background-color: #A87196;
+        border-style: dashed;
+        border-color: white;
+        color: white
+      }
+    }
+  }
+}

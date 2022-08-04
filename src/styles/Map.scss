@@ -1,0 +1,72 @@
+.Map {
+  height: 100%;
+  position: relative;
+  width: 100%;
+
+  &_filter {
+    left: 280px;
+    top: 70px;
+
+    img {
+      height: 36px;
+      width: 36px;
+    }
+  }
+
+  &_share {
+    left: 325px;
+    top: 70px;
+
+    img {
+      height: 20px;
+      width: 20px;
+    }
+  }
+
+  &_basemap {
+    right: 10px;
+    top: 70px;
+
+    img {
+      height: 30px;
+      width: 30px;
+    }
+  }
+
+  &_basemap,
+  &_filter,
+  &_share {
+    background-color: white;
+    border-radius: 4px;
+    border: none;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: block;
+    height: 36px;
+    margin: 0;
+    outline: none;
+    padding: 0;
+    position: absolute;
+    width: 36px;
+
+    &:hover {
+      background-color: rgba(220, 220, 220, 1.0);
+    }
+
+    &__selected {
+      background-color: rgba(0, 112, 205, 0.7);
+    }
+  }
+}
+
+// Overrides
+
+.mapboxgl-ctrl-top-left .mapboxgl-ctrl {
+  margin-top: 70px;
+  width: 240px;
+}
+
+.mapboxgl-ctrl-top-left {
+  z-index: 600;
+}
