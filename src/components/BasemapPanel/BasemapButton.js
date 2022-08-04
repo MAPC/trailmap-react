@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { LayerContext } from "../Map";
+import { LayerContext } from "../../App";
 
 const BasemapButton = ({ layer }) => {
   const { baseLayer, setBaseLayer } = useContext(LayerContext);

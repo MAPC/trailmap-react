@@ -1,11 +1,11 @@
-import React, { useContext } from 'react';
-import { LayerContext } from '../Map';
+import React, { useContext } from "react";
+import { LayerContext } from "../../App";
 
 const TypeButton = ({ layer, type }) => {
   const { trailLayers, setTrailLayers, proposedLayers, setProposedLayers, } = useContext(LayerContext);
 
   const toggleLayer = (layer, type) => {
-    if (type == 'trail') {
+    if (type == "trail") {
       trailLayers.includes(layer) ?
         setTrailLayers(current => current.filter(trailLayer => trailLayer !== layer)) :
         setTrailLayers(current => [...current, layer]);
@@ -15,7 +15,7 @@ const TypeButton = ({ layer, type }) => {
         setProposedLayers(current => [...current, layer]);
     }
   };
-  const isSelected = type == 'trail' ? trailLayers.includes(layer.id) : proposedLayers.includes(layer.id);
+  const isSelected = type == "trail" ? trailLayers.includes(layer.id) : proposedLayers.includes(layer.id);
 
   return (
     <button

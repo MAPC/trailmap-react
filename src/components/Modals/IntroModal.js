@@ -1,68 +1,86 @@
-import React, { useContext, useState } from 'react';
-import Button from 'react-bootstrap/Button';
-import Modal from 'react-bootstrap/Modal';
-import { ModalContext } from '../../App';
+import React, { useContext, useState } from "react";
+import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
+import { ModalContext } from "../../App";
+import { LayerContext } from "../../App";
 
-const IntroModal = ({ setMap }) => {
+const IntroModal = () => {
   const { showIntroModal, toggleIntroModal } = useContext(ModalContext);
+  const { basemaps, setBaseLayer, setTrailLayers } = useContext(LayerContext);
   const [assist, toggleAssist] = useState(false)
 
+
   const handleCannedMap = (mapType) => {
+    const setMap = (mapLayers) => {
+      setBaseLayer(basemaps.find(bm => bm.id == mapLayers.baseLayer));
+      setTrailLayers(mapLayers.trailLayers);
+    };
+
     switch (mapType) {
-      case "hiking": setMap({ baseLayer: 'terrain', trailLayes: ['naturalSurfaceFootway'] }); break;
-      case "biking": setMap({ baseLayer: 'streets', trailLayers: ['bikeLane', 'protectedBikeLane'] }); break;
+      case "hiking": setMap({ baseLayer: "terrain", trailLayers: ["naturalSurfaceFootway"] }); break;
+      case "biking": setMap({ baseLayer: "streets", trailLayers: ["bikeLane", "protectedBikeLane"] }); break;
+      case "walking": setMap({ baseLayer: "streets", trailLayers: ["pavedFootway"] }); break;
       default: break;
     }
+
     toggleAssist(!assist);
     toggleIntroModal(!showIntroModal);
   }
 
   return (
-    <>
-      <Modal
-        className="Modal"
-        show={showIntroModal}
-        onHide={() => { toggleIntroModal(!showIntroModal) }}>
-        <Modal.Title>
-          <span className="Modal__title">Welcome to Trailmap!</span>
-          <span className="Modal__subtitle">Metro Boston's Regional Walking and Cycling Map</span>
-        </Modal.Title>
-        <Modal.Body>
-          {!assist &&
-            <>
-              <Button
-                className="intro-button"
-                variant="primary"
-                onClick={() => { toggleAssist(!assist) }}>
-                Help Me Get Started
-              </Button>
-              <Button
-                className="intro-button"
-                variant="primary"
-                onClick={() => { toggleIntroModal(!showIntroModal) }}>
-                Show me Everything
-              </Button>
-            </>}
-          {assist && <>
-            I'm interested in:
+    <Modal
+      className="Modal"
+      show={showIntroModal}
+      onHide={() => { toggleIntroModal(!showIntroModal) }}>
+      <Modal.Title>
+        <span className="Modal__title">Welcome to Trailmap!</span>
+        <span className="Modal__subtitle">Metro Boston"s Regional Walking and Cycling Map</span>
+      </Modal.Title>
+      <Modal.Body>
+        {!assist &&
+          <>
             <Button
+              className="intro-button"
               variant="primary"
-              onClick={() => { handleCannedMap('biking') }}>
+              onClick={() => { toggleAssist(!assist) }}>
+              Help Me Get Started
+            </Button>
+            <Button
+              className="intro-button"
+              variant="primary"
+              onClick={() => { toggleIntroModal(!showIntroModal) }}>
+              Show me Everything
+            </Button>
+          </>}
+        {assist && <>
+          I"m interested in:
+          <div>
+            <Button
+              className="intro-button"
+              variant="primary"
+              onClick={() => { handleCannedMap("biking") }}>
               Biking
             </Button>
             <Button
+              className="intro-button"
               variant="primary"
-              onClick={() => { handleCannedMap('hiking') }}>
+              onClick={() => { handleCannedMap("hiking") }}>
               Hiking
             </Button>
-          </>}
-        </Modal.Body>
-        <Modal.Footer>
-          <span className="Modal__footer">Trailmaps is always looking for new and improved data from the community. We encourage everyone to submit up-to-date infomration on individual trails so we can continue to improve this dataset. Learn more about trailmaps and continuing here.</span>
-          <span className="Modal__disclaimer">Disclaimer: The data herein is provided for informational purposes only. MAPC makes no warranties, either expressed or implied, and assumes no responsibility for its completeness or accuracy. Users assume all responsibility and risk associated with use of the map and agree to indemnify and hold harmless MAPC with respect to any and all claims and demands that may arise resulting from use of this map.</span>
-        </Modal.Footer>
-      </Modal>
-    </>
+            <Button
+              className="intro-button"
+              variant="primary"
+              onClick={() => { handleCannedMap("walking") }}>
+              Walking
+            </Button>
+          </div>
+        </>}
+      </Modal.Body>
+      <Modal.Footer>
+        <span className="Modal__footer">Trailmaps is always looking for new and improved data from the community. We encourage everyone to submit up-to-date infomration on individual trails so we can continue to improve this dataset. Learn more about trailmaps and continuing here.</span>
+        <span className="Modal__disclaimer">Disclaimer: The data herein is provided for informational purposes only. MAPC makes no warranties, either expressed or implied, and assumes no responsibility for its completeness or accuracy. Users assume all responsibility and risk associated with use of the map and agree to indemnify and hold harmless MAPC with respect to any and all claims and demands that may arise resulting from use of this map.</span>
+      </Modal.Footer>
+    </Modal>
   );
 };
 

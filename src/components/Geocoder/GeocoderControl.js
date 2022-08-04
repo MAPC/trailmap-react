@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { useState } from 'react';
-import { useControl, Marker } from 'react-map-gl';
-import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+import * as React from "react";
+import { useState } from "react";
+import { useControl, Marker } from "react-map-gl";
+import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 
 const GeocoderControl = (props) => {
   const [marker, setMarker] = useState(null);
@@ -11,25 +11,25 @@ const GeocoderControl = (props) => {
       const ctrl = new MapboxGeocoder({
         ...props,
         marker: false,
-        countries: 'us',
+        countries: "us",
         accessToken: process.env.REACT_APP_MAPBOX_API_TOKEN
       });
-      ctrl.on('loading', props.onLoading);
-      ctrl.on('results', props.onResults);
-      ctrl.on('result', evt => {
+      ctrl.on("loading", props.onLoading);
+      ctrl.on("results", props.onResults);
+      ctrl.on("result", evt => {
         props.onResult(evt);
 
         const { result } = evt;
         const location =
           result &&
-          (result.center || (result.geometry?.type === 'Point' && result.geometry.coordinates));
+          (result.center || (result.geometry?.type === "Point" && result.geometry.coordinates));
         if (location && props.marker) {
           setMarker(<Marker {...props.marker} longitude={location[0]} latitude={location[1]} />);
         } else {
           setMarker(null);
         }
       });
-      ctrl.on('error', props.onError);
+      ctrl.on("error", props.onError);
       return ctrl;
     },
     {
