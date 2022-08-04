@@ -1,5 +1,3 @@
-import "mapbox-gl/dist/mapbox-gl.css";
-import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import BasemapIcon from "../../assets/icons/basemap-icon.svg"
 import FilterIcon from "../../assets/icons/filter-icon.svg";
 import ShareIcon from "../../assets/icons/share-icon.svg";
@@ -10,19 +8,21 @@ import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleCo
 import BasemapPanel from "../BasemapPanel";
 import ControlPanel from "../ControlPanel";
 import GeocoderPanel from '../Geocoder/GeocoderPanel';
-import LayerData from "../../data/LayerData";
 import ShareModal from '../Modals/ShareModal';
 import GlossaryModal from '../Modals/GlossaryModal';
 import { ModalContext } from "../../App";
+import { LayerContext } from "../../App";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
 
-export const LayerContext = createContext();
 
 const Map = () => {
-  const basemaps = LayerData.basemap;
   const { showShareModal, toggleShareModal } = useContext(ModalContext);
+  const { trailLayers, setTrailLayers,
+    proposedLayers, setProposedLayers,
+    baseLayer, setBaseLayer,
+    basemaps, existingTrails, proposedTrails } = useContext(LayerContext);
 
   const [viewport, setViewport] = useState({
     latitude: 42.3772,
@@ -30,9 +30,6 @@ const Map = () => {
     zoom: 10,
     transitionDuration: 1000
   });
-  const [trailLayers, setTrailLayers] = useState([]);
-  const [proposedLayers, setProposedLayers] = useState([]);
-  const [baseLayer, setBaseLayer] = useState(basemaps[0]);
   const [showControlPanel, toggleControlPanel] = useState(true);
   const [showBasemapPanel, toggleBasemapPanel] = useState(false)
 
@@ -73,8 +70,8 @@ const Map = () => {
     const visibleLayers = [];
     const allLayers = [...trailLayers, ...proposedLayers];
     allLayers.forEach((layer) => {
-      const layerType = layer.includes("Proposed") ? "proposed" : "existing";
-      const addLayer = LayerData[layerType].find(l => l.id === layer);
+      const layerSet = layer.includes("Proposed") ? proposedTrails : existingTrails;
+      const addLayer = layerSet.find(l => l.id === layer);
       visibleLayers.push(
         <Layer
           key={addLayer.id}
@@ -111,26 +108,18 @@ const Map = () => {
           scrollZoom={true}
           transitionDuration="1000"
         >
-          <LayerContext.Provider
-            value={{
-              trailLayers, setTrailLayers,
-              proposedLayers, setProposedLayers,
-              baseLayer, setBaseLayer
-            }}>
-            <ControlPanel
-              layerData={LayerData.existing}
-              proposedData={LayerData.proposed}
-              showPanel={showControlPanel} />
-            <BasemapPanel
-              basemaps={basemaps}
-              showPanel={showBasemapPanel} />
-            <Source
-              id="MAPC trail vector tiles"
-              type="vector"
-              tiles={[TRAILMAP_SOURCE]} >
-              {visibleLayers()}
-            </Source>
-          </LayerContext.Provider>
+          {showControlPanel &&
+            <ControlPanel />
+          }
+          {showBasemapPanel &&
+            <BasemapPanel />
+          }
+          <Source
+            id="MAPC trail vector tiles"
+            type="vector"
+            tiles={[TRAILMAP_SOURCE]} >
+            {visibleLayers()}
+          </Source>
           <GeocoderPanel
             MAPBOX_TOKEN={MAPBOX_TOKEN}
           />

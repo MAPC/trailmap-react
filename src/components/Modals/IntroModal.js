@@ -2,17 +2,27 @@ import React, { useContext, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import { ModalContext } from '../../App';
+import { LayerContext } from '../../App';
 
-const IntroModal = ({ setMap }) => {
+const IntroModal = () => {
   const { showIntroModal, toggleIntroModal } = useContext(ModalContext);
+  const { basemaps, setBaseLayer, setTrailLayers } = useContext(LayerContext);
   const [assist, toggleAssist] = useState(false)
 
+
   const handleCannedMap = (mapType) => {
+    const setMap = (mapLayers) => {
+      setBaseLayer(basemaps.find(bm => bm.id == mapLayers.baseLayer));
+      setTrailLayers(mapLayers.trailLayers);
+    };
+
     switch (mapType) {
       case "hiking": setMap({ baseLayer: 'terrain', trailLayes: ['naturalSurfaceFootway'] }); break;
       case "biking": setMap({ baseLayer: 'streets', trailLayers: ['bikeLane', 'protectedBikeLane'] }); break;
+      case "walking": setMap({ baseLayer: 'streets', trailLayers: ['pavedFootway'] }); break;
       default: break;
     }
+
     toggleAssist(!assist);
     toggleIntroModal(!showIntroModal);
   }
@@ -45,16 +55,26 @@ const IntroModal = ({ setMap }) => {
             </>}
           {assist && <>
             I'm interested in:
-            <Button
-              variant="primary"
-              onClick={() => { handleCannedMap('biking') }}>
-              Biking
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => { handleCannedMap('hiking') }}>
-              Hiking
-            </Button>
+            <div>
+              <Button
+                className="intro-button"
+                variant="primary"
+                onClick={() => { handleCannedMap('biking') }}>
+                Biking
+              </Button>
+              <Button
+                className="intro-button"
+                variant="primary"
+                onClick={() => { handleCannedMap('hiking') }}>
+                Hiking
+              </Button>
+              <Button
+                className="intro-button"
+                variant="primary"
+                onClick={() => { handleCannedMap('walking') }}>
+                Walking
+              </Button>
+            </div>
           </>}
         </Modal.Body>
         <Modal.Footer>
