@@ -2,7 +2,7 @@ import BasemapIcon from "../../assets/icons/basemap-icon.svg"
 import FilterIcon from "../../assets/icons/filter-icon.svg";
 import ShareIcon from "../../assets/icons/share-icon.svg";
 import Control from "./Control";
-import React, { useState, useRef, useEffect, createContext, useContext } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { useSearchParams } from "react-router-dom";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl } from "react-map-gl";
 import BasemapPanel from "../BasemapPanel";
@@ -15,14 +15,14 @@ import { LayerContext } from "../../App";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
-
+const LANDLINE_SOURCE = process.env.REACT_APP_LANDLINE_TILE_URL;
 
 const Map = () => {
   const { showShareModal, toggleShareModal } = useContext(ModalContext);
-  const { trailLayers, setTrailLayers,
-    proposedLayers, setProposedLayers,
+  const { trailLayers, setTrailLayers, proposedLayers,
     baseLayer, setBaseLayer,
-    basemaps, existingTrails, proposedTrails } = useContext(LayerContext);
+    showLandlineLayer,
+    basemaps, existingTrails, proposedTrails, landlines } = useContext(LayerContext);
 
   const [viewport, setViewport] = useState({
     latitude: 42.3772,
@@ -30,6 +30,7 @@ const Map = () => {
     zoom: 10,
     transitionDuration: 1000
   });
+  // const [bbox, setBox] = useState(null);
   const [showControlPanel, toggleControlPanel] = useState(true);
   const [showBasemapPanel, toggleBasemapPanel] = useState(false)
 
@@ -86,8 +87,29 @@ const Map = () => {
     });
     return (visibleLayers);
   }
+  const landlineLayers = () => {
+    const visibleLandlineLayers = [];
+    if (showLandlineLayer) {
+      landlines.reverse().forEach((layer) => {
+        visibleLandlineLayers.push(
+          <Layer
+            key={layer.id}
+            id={layer.id}
+            type={layer.type}
+            filter={layer.filter}
+            source="MAPC landline vector tiles"
+            source-layer={layer["source-layer"]}
+            paint={layer.paint}
+            layout={layer.layout}>
+          </Layer>
+        )
+      });
+    }
+    return (visibleLandlineLayers);
+  }
 
   const generateShareUrl = () => {
+    //sample URL
     //http://localhost:8080/?baseLayer=mapboxDark&trailLayers=pavedPaths,unimprovedPaths,bikeLane
     return `${window.location.href.split("?")[0]}?baseLayer=${baseLayer.id}&trailLayers=${trailLayers.join(",")}&centroid=${viewport.latitude},${viewport.longitude}&zoom=${viewport.zoom}`;
   }
@@ -120,21 +142,27 @@ const Map = () => {
             tiles={[TRAILMAP_SOURCE]} >
             {visibleLayers()}
           </Source>
+          <Source
+            id="MAPC landline vector tiles"
+            type="vector"
+            tiles={[LANDLINE_SOURCE]} >
+            {landlineLayers()}
+          </Source>
           <GeocoderPanel
             MAPBOX_TOKEN={MAPBOX_TOKEN}
           />
           <Control
-            feature={"filter"}
+            style={"Map_filter"}
             icon={FilterIcon}
             alt={"Show Control Panel"}
             clickHandler={() => toggleControlPanel(!showControlPanel)} />
           <Control
-            feature={"share"}
+            style={"Map_share"}
             icon={ShareIcon}
             alt={"Share Map"}
             clickHandler={() => toggleShareModal(!showShareModal)} />
           <Control
-            feature={"basemap"}
+            style={"Map_basemap"}
             icon={BasemapIcon}
             alt={"Show Baesmaps"}
             clickHandler={() => toggleBasemapPanel(!showBasemapPanel)} />

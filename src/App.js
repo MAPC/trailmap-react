@@ -15,6 +15,7 @@ const App = () => {
   const basemaps = LayerData.basemap;
   const existingTrails = LayerData.existing;
   const proposedTrails = LayerData.proposed;
+  const landlines = LayerData.landline;
 
   const [showIntroModal, toggleIntroModal] = useState(true)
   const [showAboutModal, toggleAboutModal] = useState(false)
@@ -25,6 +26,7 @@ const App = () => {
   const [trailLayers, setTrailLayers] = useState([]);
   const [proposedLayers, setProposedLayers] = useState([]);
   const [baseLayer, setBaseLayer] = useState(basemaps[0]);
+  const [showLandlineLayer, toggleLandlineLayer] = useState(false);
 
   return (
     <div className="App">
@@ -43,7 +45,9 @@ const App = () => {
             trailLayers, setTrailLayers,
             proposedLayers, setProposedLayers,
             baseLayer, setBaseLayer,
-            basemaps, existingTrails, proposedTrails
+            showLandlineLayer, toggleLandlineLayer,
+            basemaps, existingTrails, proposedTrails,
+            landlines
           }}>
             <IntroModal />
             <Map />

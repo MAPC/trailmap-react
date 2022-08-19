@@ -1,0 +1,14 @@
+.LegendItem {
+  display: flex;
+  align-items: flex-start;
+
+  &__label {
+    display: inline-flex;
+
+  }
+
+  &__swatch {
+    display: inline-flex;
+    padding-right: 0.5rem;
+  }
+}

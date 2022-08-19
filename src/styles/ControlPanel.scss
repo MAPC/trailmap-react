@@ -219,4 +219,24 @@
       }
     }
   }
+
+  &_checkbox {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+
+    // Override
+
+    .form-check-input {
+      display: inline-flex;
+      height: 1.25rem;
+      width: 1.25rem;
+    }
+
+    .form-check-label {
+      display: inline-flex;
+      font-size: 1rem;
+      margin-left: .5rem;
+    }
+  }
 }

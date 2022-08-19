@@ -12,7 +12,7 @@ const AboutModal = () => {
       onHide={() => toggleAboutModal(!showAboutModal)}>
       <Modal.Title>
         <span className="Modal__title">About Trailmap</span>
-        <span className="Modal__subtitle">Metro Boston"s Regional Walking and Cycling Map</span>
+        <span className="Modal__subtitle">Metro Boston's Regional Walking and Cycling Map</span>
       </Modal.Title>
       <Modal.Body>
         <span className="Modal__body">This map is a comprehensive map of pedestrian and bicycle facilities throughout the MAPC region and beyond. The data on this map tool has been collected from a number of sources including city/town trail data, land trusts, DCR, MassDOT, and other sources.</span>

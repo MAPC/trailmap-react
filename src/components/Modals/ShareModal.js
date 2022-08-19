@@ -36,7 +36,7 @@ const ShareModal = ({ url }) => {
           </Button>
         </InputGroup>
         <p>
-          To download the CSV and Shapefiles for these trails, visit <Link to={{ pathname: "https://datacommon.mapc.org/browser/Transportation/Bicycle%20and%20Pedestrian%20Facilities" }} target="_blank">MAPC"s DataCommon</Link>
+          To download the CSV and Shapefiles for these trails, visit <Link to={{ pathname: "https://datacommon.mapc.org/browser/Transportation/Bicycle%20and%20Pedestrian%20Facilities" }} target="_blank">MAPC's DataCommon</Link>
         </p>
       </Modal.Body>
       <Modal.Footer>

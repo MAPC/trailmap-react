@@ -1,8 +1,8 @@
 import React from "react";
 
-const Control = ({ feature, icon, alt, clickHandler }) => {
+const Control = ({ style, icon, alt, clickHandler }) => {
   return (<button
-    className={`Map_${feature}`}
+    className={style}
     onClick={clickHandler}
   >
     <img src={icon} alt={alt} />

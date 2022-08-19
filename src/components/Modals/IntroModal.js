@@ -17,13 +17,11 @@ const IntroModal = () => {
     };
 
     switch (mapType) {
-      case "hiking": setMap({ baseLayer: "terrain", trailLayers: ["naturalSurfaceFootway"] }); break;
-      case "biking": setMap({ baseLayer: "streets", trailLayers: ["bikeLane", "protectedBikeLane"] }); break;
-      case "walking": setMap({ baseLayer: "streets", trailLayers: ["pavedFootway"] }); break;
+      case "hiking": setMap({ baseLayer: "terrain", trailLayers: ["unimprovedPaths", "naturalSurfaceFootway"] }); break;
+      case "biking": setMap({ baseLayer: "streets", trailLayers: ["bikeLane", "protectedBikeLane", "pavedPaths", "unimprovedPaths"] }); break;
+      case "walking": setMap({ baseLayer: "streets", trailLayers: ["pavedPaths", "pavedFootway", "unimprovedPaths"] }); break;
       default: break;
     }
-
-    toggleAssist(!assist);
     toggleIntroModal(!showIntroModal);
   }
 
@@ -34,7 +32,7 @@ const IntroModal = () => {
       onHide={() => { toggleIntroModal(!showIntroModal) }}>
       <Modal.Title>
         <span className="Modal__title">Welcome to Trailmap!</span>
-        <span className="Modal__subtitle">Metro Boston"s Regional Walking and Cycling Map</span>
+        <span className="Modal__subtitle">Metro Boston's Regional Walking and Cycling Map</span>
       </Modal.Title>
       <Modal.Body>
         {!assist &&
@@ -53,7 +51,7 @@ const IntroModal = () => {
             </Button>
           </>}
         {assist && <>
-          I"m interested in:
+          I'm interested in:
           <div>
             <Button
               className="intro-button"
