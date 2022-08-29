@@ -47,7 +47,7 @@ const ControlPanel = () => {
           onChange={() => toggleLandlineLayer(!showLandlineLayer)}
           label={showLandlineLayer ? 'Hide landline layer' : "Show landline layer"}
         />
-        {showLandlineLayer ? <Legend /> : ''}
+        <Legend />
       </div>
     </div>
   );

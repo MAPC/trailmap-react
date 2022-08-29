@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import LegendItem from './LegendItem';
+import { LayerContext } from "../../../App";
 
 const LANDLINE_LEGEND = process.env.REACT_APP_LANDLINE_LEGEND_URL;
 
 const Legend = () => {
+  const { showLandlineLayer } = useContext(LayerContext);
   const [legendItems, setLegendItems] = useState([]);
 
   useEffect(() => {
@@ -21,7 +23,8 @@ const Legend = () => {
   }, [])
 
   return (
-    <div className='Legend'>
+    <div className='Legend'
+      style={showLandlineLayer ? {} : { display: 'none' }}>
       {legendItems}
     </div>)
 }
