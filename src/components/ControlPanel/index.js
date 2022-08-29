@@ -44,8 +44,9 @@ const ControlPanel = () => {
           type='checkbox'
           id='default-checkbox'
           className="ControlPanel_checkbox"
+          checked={showLandlineLayer}
           onChange={() => toggleLandlineLayer(!showLandlineLayer)}
-          label={showLandlineLayer ? 'Hide landline layer' : "Show landline layer"}
+          label="Show landline layer"
         />
         <Legend />
       </div>
