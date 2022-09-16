@@ -1,21 +1,11 @@
 .Legend {
-
   height: 400px;
   margin-top: -2rem;
-  padding-bottom: 3rem;
 
   &Item {
-    display: flex;
-    align-items: flex-start;
-
     &__label {
-      display: inline-flex;
-
-    }
-
-    &__swatch {
-      display: inline-flex;
-      padding-right: 0.5rem;
+      font-family: $layer-font;
+      font-size: $layer-font-size;
     }
   }
 }

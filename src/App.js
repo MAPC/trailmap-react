@@ -17,11 +17,11 @@ const App = () => {
   const proposedTrails = LayerData.proposed;
   const landlines = LayerData.landline;
 
-  const [showIntroModal, toggleIntroModal] = useState(true)
-  const [showAboutModal, toggleAboutModal] = useState(false)
-  const [showContributeModal, toggleContributeModal] = useState(false)
-  const [showShareModal, toggleShareModal] = useState(false)
-  const [showGlossaryModal, toggleGlossaryModal] = useState(false)
+  const [showIntroModal, toggleIntroModal] = useState(true);
+  const [showAboutModal, toggleAboutModal] = useState(false);
+  const [showContributeModal, toggleContributeModal] = useState(false);
+  const [showShareModal, toggleShareModal] = useState(false);
+  const [showGlossaryModal, toggleGlossaryModal] = useState(false);
 
   const [trailLayers, setTrailLayers] = useState([]);
   const [proposedLayers, setProposedLayers] = useState([]);
@@ -30,7 +30,7 @@ const App = () => {
 
   return (
     <div className="App">
-      <div className="App-wrapper">
+      <div className="App-wrapper position-relative vw-100 vh-100">
         <ModalContext.Provider value={{
           showIntroModal, toggleIntroModal,
           showAboutModal, toggleAboutModal,

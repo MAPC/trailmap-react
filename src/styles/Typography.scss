@@ -1,0 +1,143 @@
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: normal;
+  src: url("../assets/fonts/OpenSans-Regular.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Bold";
+  font-style: normal;
+  font-weight: bold;
+  src: url("../assets/fonts/OpenSans-Bold.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Bold Italic";
+  font-style: italic;
+  font-weight: bold;
+  src: url("../assets/fonts/OpenSans-BoldItalic.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Extra Bold";
+  font-style: normal;
+  font-weight: bolder;
+  src: url("../assets/fonts/OpenSans-ExtraBold.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Extra Bold Italic";
+  font-style: italic;
+  font-weight: bolder;
+  src: url("../assets/fonts/OpenSans-ExtraBoldItalic.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Italic";
+  font-style: italic;
+  font-weight: normal;
+  src: url("../assets/fonts/OpenSans-Italic.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Light";
+  font-style: normal;
+  font-weight: lighter;
+  src: url("../assets/fonts/OpenSans-Light.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Light Italic";
+  src: url("../assets/fonts/OpenSans-LightItalic.woff") format("woff");
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Open Sans Medium";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../assets/fonts/OpenSans-Medium.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Medium Italic";
+  font-style: italic;
+  font-weight: 400;
+  src: url("../assets/fonts/OpenSans-MediumItalic.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Semi Bold";
+  font-style: normal;
+  font-weight: 600;
+  src: url("../assets/fonts/OpenSans-SemiBold.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Open Sans Semi Bold Italic";
+  font-style: italic;
+  font-weight: 600;
+  src: url("../assets/fonts/OpenSans-SemiBoldItalic.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Literata";
+  font-style: normal;
+  font-weight: normal;
+  src: url("../assets/fonts/Literata-Regular.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Literata Bold";
+  src: url("../assets/fonts/Literata-Bold.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Literata Italic";
+  font-style: italic;
+  font-weight: normal;
+  src: url("../assets/fonts/Literata-Italic.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Literata Medium";
+  src: url("../assets/fonts/Literata-Medium.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Literata Medium Italic";
+  font-style: italic;
+  font-weight: 400;
+  src: url("../assets/fonts/Literata-MediumItalic.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Rockwell";
+  font-style: normal;
+  font-weight: normal;
+  src: url("../assets/fonts/Rockwell.woff") format("woff");
+}
+
+$header-title-font: 'Rockwell', serif;
+$header-subititle-font: 'Open Sans', sans-serif;
+$title-font: 'Literata Medium', serif;
+$subtitle-font: 'Literata', serif;
+$body-font: 'Open Sans', sans-serif;
+$body-bold-font: 'Open Sans Bold', sans-serif;
+$footer-font: 'Open Sans Light', sans-serif;
+$disclaimer-font: 'Open Sans Light Italic', sans-serif;
+$basemap-font: 'Open Sans', sans-serif;
+$layer-font: 'Open Sans Light', sans-serif;
+
+$title-font-size: 1.5rem;
+$subtitle-font-size: 1.25rem;
+$body-font-size: 1rem;
+$list-font-size: 0.875rem;
+$footer-font-size: 0.75rem;
+$layer-font-size: 0.75rem;
+$disclaimer-font-size: 0.675rem;

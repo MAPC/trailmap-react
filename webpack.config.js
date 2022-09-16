@@ -1,4 +1,4 @@
-const path = require('path')
+const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const DotEnv = require('dotenv-webpack');
 
@@ -46,11 +46,17 @@ module.exports = {
       {
         test: /\.css$/i,
         use: ["style-loader", "css-loader"],
+      },
+      {
+        test: /\.(woff|woff2)$/,
+        use: {
+          loader: 'url-loader',
+        },
       }
     ]
   },
   plugins: [
-    new HtmlWebpackPlugin({ template: './src/index.html', favicon: './src/favicon.ico' }),
+    new HtmlWebpackPlugin({ template: './src/index.html', favicon: './src/favicon.png' }),
     new DotEnv()
   ]
 };

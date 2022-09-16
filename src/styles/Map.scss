@@ -1,6 +1,5 @@
 .Map {
   height: 100%;
-  position: relative;
   width: 100%;
 
   &_filter {
@@ -42,12 +41,8 @@
     box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
     box-sizing: border-box;
     cursor: pointer;
-    display: block;
     height: 36px;
-    margin: 0;
     outline: none;
-    padding: 0;
-    position: absolute;
     width: 36px;
 
     &:hover {

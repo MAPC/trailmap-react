@@ -1,4 +1,4 @@
-import BasemapIcon from "../../assets/icons/basemap-icon.svg"
+import BasemapIcon from "../../assets/icons/basemap-icon.svg";
 import FilterIcon from "../../assets/icons/filter-icon.svg";
 import ShareIcon from "../../assets/icons/share-icon.svg";
 import Control from "./Control";
@@ -32,7 +32,7 @@ const Map = () => {
   });
   // const [bbox, setBox] = useState(null);
   const [showControlPanel, toggleControlPanel] = useState(true);
-  const [showBasemapPanel, toggleBasemapPanel] = useState(false)
+  const [showBasemapPanel, toggleBasemapPanel] = useState(false);
 
   const mapRef = useRef();
 
@@ -47,7 +47,7 @@ const Map = () => {
           result[key] = value;
         }
         return result;
-      }
+      };
       const params = paramsToObject(searchParams.entries());
       if (!!params.baseLayer) {
         const paramBase = basemaps.find(bm => bm.id === params.baseLayer);
@@ -83,10 +83,10 @@ const Map = () => {
           paint={addLayer.paint}
           layout={addLayer.layout}>
         </Layer>
-      )
+      );
     });
     return (visibleLayers);
-  }
+  };
   const landlineLayers = () => {
     const visibleLandlineLayers = [];
     if (showLandlineLayer) {
@@ -102,23 +102,23 @@ const Map = () => {
             paint={layer.paint}
             layout={layer.layout}>
           </Layer>
-        )
+        );
       });
     }
     return (visibleLandlineLayers);
-  }
+  };
 
   const generateShareUrl = () => {
     //sample URL
     //http://localhost:8080/?baseLayer=mapboxDark&trailLayers=pavedPaths,unimprovedPaths,bikeLane
     return `${window.location.href.split("?")[0]}?baseLayer=${baseLayer.id}&trailLayers=${trailLayers.join(",")}&centroid=${viewport.latitude},${viewport.longitude}&zoom=${viewport.zoom}`;
-  }
+  };
 
   return (
     <>
       <ShareModal url={generateShareUrl()} />
       <GlossaryModal />
-      <div className="Map">
+      <div className="Map position-relative">
         <ReactMapGL
           ref={mapRef}
           {...viewport}
@@ -152,17 +152,17 @@ const Map = () => {
             MAPBOX_TOKEN={MAPBOX_TOKEN}
           />
           <Control
-            style={"Map_filter"}
+            style={"Map_filter d-block position-absolute m-0 p-0"}
             icon={FilterIcon}
             alt={"Show Control Panel"}
             clickHandler={() => toggleControlPanel(!showControlPanel)} />
           <Control
-            style={"Map_share"}
+            style={"Map_share d-block position-absolute m-0 p-0"}
             icon={ShareIcon}
             alt={"Share Map"}
             clickHandler={() => toggleShareModal(!showShareModal)} />
           <Control
-            style={"Map_basemap"}
+            style={"Map_basemap d-block position-absolute m-0 p-0"}
             icon={BasemapIcon}
             alt={"Show Baesmaps"}
             clickHandler={() => toggleBasemapPanel(!showBasemapPanel)} />

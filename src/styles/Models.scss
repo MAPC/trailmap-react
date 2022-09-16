@@ -1,60 +1,45 @@
 .Modal {
-  text-align: center;
 
   &__title {
     border-bottom: solid rgba(0, 112, 205, 0.7) 0.5px;
-    display: block;
-    font-size: 1.5rem;
-    font-weight: 400;
-    line-height: 1.75rem;
-    margin: 0.5rem 1.5rem;
-    padding: 1.0rem;
+    font-family: $title-font;
+    font-size: $title-font-size;
   }
 
   &__subtitle {
-    display: block;
-    font-size: 1.25rem;
-    margin: 0.5rem 1.5rem;
+    font-family: $subtitle-font;
+    font-size: $subtitle-font-size;
   }
 
   &__body {
-    font-size: 1rem;
+    font-family: $body-font;
+    font-size: $body-font-size;
   }
 
   &__list {
+    font-family: $body-font;
+    font-size: $list-font-size;
     list-style-type: none;
-    padding: 0.5rem;
-    text-align: left;
-    font-size: 0.875rem;
-    margin-bottom: 0;
 
     span {
-      font-weight: 600;
+      font-family: $body-bold-font;
     }
   }
 
   &__footer {
-    color: rgba(0, 0, 0, 0.5);
-    font-size: 0.75rem;
-    padding: 0.5rem;
+    color: rgba(0, 0, 0, 0.75);
+    font-family: $footer-font;
+    font-size: $footer-font-size;
   }
 
   &__disclaimer {
-    color: rgba(0, 0, 0, 0.5);
-    font-size: 0.675rem;
-    font-style: italic;
-    padding: 0.5rem;
-  }
-
-  .intro-button {
-    margin: 0.75rem;
+    color: rgba(0, 0, 0, 0.75);
+    font-family: $disclaimer-font;
+    font-size: $disclaimer-font-size;
   }
 
   .share-button {
-    align-items: center;
-    display: flex;
     height: 40px;
-    padding: 0;
     width: 40px;
 
     img {

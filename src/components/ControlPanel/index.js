@@ -24,26 +24,26 @@ const ControlPanel = () => {
   });
 
   return (
-    <div className="ControlPanel" >
-      <div className="ControlPanel_opacity"></div>
+    <div className="ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto" >
+      <div className="ControlPanel_opacity position-fixed"></div>
       <div>
-        <span className="ControlPanel__title">Find the trails that work for you!</span>
-        <p>Select from various trail types to find trails best suited to your needs. Find a description of each to the trail types <span className="ControlPanel__glossary" onClick={() => { toggleGlossaryModal(!showGlossaryModal) }}>here</span>.</p>
+        <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Find the trails that work for you!</span>
+        <p>Select from various trail types to find trails best suited to your needs. Find a description of each to the trail types <span className="ControlPanel__glossary" onClick={() => { toggleGlossaryModal(!showGlossaryModal); }}>here</span>.</p>
       </div>
       <div>
-        <span className="ControlPanel__subtitle">Existing:</span>
+        <span className="ControlPanel__subtitle mt-2 mb-2 d-block">Existing:</span>
         {renderTypeButton}
       </div>
       <div>
-        <span className="ControlPanel__subtitle">Proposed:</span>
+        <span className="ControlPanel__subtitle mt-2 mb-2 d-block">Proposed:</span>
         {renderProposedTypeButton}
       </div>
       <div>
-        <span className="ControlPanel__subtitle">Landline Layer:</span>
+        <span className="ControlPanel__subtitle mt-2 mb-2 d-block">Landline Layer:</span>
         <Form.Check
           type='checkbox'
           id='default-checkbox'
-          className="ControlPanel_checkbox"
+          className="ControlPanel_checkbox mb-5 d-flex align-items-center"
           checked={showLandlineLayer}
           onChange={() => toggleLandlineLayer(!showLandlineLayer)}
           label="Show landline layer"

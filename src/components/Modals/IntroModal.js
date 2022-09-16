@@ -7,7 +7,7 @@ import { LayerContext } from "../../App";
 const IntroModal = () => {
   const { showIntroModal, toggleIntroModal } = useContext(ModalContext);
   const { basemaps, setBaseLayer, setTrailLayers } = useContext(LayerContext);
-  const [assist, toggleAssist] = useState(false)
+  const [assist, toggleAssist] = useState(false);
 
 
   const handleCannedMap = (mapType) => {
@@ -23,30 +23,30 @@ const IntroModal = () => {
       default: break;
     }
     toggleIntroModal(!showIntroModal);
-  }
+  };
 
   return (
     <Modal
       className="Modal"
       show={showIntroModal}
-      onHide={() => { toggleIntroModal(!showIntroModal) }}>
+      onHide={() => { toggleIntroModal(!showIntroModal); }}>
       <Modal.Title>
-        <span className="Modal__title">Welcome to Trailmap!</span>
-        <span className="Modal__subtitle">Metro Boston's Regional Walking and Cycling Map</span>
+        <span className="Modal__title text-center d-block mt-1 mb-1 ms-2 me-2 p-3 lh-lg">Welcome to Trailmap!</span>
+        <span className="Modal__subtitle text-center d-block mt-1 mb-1 ms-2 me-2 p-3">Metro Boston's Regional Walking and Cycling Map</span>
       </Modal.Title>
-      <Modal.Body>
+      <Modal.Body className="Modal__body text-center">
         {!assist &&
           <>
             <Button
-              className="intro-button"
+              className="intro-button mb-2"
               variant="primary"
-              onClick={() => { toggleAssist(!assist) }}>
+              onClick={() => { toggleAssist(!assist); }}>
               Help Me Get Started
             </Button>
             <Button
-              className="intro-button"
+              className="intro-button m-2"
               variant="primary"
-              onClick={() => { toggleIntroModal(!showIntroModal) }}>
+              onClick={() => { toggleIntroModal(!showIntroModal); }}>
               Show me Everything
             </Button>
           </>}
@@ -54,29 +54,29 @@ const IntroModal = () => {
           I'm interested in:
           <div>
             <Button
-              className="intro-button"
+              className="intro-button m-2"
               variant="primary"
-              onClick={() => { handleCannedMap("biking") }}>
+              onClick={() => { handleCannedMap("biking"); }}>
               Biking
             </Button>
             <Button
-              className="intro-button"
+              className="intro-button m-2"
               variant="primary"
-              onClick={() => { handleCannedMap("hiking") }}>
+              onClick={() => { handleCannedMap("hiking"); }}>
               Hiking
             </Button>
             <Button
-              className="intro-button"
+              className="intro-button m-2"
               variant="primary"
-              onClick={() => { handleCannedMap("walking") }}>
+              onClick={() => { handleCannedMap("walking"); }}>
               Walking
             </Button>
           </div>
         </>}
       </Modal.Body>
       <Modal.Footer>
-        <span className="Modal__footer">Trailmaps is always looking for new and improved data from the community. We encourage everyone to submit up-to-date infomration on individual trails so we can continue to improve this dataset. Learn more about trailmaps and continuing here.</span>
-        <span className="Modal__disclaimer">Disclaimer: The data herein is provided for informational purposes only. MAPC makes no warranties, either expressed or implied, and assumes no responsibility for its completeness or accuracy. Users assume all responsibility and risk associated with use of the map and agree to indemnify and hold harmless MAPC with respect to any and all claims and demands that may arise resulting from use of this map.</span>
+        <span className="Modal__footer text-center p-1">Trailmaps is always looking for new and improved data from the community. We encourage everyone to submit up-to-date infomration on individual trails so we can continue to improve this dataset. Learn more about trailmaps and continuing here.</span>
+        <span className="Modal__disclaimer p-1 fst-italic">Disclaimer: The data herein is provided for informational purposes only. MAPC makes no warranties, either expressed or implied, and assumes no responsibility for its completeness or accuracy. Users assume all responsibility and risk associated with use of the map and agree to indemnify and hold harmless MAPC with respect to any and all claims and demands that may arise resulting from use of this map.</span>
       </Modal.Footer>
     </Modal>
   );

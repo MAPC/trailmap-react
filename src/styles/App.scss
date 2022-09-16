@@ -1,25 +1,10 @@
 @import "~bootstrap/scss/bootstrap";
-@import '~mapbox-gl/dist/mapbox-gl.css';
+@import "~mapbox-gl/dist/mapbox-gl.css";
 @import "~react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
+@import "./Typography.scss";
 @import "./BasemapPanel.scss";
 @import "./ControlPanel.scss";
 @import "./Header.scss";
 @import "./Legend.scss";
 @import "./Map.scss";
 @import "./Models.scss";
-
-body {
-  margin: 0;
-  padding: 0;
-}
-
-.App {
-  height: 100vh;
-  width: 100vw;
-
-  &-wrapper {
-    height: 100vh;
-    position: relative;
-    width: 100vw;
-  }
-}

@@ -20,13 +20,13 @@ const Legend = () => {
         });
         setLegendItems(legendItems);
       });
-  }, [])
+  }, []);
 
   return (
-    <div className='Legend'
+    <div className='Legend pb-4'
       style={showLandlineLayer ? {} : { display: 'none' }}>
       {legendItems}
-    </div>)
-}
+    </div>);
+};
 
 export default Legend;

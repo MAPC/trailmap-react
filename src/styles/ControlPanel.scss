@@ -1,12 +1,9 @@
 .ControlPanel {
   background-color: aliceblue;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+  font-size: $body-font-size;
   height: 100vh;
   left: 0;
-  overflow: auto;
-  padding: 3rem 0.625rem;
-  position: absolute;
-  text-align: left;
   top: 60px;
   width: 265px;
 
@@ -15,17 +12,13 @@
     height: 3.5rem;
     margin-top: -3rem;
     opacity: 0.8;
-    position: fixed;
     width: 245px;
     z-index: 500;
   }
 
   &__title {
-    display: block;
-    font-size: 1.5rem;
-    font-weight: 400;
-    line-height: 1.75rem;
-    margin: 0.5rem 0;
+    font-family: $title-font;
+    font-size: $title-font-size;
   }
 
   &__glossary {
@@ -38,9 +31,8 @@
   }
 
   &__subtitle {
-    display: block;
-    font-size: 1.25rem;
-    margin: 0.875rem 0;
+    font-family: $subtitle-font;
+    font-size: $subtitle-font-size;
   }
 
   &_type_button {
@@ -50,13 +42,8 @@
     box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
     color: black;
     cursor: pointer;
-    display: inline-block;
-    font-size: 0.75rem;
-    line-height: 0.875rem;
-    margin: 0.25rem;
-    padding: 0.625rem;
-    text-align: center;
-    text-decoration: none;
+    font-family: $layer-font;
+    font-size: $layer-font-size;
     transition: all 0.3s ease-in-out;
     width: 110px;
     -moz-appearance: none;
@@ -221,10 +208,6 @@
   }
 
   &_checkbox {
-    display: flex;
-    align-items: center;
-    margin-bottom: 3rem;
-
     // Override
 
     .form-check-input {
@@ -235,7 +218,6 @@
 
     .form-check-label {
       display: inline-flex;
-      font-size: 1rem;
       margin-left: .5rem;
     }
   }
