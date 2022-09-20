@@ -195,6 +195,106 @@ const LayerData = {
   ],
   landline: [
     {
+      "id": "Facility Type/Shared Use Path - Existing",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        0
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#00A884",
+        "line-width": 3
+      }
+    },
+    {
+      "id": "Facility Type/Shared Use Path - Design/0",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        1
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#FFFFFF",
+        "line-dasharray": [
+          1.47059,
+          1.47059
+        ],
+        "line-width": 1.5
+      }
+    },
+    {
+      "id": "Facility Type/Shared Use Path - Design/1",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        1
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#00A884",
+        "line-width": 3
+      }
+    },
+    {
+      "id": "Facility Type/Shared Use Path - Envisioned",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        2
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#00A884",
+        "line-dasharray": [
+          1.5,
+          2
+        ],
+        "line-width": 3
+      }
+    },
+    {
+      "id": "Facility Type/Shared Use Path - Unimproved Surface",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        3
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#C7D79E",
+        "line-width": 3
+      }
+    },
+    {
       "id": "Facility Type/Protected Bike Lane and Sidewalk/0",
       "type": "line",
       "source": "esri",
@@ -210,7 +310,26 @@ const LayerData = {
       },
       "paint": {
         "line-color": "#FFFFFF",
-        "line-width": 1.73333
+        "line-width": 1.5
+      }
+    },
+    {
+      "id": "Facility Type/Protected Bike Lane and Sidewalk/1",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        4
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#0070FF",
+        "line-width": 3
       }
     },
     {
@@ -228,25 +347,66 @@ const LayerData = {
       },
       "paint": {
         "line-color": "#FFFFFF",
-        "line-width": 1.46667
+        "line-width": 1
       }
     },
     {
-      "id": "Facility Type/Bike Lane - Design or Construction/1",
+      "id": "Facility Type/Protected Bike Lane - Design or Construction/1",
       "type": "line",
       "source": "esri",
       "source-layer": "Facility Type",
       "filter": [
         "==",
         "_symbol",
-        7
+        5
       ],
       "layout": {
         "line-join": "round"
       },
       "paint": {
+        "line-color": "#FFFFFF",
+        "line-dasharray": [
+          1.47059,
+          1.47059
+        ],
+        "line-width": 2
+      }
+    },
+    {
+      "id": "Facility Type/Protected Bike Lane - Design or Construction/2",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        5
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#0070FF",
+        "line-width": 3
+      }
+    },
+    {
+      "id": "Facility Type/Bike Lane and Sidewalk",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        6
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
         "line-color": "#73B2FF",
-        "line-width": 6.66667
+        "line-width": 3
       }
     },
     {
@@ -268,26 +428,25 @@ const LayerData = {
           1.30769,
           1.30769
         ],
-        "line-width": 5.09804
+        "line-width": 1.5
       }
     },
     {
-      "id": "Facility Type/Shared Street - Urban/1",
+      "id": "Facility Type/Bike Lane - Design or Construction/1",
       "type": "line",
       "source": "esri",
       "source-layer": "Facility Type",
       "filter": [
         "==",
         "_symbol",
-        8
+        7
       ],
       "layout": {
-        "line-cap": "round",
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#D7C29E",
-        "line-width": 6.66667
+        "line-color": "#73B2FF",
+        "line-width": 3
       }
     },
     {
@@ -306,7 +465,90 @@ const LayerData = {
       },
       "paint": {
         "line-color": "#FFFFFF",
-        "line-width": 1.33333
+        "line-width": 1
+      }
+    },
+    {
+      "id": "Facility Type/Shared Street - Urban/1",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        8
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#D7C29E",
+        "line-width": 3
+      }
+    },
+    {
+      "id": "Facility Type/Shared Street - Suburban",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        9
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#D7C29E",
+        "line-width": 3
+      }
+    },
+    {
+      "id": "Facility Type/Shared Street - Envisioned",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        10
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#D7C29E",
+        "line-dasharray": [
+          1.66667,
+          1
+        ],
+        "line-width": 3,
+        "line-offset": -1.06667
+      }
+    },
+    {
+      "id": "Facility Type/Gap - Facility Type TBD",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        11
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#FFED7F",
+        "line-dasharray": [
+          2,
+          2
+        ],
+        "line-width": 3
       }
     },
     {
@@ -325,26 +567,29 @@ const LayerData = {
       },
       "paint": {
         "line-color": "#FF5500",
-        "line-width": 4
+        "line-width": 3
       }
     },
     {
-      "id": "Facility Type/Foot Trail - Roadway Section/1",
+      "id": "Facility Type/Foot Trail - Envisioned Natural Surface",
       "type": "line",
       "source": "esri",
       "source-layer": "Facility Type",
       "filter": [
         "==",
         "_symbol",
-        14
+        13
       ],
       "layout": {
         "line-join": "round"
       },
       "paint": {
         "line-color": "#FF5500",
-        "line-width": 1.6,
-        "line-offset": -1.73333
+        "line-dasharray": [
+          2.5,
+          1.5
+        ],
+        "line-width": 3
       }
     },
     {
@@ -362,7 +607,49 @@ const LayerData = {
       },
       "paint": {
         "line-color": "#FF5500",
-        "line-width": 1.6,
+        "line-width": 1.5,
+        "line-offset": 2.66667
+      }
+    },
+    {
+      "id": "Facility Type/Foot Trail - Roadway Section/1",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        14
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#FF5500",
+        "line-width": 1.5,
+        "line-offset": -1.73333
+      }
+    },
+    {
+      "id": "Facility Type/Foot Trail - Envisioned Roadway Section/0",
+      "type": "line",
+      "source": "esri",
+      "source-layer": "Facility Type",
+      "filter": [
+        "==",
+        "_symbol",
+        15
+      ],
+      "layout": {
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#FF5500",
+        "line-dasharray": [
+          4.16667,
+          4.16667
+        ],
+        "line-width": 1.5,
         "line-offset": 2.66667
       }
     },
@@ -385,295 +672,8 @@ const LayerData = {
           4.16667,
           4.16667
         ],
-        "line-width": 1.6,
+        "line-width": 3,
         "line-offset": -1.53333
-      }
-    },
-    {
-      "id": "Facility Type/Foot Trail - Envisioned Roadway Section/0",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        15
-      ],
-      "layout": {
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#FF5500",
-        "line-dasharray": [
-          4.16667,
-          4.16667
-        ],
-        "line-width": 1.6,
-        "line-offset": 2.66667
-      }
-    },
-    {
-      "id": "Facility Type/Bike Lane and Sidewalk",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        6
-      ],
-      "layout": {
-        "line-cap": "round",
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#73B2FF",
-        "line-width": 6.66667
-      }
-    },
-    {
-      "id": "Facility Type/Foot Trail - Envisioned Natural Surface",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        13
-      ],
-      "layout": {
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#FF5500",
-        "line-dasharray": [
-          2.5,
-          1.5
-        ],
-        "line-width": 2.66667
-      }
-    },
-    {
-      "id": "Facility Type/Gap - Facility Type TBD",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        11
-      ],
-      "layout": {
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#FFED7F",
-        "line-dasharray": [
-          2,
-          2
-        ],
-        "line-width": 4
-      }
-    },
-    {
-      "id": "Facility Type/Shared Street - Envisioned",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        10
-      ],
-      "layout": {
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#D7C29E",
-        "line-dasharray": [
-          1.66667,
-          1
-        ],
-        "line-width": 4,
-        "line-offset": -1.06667
-      }
-    },
-    {
-      "id": "Facility Type/Shared Street - Suburban",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        9
-      ],
-      "layout": {
-        "line-cap": "round",
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#D7C29E",
-        "line-width": 6.66667
-      }
-    },
-    {
-      "id": "Facility Type/Protected Bike Lane - Design or Construction/2",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        5
-      ],
-      "layout": {
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#0070FF",
-        "line-width": 6.66667
-      }
-    },
-    {
-      "id": "Facility Type/Protected Bike Lane - Design or Construction/1",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        5
-      ],
-      "layout": {
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#FFFFFF",
-        "line-dasharray": [
-          1.47059,
-          1.47059
-        ],
-        "line-width": 4.53333
-      }
-    },
-    {
-      "id": "Facility Type/Protected Bike Lane and Sidewalk/1",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        4
-      ],
-      "layout": {
-        "line-cap": "round",
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#0070FF",
-        "line-width": 6.66667
-      }
-    },
-    {
-      "id": "Facility Type/Shared Use Path - Envisioned",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        2
-      ],
-      "layout": {
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#00A884",
-        "line-dasharray": [
-          1.5,
-          2
-        ],
-        "line-width": 5.33333
-      }
-    },
-    {
-      "id": "Facility Type/Shared Use Path - Design/1",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        1
-      ],
-      "layout": {
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#00A884",
-        "line-width": 6.66667
-      }
-    },
-    {
-      "id": "Facility Type/Shared Use Path - Design/0",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        1
-      ],
-      "layout": {
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#FFFFFF",
-        "line-dasharray": [
-          1.47059,
-          1.47059
-        ],
-        "line-width": 4.53333
-      }
-    },
-    {
-      "id": "Facility Type/Shared Use Path - Unimproved Surface",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        3
-      ],
-      "layout": {
-        "line-cap": "round",
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#C7D79E",
-        "line-width": 6.66667
-      }
-    },
-    {
-      "id": "Facility Type/Shared Use Path - Existing",
-      "type": "line",
-      "source": "esri",
-      "source-layer": "Facility Type",
-      "filter": [
-        "==",
-        "_symbol",
-        0
-      ],
-      "layout": {
-        "line-cap": "round",
-        "line-join": "round"
-      },
-      "paint": {
-        "line-color": "#00A884",
-        "line-width": 6.66667
       }
     }
   ],

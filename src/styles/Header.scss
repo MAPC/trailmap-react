@@ -1,5 +1,5 @@
 .Header {
-  background-color: rgba(0, 112, 205, 0.6);
+  background-color: transparentize($dark-blue, 0.3);
   height: 60px;
   width: 100%;
   z-index: 1;
@@ -35,7 +35,7 @@
       }
     }
 
-    color: #ffffff;
+    color: $white;
     margin: unset;
   }
 
@@ -84,7 +84,7 @@
   &__about,
   &__contribute,
   &__assist {
-    background-color: rgba(0, 112, 205, 0.0);
+    background-color: transparentize($dark-blue, 0.7);
     border-radius: 4px;
     border: none;
     box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;

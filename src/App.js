@@ -17,7 +17,7 @@ const App = () => {
   const proposedTrails = LayerData.proposed;
   const landlines = LayerData.landline;
 
-  const [showIntroModal, toggleIntroModal] = useState(true);
+  const [showIntroModal, toggleIntroModal] = useState(false);
   const [showAboutModal, toggleAboutModal] = useState(false);
   const [showContributeModal, toggleContributeModal] = useState(false);
   const [showShareModal, toggleShareModal] = useState(false);
@@ -26,7 +26,7 @@ const App = () => {
   const [trailLayers, setTrailLayers] = useState([]);
   const [proposedLayers, setProposedLayers] = useState([]);
   const [baseLayer, setBaseLayer] = useState(basemaps[0]);
-  const [showLandlineLayer, toggleLandlineLayer] = useState(false);
+  const [showLandlineLayer, toggleLandlineLayer] = useState(true);
 
   return (
     <div className="App">

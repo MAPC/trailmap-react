@@ -35,7 +35,7 @@
   &_basemap,
   &_filter,
   &_share {
-    background-color: white;
+    background-color: $white;
     border-radius: 4px;
     border: none;
     box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
@@ -46,11 +46,11 @@
     width: 36px;
 
     &:hover {
-      background-color: rgba(220, 220, 220, 1.0);
+      background-color: $light-grey;
     }
 
     &__selected {
-      background-color: rgba(0, 112, 205, 0.7);
+      background-color: transparentize($dark-blue, 0.7);
     }
   }
 }
