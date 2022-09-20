@@ -1,7 +1,9 @@
 .Modal {
 
   &__title {
-    border-bottom: solid rgba(0, 112, 205, 0.7) 0.5px;
+    border-bottom-style: solid;
+    border-bottom-width: 0.5px;
+    border-bottom-color: transparentize($dark-blue, 0.7);
     font-family: $title-font;
     font-size: $title-font-size;
   }
@@ -27,13 +29,13 @@
   }
 
   &__footer {
-    color: rgba(0, 0, 0, 0.75);
+    color: $dark-grey;
     font-family: $footer-font;
     font-size: $footer-font-size;
   }
 
   &__disclaimer {
-    color: rgba(0, 0, 0, 0.75);
+    color: $dark-grey;
     font-family: $disclaimer-font;
     font-size: $disclaimer-font-size;
   }

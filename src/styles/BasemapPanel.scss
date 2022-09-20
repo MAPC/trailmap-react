@@ -7,11 +7,11 @@
     list-style: none;
 
     &__item {
-      background-color: white;
+      background-color: $white;
       border-radius: 8px;
       border: solid rgba(0, 112, 205, 0.7) 0.5px;
-      box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-      color: rgba(0, 112, 205, 1);
+      box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
+      color: $dark-blue;
       cursor: pointer;
       font-family: $basemap-font;
       font-size: $layer-font-size;
@@ -20,8 +20,8 @@
 
       &:hover,
       &_selected {
-        color: white;
-        background-color: rgba(0, 112, 205, 1.0);
+        color: $white;
+        background-color: $dark-blue;
       }
     }
   }
