@@ -1,0 +1,31 @@
+.Popup {
+  font-family: $layer-font;
+  color: $dark-blue;
+
+  // override
+  .mapboxgl-popup-content {
+    padding: 12px 10px;
+  }
+
+  span {
+    display: block;
+    line-height: $identify-font-line-height;
+  }
+
+  &__name {
+    font-family: $identify-name-font;
+    font-size: $identify-name-font-size;
+  }
+
+  &__layer {
+    font-family: $identify-layer-font;
+    font-size: $identify-layer-font-size;
+  }
+
+
+  &__info {
+    font-family: $identify-info-font;
+    font-size: $identify-info-font-size;
+  }
+
+}

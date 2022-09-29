@@ -7,5 +7,10 @@
 @import "./ControlPanel.scss";
 @import "./Header.scss";
 @import "./Legend.scss";
+@import "./Popup.scss";
 @import "./Map.scss";
 @import "./Models.scss";
+
+.App {
+  cursor: crosshair;
+}

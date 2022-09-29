@@ -29,6 +29,7 @@ const ControlPanel = () => {
       <div>
         <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Find the trails that work for you!</span>
         <p>Select from various trail types to find trails best suited to your needs. Find a description of each to the trail types <span className="ControlPanel__glossary" onClick={() => { toggleGlossaryModal(!showGlossaryModal); }}>here</span>.</p>
+        <p>Click an existing or proposed trail on the map for more information.</p>
       </div>
       <div>
         <span className="ControlPanel__subtitle mt-2 mb-2 d-block">Existing:</span>
