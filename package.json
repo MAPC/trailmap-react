@@ -21,7 +21,9 @@
   "scripts": {
     "start": "webpack server --mode development",
     "build": "webpack",
-    "staging": "webpack && rsync -r dist/* trailmap@prep.mapc.org:/var/www/trailmap4"
+    "staging": "webpack && rsync -r dist/* trailmap@prep.mapc.org:/var/www/trailmap4",
+    "production": "webpack && rsync -r dist/* trailmap@live.mapc.org:/var/www/trailmap4"
+
   },
   "browserslist": {
     "production": [
