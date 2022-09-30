@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import axios from 'axios';
 import LegendItem from './LegendItem';
 import { LayerContext } from "../../../App";
 
@@ -9,10 +10,9 @@ const Legend = () => {
   const [legendItems, setLegendItems] = useState([]);
 
   useEffect(() => {
-    fetch(LANDLINE_LEGEND)
-      .then((response) => response.json())
-      .then((data) => {
-        const legendItems = data.layers[0].legend.map((legendItem, index) => {
+    axios(LANDLINE_LEGEND)
+      .then((res) => {
+        const legendItems = res.data.layers[0].legend.map((legendItem, index) => {
           return (<LegendItem
             key={index}
             imageSrc={legendItem.url}

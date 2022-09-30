@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Popup } from 'react-map-gl';
 
 const Identify = ({ point, identifyResult, handleShowPopup }) => {

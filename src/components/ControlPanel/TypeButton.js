@@ -25,7 +25,7 @@ const TypeButton = ({ layer, type }) => {
       onClick={() => toggleLayer(layer.id, type)}
     >
       {layer.label}
-    </button >
+    </button>
   );
 };
 

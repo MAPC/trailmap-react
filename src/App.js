@@ -1,10 +1,10 @@
 import React, { createContext, useState } from "react";
-import Map from "./components/Map";
+import "./styles/App.scss";
 import Header from "./components/Header";
 import IntroModal from "./components/Modals/IntroModal";
 import ContributeModal from "./components/Modals/ContributeModal";
 import AboutModal from "./components/Modals/AboutModal";
-import "./styles/App.scss";
+import Map from "./components/Map";
 import LayerData from "./data/LayerData";
 
 export const ModalContext = createContext();
