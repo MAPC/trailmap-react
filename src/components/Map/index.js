@@ -1,19 +1,19 @@
 import BasemapIcon from "../../assets/icons/basemap-icon.svg";
 import FilterIcon from "../../assets/icons/filter-icon.svg";
 import ShareIcon from "../../assets/icons/share-icon.svg";
-import Control from "./Control";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from 'axios';
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl } from "react-map-gl";
 import BasemapPanel from "../BasemapPanel";
+import Control from "./Control";
 import ControlPanel from "../ControlPanel";
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
-import ShareModal from "../Modals/ShareModal";
 import GlossaryModal from "../Modals/GlossaryModal";
+import Identify from './Identify';
+import ShareModal from "../Modals/ShareModal";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
-import Identify from './Identify';
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
@@ -128,7 +128,6 @@ const Map = () => {
     if (trailLayers.length > 0 || proposedLayers.length > 0) {
       const currentMap = mapRef.current.getMap();
       const currentMapBounds = currentMap.getBounds();
-      console.log('all', allLayers);
       // https://geo.mapc.org:6443/arcgis/rest/services/transportation/AllTrails/MapServer/identify?geometry=-70.76687716085354,42.63667346474689&geometryType=esriGeometryPoint&sr=4326&layers=all&tolerance=3&mapExtent=-70.80280174812555,42.61677473648123,-70.75534438806021,42.64918646358444&imageDisplay=600%2C550%2C96&returnGeometry=true&returnZ=false&returnM=false&returnUnformattedValues=false&returnFieldName=false&f=pjson
       axios.get(TRAILMAP_IDENTIFY_SOURCE, {
         params: {
@@ -174,7 +173,8 @@ const Map = () => {
             <Identify
               point={identifyPoint}
               identifyResult={identifyInfo}
-              handleShowPopup={() => toggleIdentifyPopup(!showIdentifyPopup)}>
+              handleShowPopup={() => toggleIdentifyPopup(!showIdentifyPopup)}
+            >
             </Identify>
           }
           {showControlPanel &&
@@ -186,13 +186,15 @@ const Map = () => {
           <Source
             id="MAPC trail vector tiles"
             type="vector"
-            tiles={[TRAILMAP_SOURCE]} >
+            tiles={[TRAILMAP_SOURCE]}
+          >
             {visibleLayers()}
           </Source>
           <Source
             id="MAPC landline vector tiles"
             type="vector"
-            tiles={[LANDLINE_SOURCE]} >
+            tiles={[LANDLINE_SOURCE]}
+          >
             {landlineLayers()}
           </Source>
           <GeocoderPanel
@@ -202,23 +204,27 @@ const Map = () => {
             style={"Map_filter d-block position-absolute m-0 p-0"}
             icon={FilterIcon}
             alt={"Show Control Panel"}
-            clickHandler={() => toggleControlPanel(!showControlPanel)} />
+            clickHandler={() => toggleControlPanel(!showControlPanel)}
+          />
           <Control
             style={"Map_share d-block position-absolute m-0 p-0"}
             icon={ShareIcon}
             alt={"Share Map"}
-            clickHandler={() => toggleShareModal(!showShareModal)} />
+            clickHandler={() => toggleShareModal(!showShareModal)}
+          />
           <Control
             style={"Map_basemap d-block position-absolute m-0 p-0"}
             icon={BasemapIcon}
             alt={"Show Baesmaps"}
-            clickHandler={() => toggleBasemapPanel(!showBasemapPanel)} />
+            clickHandler={() => toggleBasemapPanel(!showBasemapPanel)}
+          />
           <ScaleControl
             position="bottom-right"
           />
           <NavigationControl
             className="map_navigation"
-            position="bottom-right" />
+            position="bottom-right"
+          />
           <GeolocateControl
             className="map_geolocate"
             positionOptions={{ enableHighAccuracy: true }}
@@ -228,7 +234,7 @@ const Map = () => {
             trackUserLocation={false}
             position="bottom-right"
           />
-        </ReactMapGL >
+        </ReactMapGL>
       </div>
     </>
   );
