@@ -69,7 +69,7 @@ const LayerData = {
     {
       id: 'pavedFootway',
       'esri-id': 4,
-      label: 'Paved Footway',
+      label: 'Paved Foot Path',
       type: 'line',
       'source-layer': 'Paved Footway',
       layout: {
@@ -86,7 +86,7 @@ const LayerData = {
     {
       id: 'naturalSurfaceFootway',
       'esri-id': 6,
-      label: 'Natural Surface Footways',
+      label: 'Natural Surface Path',
       type: 'line',
       'source-layer': 'Natural Surface Footway',
       layout: {
@@ -105,7 +105,7 @@ const LayerData = {
     {
       id: 'pavedPathsProposed',
       'esri-id': 9,
-      label: 'Proposed Paved Shared Use',
+      label: 'Planned Paved Shared Use',
       type: 'line',
       'source-layer': 'Proposed Paved Shared Use Paths',
       layout: {
@@ -122,7 +122,7 @@ const LayerData = {
     {
       id: 'unimprovedPathsProposed',
       'esri-id': 11,
-      label: 'Proposed Unimproved Shared Use',
+      label: 'Planned Unimproved Shared Use',
       type: 'line',
       'source-layer': 'Proposed Unimproved Shared Use Paths',
       layout: {
@@ -139,7 +139,7 @@ const LayerData = {
     {
       id: 'bikeLaneProposed',
       'esri-id': 3,
-      label: 'Proposed Bike Lanes',
+      label: 'Planned Bike Lanes',
       type: 'line',
       'source-layer': 'Proposed Bike Lanes',
       layout: {
@@ -156,7 +156,7 @@ const LayerData = {
     {
       id: 'protectedBikeLaneProposed',
       'esri-id': 1,
-      label: 'Proposed Protected Bike Lanes',
+      label: 'Planned Protected Bike Lanes',
       type: 'line',
       'source-layer': 'Proposed Protected Bike Lanes',
       layout: {
@@ -173,7 +173,7 @@ const LayerData = {
     {
       id: 'pavedFootwayProposed',
       'esri-id': 5,
-      label: 'Proposed Paved Footway',
+      label: 'Planned Paved Foot Path',
       type: 'line',
       'source-layer': 'Proposed Paved Footway',
       layout: {
@@ -190,7 +190,7 @@ const LayerData = {
     {
       id: 'naturalSurfaceFootwayProposed',
       'esri-id': 7,
-      label: 'Proposed Natural Surface Footway',
+      label: 'Planned Natural Surface Path',
       type: 'line',
       'source-layer': 'Proposed Natural Surface Footway',
       layout: {

@@ -36,18 +36,18 @@ const ControlPanel = () => {
         {renderTypeButton}
       </div>
       <div>
-        <span className="ControlPanel__subtitle mt-2 mb-2 d-block">Proposed:</span>
+        <span className="ControlPanel__subtitle mt-2 mb-2 d-block">Planned:</span>
         {renderProposedTypeButton}
       </div>
       <div>
-        <span className="ControlPanel__subtitle mt-2 mb-2 d-block">Landline Layer:</span>
+        <span className="ControlPanel__subtitle mt-2 mb-2 d-block">Regional Greenway Network:</span>
         <Form.Check
           type='checkbox'
           id='default-checkbox'
           className="ControlPanel_checkbox mb-5 d-flex align-items-center"
           checked={showLandlineLayer}
           onChange={() => toggleLandlineLayer(!showLandlineLayer)}
-          label="Show landline layer"
+          label="Show LandLine greenway layer"
         />
         <Legend />
       </div>

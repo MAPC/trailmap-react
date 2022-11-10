@@ -20,6 +20,7 @@ const IntroModal = () => {
       case "hiking": setMap({ baseLayer: "terrain", trailLayers: ["unimprovedPaths", "naturalSurfaceFootway"] }); break;
       case "biking": setMap({ baseLayer: "streets", trailLayers: ["bikeLane", "protectedBikeLane", "pavedPaths", "unimprovedPaths"] }); break;
       case "walking": setMap({ baseLayer: "streets", trailLayers: ["pavedPaths", "pavedFootway", "unimprovedPaths"] }); break;
+      case "all": setMap({ baseLayer: "terrain", trailLayers: ['pavedPaths', 'bikeLane', 'pavedFootway', 'naturalSurfaceFootway', 'protectedBikeLane', 'unimprovedPaths'] });
       default: break;
     }
     toggleIntroModal(!showIntroModal);
@@ -46,7 +47,7 @@ const IntroModal = () => {
             <Button
               className="intro-button m-2"
               variant="primary"
-              onClick={() => { toggleIntroModal(!showIntroModal); }}>
+              onClick={() => { handleCannedMap("all"); }}>
               Show me Everything
             </Button>
           </>}
