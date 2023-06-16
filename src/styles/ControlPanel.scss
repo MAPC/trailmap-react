@@ -5,16 +5,16 @@
   height: 100vh;
   left: 0;
   top: 60px;
-  width: 265px;
+  width: 275px;
 
-  &_opacity {
-    background-color: $light-blue;
-    height: 3.5rem;
-    margin-top: -3rem;
-    opacity: 0.8;
-    width: 245px;
-    z-index: 500;
-  }
+  // &_opacity {
+  //   background-color: $light-blue;
+  //   height: 3.5rem;
+  //   margin-top: -3rem;
+  //   opacity: 0.8;
+  //   width: 245px;
+  //   z-index: 500;
+  // }
 
   &__title {
     font-family: $title-font;
@@ -50,7 +50,6 @@
 
     &:hover {
       color: $white;
-      ;
     }
 
     &__paved {
@@ -137,7 +136,6 @@
         background-color: $dark-green;
         border-style: dashed;
         border-color: $white;
-        ;
         color: $white;
       }
     }
@@ -151,7 +149,6 @@
         background-color: $medium-green;
         border-style: dashed;
         border-color: $white;
-        ;
         color: $white;
       }
     }
@@ -165,7 +162,6 @@
         background-color: $dark-blue;
         border-style: dashed;
         border-color: $white;
-        ;
         color: $white;
       }
     }
@@ -179,7 +175,6 @@
         background-color: $medium-blue;
         border-style: dashed;
         border-color: $white;
-        ;
         color: $white;
       }
     }
@@ -193,7 +188,6 @@
         background-color: $dark-purple;
         border-style: dashed;
         border-color: $white;
-        ;
         color: $white;
       }
     }
@@ -208,7 +202,6 @@
         background-color: $medium-purple;
         border-style: dashed;
         border-color: $white;
-        ;
         color: $white;
       }
     }
@@ -225,7 +218,7 @@
 
     .form-check-label {
       display: inline-flex;
-      margin-left: .5rem;
+      margin-left: 0.5rem;
     }
   }
 }
