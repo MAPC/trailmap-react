@@ -1,5 +1,4 @@
 .Modal {
-
   &__title {
     border-bottom-style: solid;
     border-bottom-width: 0.5px;
@@ -55,4 +54,12 @@
 
 .modal-dialog {
   width: 350px;
+}
+
+#contribute-submit-form {
+  margin: 0px;
+}
+
+#contribute-submit-button {
+  margin: 7px 0 7px 0;
 }
