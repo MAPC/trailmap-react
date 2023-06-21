@@ -50,6 +50,85 @@ const ShareModal = ({ url }) => {
           </a>
         </span>
       </Modal.Body>
+      <span className="text-center">Direct Downloads</span>
+      <ul className="text-center direct-download-links">
+        <li className="text-left direct-download-link">
+          <span className="direct-download-link-left">
+            Walking Trails (Lines)
+          </span>
+          <div className="direct-download-link-right">
+            <a
+              href="https://datacommon.mapc.org/csv?table=mapc.trans_walking_trails&database=gisdata"
+              target="_blank"
+            >
+              <Button className="direct-download-link-btn">.csv</Button>
+            </a>
+            <a
+              href="https://datacommon.mapc.org/shapefile?table=gisdata.mapc.trans_walking_trails&database=gisdata"
+              target="_blank"
+            >
+              <Button className="direct-download-link-btn">.shp</Button>
+            </a>
+          </div>
+        </li>
+        <li className="text-left direct-download-link">
+          <span className="direct-download-link-left">
+            Bicycle Facilities (Lines)
+          </span>
+          <div className="direct-download-link-right">
+            <a
+              href="https://datacommon.mapc.org/csv?table=mapc.trans_bike_facilities&database=gisdata"
+              target="_blank"
+            >
+              <Button className="direct-download-link-btn">.csv</Button>
+            </a>
+            <a
+              href="https://datacommon.mapc.org/shapefile?table=gisdata.mapc.trans_bike_facilities&database=gisdata"
+              target="_blank"
+            >
+              <Button className="direct-download-link-btn">.shp</Button>
+            </a>
+          </div>
+        </li>
+        <li className="text-left direct-download-link">
+          <span className="direct-download-link-left">
+            Land Line Systems (Lines)
+          </span>
+          <div className="direct-download-link-right">
+            <a
+              href="https://datacommon.mapc.org/csv?table=mapc.trans_land_line_systems&database=gisdata"
+              target="_blank"
+            >
+              <Button className="direct-download-link-btn">.csv</Button>
+            </a>
+            <a
+              href="https://datacommon.mapc.org/shapefile?table=gisdata.mapc.trans_land_line_systems&database=gisdata"
+              target="_blank"
+            >
+              <Button className="direct-download-link-btn">.shp</Button>
+            </a>
+          </div>
+        </li>
+        <li className="text-left direct-download-link">
+          <span className="direct-download-link-left">
+            Shared Use Trails (Lines)
+          </span>
+          <div className="direct-download-link-right">
+            <a
+              href="https://datacommon.mapc.org/csv?table=mapc.trans_shared_use_paths&database=gisdata"
+              target="_blank"
+            >
+              <Button className="direct-download-link-btn">.csv</Button>
+            </a>
+            <a
+              href="https://datacommon.mapc.org/shapefile?table=gisdata.mapc.trans_shared_use_paths&database=gisdata"
+              target="_blank"
+            >
+              <Button className="direct-download-link-btn">.shp</Button>
+            </a>
+          </div>
+        </li>
+      </ul>
       <Modal.Footer>
         <span className="Modal__footer text-center">
           Trailmaps is always looking for new and improved data from the
