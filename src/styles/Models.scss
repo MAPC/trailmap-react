@@ -56,6 +56,12 @@
   width: 350px;
 }
 
+.direct-download {
+  font-weight: bold;
+  text-decoration: underline $light-grey;
+  text-underline-offset: 0.25rem;
+}
+
 .direct-download-links {
   padding: 0.65rem 0px 0.25rem 0px;
 }
@@ -80,4 +86,9 @@
       margin-left: 0.25rem;
     }
   }
+}
+
+.modal-footer-link {
+  color: $medium-blue;
+  cursor: pointer;
 }
