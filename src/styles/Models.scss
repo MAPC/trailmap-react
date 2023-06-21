@@ -27,6 +27,11 @@
     }
   }
 
+  &__emphasize {
+    font-family: $body-bold-font;
+    font-style: italic;
+  }
+
   &__footer {
     color: $dark-grey;
     font-family: $footer-font;
