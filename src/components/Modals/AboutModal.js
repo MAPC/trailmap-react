@@ -7,7 +7,14 @@ const AboutModal = () => {
   const { showContributeModal, toggleContributeModal } = useContext(ModalContext);
 
   return (
-    <Modal className="Modal" show={showAboutModal} onHide={() => toggleAboutModal(!showAboutModal)}>
+
+    <Modal
+      className="Modal"
+      dialogClassName="mx-auto"
+      show={showAboutModal}
+      onHide={() => toggleAboutModal(!showAboutModal)}
+      centered
+    >
       <Modal.Title>
         <span className="Modal__title text-center d-block mt-1 mb-1 ms-2 me-2 p-3 lh-lg">About Trailmap</span>
         <span className="Modal__subtitle text-center d-block mt-1 mb-1 ms-2 me-2 p-3">

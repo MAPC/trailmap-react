@@ -8,7 +8,6 @@ const IntroModal = () => {
   const { showIntroModal, toggleIntroModal } = useContext(ModalContext);
   const { showContributeModal, toggleContributeModal } = useContext(ModalContext);
   const { basemaps, setBaseLayer, setTrailLayers } = useContext(LayerContext);
-
   const [assist, toggleAssist] = useState(false);
 
   const handleCannedMap = (mapType) => {
@@ -51,10 +50,12 @@ const IntroModal = () => {
   return (
     <Modal
       className="Modal"
+      dialogClassName="mx-auto"
       show={showIntroModal}
       onHide={() => {
         toggleIntroModal(!showIntroModal);
       }}
+      centered
     >
       <Modal.Title>
         <span className="Modal__title text-center d-block mt-1 mb-1 ms-2 me-2 p-3 lh-lg">Welcome to Trailmap!</span>

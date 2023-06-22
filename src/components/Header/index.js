@@ -21,9 +21,11 @@ const Header = () => {
 
   return (
     <header className="Header d-flex flex-row align-items-center position-absolute">
-      <img src={TrailmapLogo} className="Header__image" alt="Metropolitan Area Planning Council" />
+      <a href="https://www.mapc.org/resource-library/landline-vision-plan/#google_translate_element" target="_blank">
+        <img src={TrailmapLogo} className="Header__image" alt="Metropolitan Area Planning Council" />
+      </a>
       <div className="Header__title">
-        <span className="Header__title--main">
+        <span className="Header__title--main Header__title--small-mobile-remove">
           Trailmap
           <span className="Header__title--mobile-remove">:</span>
         </span>

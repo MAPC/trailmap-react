@@ -6,7 +6,12 @@ const GlossaryModal = () => {
   const { showGlossaryModal, toggleGlossaryModal } = useContext(ModalContext);
 
   return (
-    <Modal className="Modal" show={showGlossaryModal} onHide={() => toggleGlossaryModal(!showGlossaryModal)}>
+    <Modal
+      className="Modal"
+      dialogClassName="mx-auto"
+      show={showGlossaryModal}
+      onHide={() => toggleGlossaryModal(!showGlossaryModal)}
+    >
       <Modal.Title>
         <span className="Modal__title d-block mt-1 mb-1 ms-2 me-2 p-3 lh-lg text-center">Glossary of Trail Types</span>
       </Modal.Title>

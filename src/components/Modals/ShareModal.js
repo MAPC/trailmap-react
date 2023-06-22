@@ -19,6 +19,7 @@ const ShareModal = ({ url }) => {
   return (
     <Modal
       className="Modal"
+      dialogClassName="mx-auto"
       show={showShareModal}
       onHide={() => {
         toggleShareModal(false);

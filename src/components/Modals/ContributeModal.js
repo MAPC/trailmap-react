@@ -10,10 +10,12 @@ const ContributeModal = () => {
   return (
     <Modal
       className="Modal"
+      dialogClassName="mx-auto"
       show={showContributeModal}
       onHide={() => {
         toggleContributeModal(!showContributeModal);
       }}
+      centered
     >
       <Modal.Title>
         <span className="Modal__title text-center d-block mt-1 mb-1 ms-2 me-2 p-3 lh-lg">

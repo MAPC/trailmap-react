@@ -3,6 +3,7 @@
   width: 100%;
 
   &_filter {
+    visibility: visible;
     left: 280px;
     top: 70px;
 
@@ -10,11 +11,21 @@
       height: 36px;
       width: 36px;
     }
+
+    @media only screen and (max-width: 325px) {
+      visibility: hidden;
+    }
   }
 
   &_share {
     left: 325px;
     top: 70px;
+
+    @media only screen and (max-width: 325px) {
+      right: 10px;
+      left: auto;
+      top: 110px;
+    }
 
     img {
       height: 20px;
@@ -64,4 +75,41 @@
 
 .mapboxgl-ctrl-top-left {
   z-index: 600;
+}
+
+#control-close-btn {
+  position: absolute;
+  background-color: $lighter-blue;
+  z-index: 5;
+  left: 259px;
+  // top: 7.8rem;
+  top: 89.5vh;
+  padding: 10px 10px;
+  opacity: 100%;
+
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+
+  @media only screen and (max-height: 920px) and (min-width: 1000px) {
+    left: 274px;
+  }
+}
+
+#control-open-btn {
+  position: absolute;
+  background-color: $lighter-blue;
+  z-index: 5;
+  left: 0px;
+  // top: 7.8rem;
+  top: 89.5vh;
+  opacity: 100%;
+
+  padding: 0px;
+
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  img {
+    width: 36px;
+    height: 36px;
+  }
 }
