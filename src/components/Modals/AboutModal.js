@@ -4,8 +4,10 @@ import { ModalContext } from "../../App";
 
 const AboutModal = () => {
   const { showAboutModal, toggleAboutModal } = useContext(ModalContext);
+  const { showContributeModal, toggleContributeModal } = useContext(ModalContext);
 
   return (
+
     <Modal
       className="Modal"
       dialogClassName="mx-auto"
@@ -30,7 +32,17 @@ const AboutModal = () => {
         <span className="Modal__footer text-center p-1">
           Trailmaps is always looking for new and improved data from the community. We encourage everyone to submit
           up-to-date infomration on individual trails so we can continue to improve this dataset. Learn more about
-          trailmaps and continuing here.
+          trailmaps and continuing{" "}
+          <a
+            onClick={() => {
+              toggleAboutModal(false);
+              toggleContributeModal(true);
+            }}
+            className="modal-footer-link"
+          >
+            here
+          </a>
+          .
         </span>
         <span className="Modal__disclaimer p-1 fst-italic">
           Disclaimer: The data herein is provided for informational purposes only. MAPC makes no warranties, either
