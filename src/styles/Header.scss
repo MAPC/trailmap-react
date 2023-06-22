@@ -29,7 +29,14 @@
     }
 
     &--mobile-remove {
-      @media only screen and (max-width: 680px) {
+      @media only screen and (max-width: 780px) {
+        display: none;
+        padding: 0 20px 0 0;
+      }
+    }
+
+    &--small-mobile-remove {
+      @media only screen and (max-width: 325px) {
         display: none;
         padding: 0 20px 0 0;
       }

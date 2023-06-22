@@ -23,7 +23,7 @@ const Header = () => {
       </a>
 
       <div className="Header__title">
-        <span className="Header__title--main">
+        <span className="Header__title--main Header__title--small-mobile-remove">
           Trailmap
           <span className="Header__title--mobile-remove">:</span>
         </span>

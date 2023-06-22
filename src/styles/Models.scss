@@ -1,5 +1,4 @@
 .Modal {
-
   &__title {
     border-bottom-style: solid;
     border-bottom-width: 0.5px;
@@ -54,5 +53,15 @@
 // Overrides
 
 .modal-dialog {
-  width: 350px;
+  width: 300px;
+
+  @media only screen and (min-width: 2000px) {
+    width: 425px;
+  }
+  @media only screen and (min-width: 1600px) {
+    width: 350px;
+  }
+  @media only screen and (max-width: 325px) {
+    width: 275px;
+  }
 }
