@@ -5,16 +5,21 @@
   height: 100vh;
   left: 0;
   top: 60px;
-  width: 275px;
 
-  // &_opacity {
-  //   background-color: $light-blue;
-  //   height: 3.5rem;
-  //   margin-top: -3rem;
-  //   opacity: 0.8;
-  //   width: 245px;
-  //   z-index: 500;
-  // }
+  @media only screen and (max-height: 920px) and (min-width: 1000px) {
+    width: 275px;
+  }
+
+  width: 260px;
+
+  &_opacity {
+    background-color: $light-blue;
+    height: 3rem;
+    margin-top: -3rem;
+    opacity: 0.8;
+    width: 245px;
+    z-index: 500;
+  }
 
   &__title {
     font-family: $title-font;
