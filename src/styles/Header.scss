@@ -48,13 +48,27 @@
       width: 25px;
 
       svg {
-        fill-opacity: 0.0;
+        fill-opacity: 0;
+      }
+    }
+  }
+
+  &__glossary {
+    right: 50px;
+    top: 15px;
+
+    img {
+      height: 23px;
+      width: 23px;
+
+      svg {
+        fill-opacity: 0;
       }
     }
   }
 
   &__contribute {
-    right: 50px;
+    right: 90px;
     top: 15px;
 
     img {
@@ -62,13 +76,13 @@
       width: 45px;
 
       svg {
-        fill-opacity: 0.0;
+        fill-opacity: 0;
       }
     }
   }
 
   &__assist {
-    right: 90px;
+    right: 130px;
     top: 15px;
 
     img {
@@ -76,13 +90,14 @@
       width: 25px;
 
       svg {
-        fill-opacity: 0.0;
+        fill-opacity: 0;
       }
     }
   }
 
   &__about,
   &__contribute,
+  &__glossary,
   &__assist {
     background-color: transparentize($dark-blue, 0.7);
     border-radius: 4px;
