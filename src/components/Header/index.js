@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { ModalContext } from "../../App";
 import Control from "../Map/Control";
 import AboutIcon from "../../assets/icons/about-icon.svg";
+import GlossaryIcon from "../../assets/icons/glossary-icon.svg";
 import ContributeIcon from "../../assets/icons/contribute-icon.svg";
 import HelpIcon from "../../assets/icons/help-icon.svg";
 import TrailmapLogo from "../../assets/MAPC_logo.svg";
@@ -14,6 +15,8 @@ const Header = () => {
     toggleContributeModal,
     showIntroModal,
     toggleIntroModal,
+    showGlossaryModal,
+    toggleGlossaryModal,
   } = useContext(ModalContext);
 
   return (
@@ -21,7 +24,6 @@ const Header = () => {
       <a href="https://www.mapc.org/resource-library/landline-vision-plan/#google_translate_element" target="_blank">
         <img src={TrailmapLogo} className="Header__image" alt="Metropolitan Area Planning Council" />
       </a>
-
       <div className="Header__title">
         <span className="Header__title--main Header__title--small-mobile-remove">
           Trailmap
@@ -44,6 +46,14 @@ const Header = () => {
           alt={"About Map"}
           clickHandler={() => {
             toggleAboutModal(!showAboutModal);
+          }}
+        />
+        <Control
+          style={"Header__glossary d-flex justify-content-evenly align-items-center m-0 p-0 position-absolute"}
+          icon={GlossaryIcon}
+          alt={"About Trails"}
+          clickHandler={() => {
+            toggleGlossaryModal(!showGlossaryModal);
           }}
         />
         <Control

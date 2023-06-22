@@ -17,29 +17,40 @@ const GlossaryModal = () => {
       </Modal.Title>
       <Modal.Body>
         <span className="Modal__body">
-          The following is a brief description on the different trail types. Proposed trails of each type reprepresent
-          future trails.
+          The following is a brief description on the different trail types found in the control panel. Proposed trails
+          (dashed lines) of each type represents future trails:
         </span>
         <ul className="Modal__list text-left p-1 mb-0">
-          <li>
-            <span>Paved Paths</span>: Hard packed accessible surface, typically asphalt or stonedust
+          <li className="mt-4">
+            <span className="ControlPanel_type_button__pavedPaths">Paved Shared Use</span>: Hard packed accessible
+            surface, typically asphalt or stonedust
           </li>
-          <li>
-            <span>Unimproved Paths</span>: Future paved paths, currently with an unimproved natural surface
+          <li className="mt-2">
+            <span className="ControlPanel_type_button__unimprovedPaths">Unimproved Shared Use</span>: Future paved
+            paths, currently with an unimproved natural surface
           </li>
-          <li>
-            <span>Protected Bike Lane</span>: Physically separated from motor vehicle traffic
+          <li className="mt-2 mb-2">
+            <span className="ControlPanel_type_button__bikeLane">Bike Lane</span>: Striped lane within the roadway
+            adjacent to traffic
           </li>
-          <li>
-            <span>Bike Lane</span>: Striped lane within the roadway adjacent to traffic
+          <li className="mt-2 mb-2">
+            <span className="ControlPanel_type_button__protectedBikeLane">Protected Bike Lane</span>: Physically
+            separated from motor vehicle traffic
           </li>
-          <li>
-            <span>Paved Footway</span>: Hard surface path, typically in city park or campus environments
+          <li className="mt-2 mb-2">
+            <span className="ControlPanel_type_button__pavedFootway">Paved Foot Path</span>: Hard surface path,
+            typically in city park or campus environments
           </li>
-          <li>
-            <span>Natural Surface Footway</span>: Hiking trail, typically found in conservation areas
+          <li className="mt-2 mb-4">
+            <span className="ControlPanel_type_button__naturalSurfaceFootway">Natural Surface Path</span>: Hiking trail,
+            typically found in conservation areas
           </li>
         </ul>
+        <span className="Modal__body">
+          To find out more about the details of the Regional Greenway Network and how that's represented, click{" "}
+          <span className="Modal__emphasize">Show Landline Greenway Layer</span> in the control panel to see the map
+          legend
+        </span>
       </Modal.Body>
       <Modal.Footer>
         <span className="Modal__disclaimer p-1 fst-italic">
