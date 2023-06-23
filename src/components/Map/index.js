@@ -147,7 +147,7 @@ const Map = () => {
             geometry: `${e.lngLat.lng},${e.lngLat.lat}`,
             geometryType: "esriGeometryPoint",
             sr: 4326,
-            layers: allLayers,
+            layers: "visible:" + allLayers,
             tolerance: 3,
             mapExtent: `${currentMapBounds._sw.lng},${currentMapBounds._sw.lat},${currentMapBounds._ne.lng},${currentMapBounds._ne.lat}`,
             imageDisplay: `600,550,96`,
@@ -157,7 +157,10 @@ const Map = () => {
         })
         .then((res) => {
           if (res.data.results.length > 0) {
-            const identifyResult = res.data.results[0];
+            const identifyResult = [];
+            for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
+              identifyResult.push(res.data.results[i]);
+            }
             setIdentifyInfo(identifyResult);
             toggleIdentifyPopup(true);
             setIdentifyPoint(e.lngLat);
