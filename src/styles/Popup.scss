@@ -1,8 +1,8 @@
 .Popup {
   font-family: $layer-font;
   color: $dark-blue;
-  // width: 240px;
-  // height: 150px;
+  width: 240px;
+  height: 150px;
 
   // override
   .mapboxgl-popup-content {
