@@ -137,6 +137,7 @@ const Map = () => {
       ...existingTrails.filter((et) => trailLayers.includes(et.id)).map((et) => et["esri-id"]),
       ...proposedTrails.filter((et) => proposedLayers.includes(et.id)).map((et) => et["esri-id"]),
     ].join(",");
+    console.log(allLayers);
     if (trailLayers.length > 0 || proposedLayers.length > 0) {
       const currentMap = mapRef.current.getMap();
       const currentMapBounds = currentMap.getBounds();
@@ -147,7 +148,7 @@ const Map = () => {
             geometry: `${e.lngLat.lng},${e.lngLat.lat}`,
             geometryType: "esriGeometryPoint",
             sr: 4326,
-            layers: allLayers,
+            layers: "visible:" + allLayers,
             tolerance: 3,
             mapExtent: `${currentMapBounds._sw.lng},${currentMapBounds._sw.lat},${currentMapBounds._ne.lng},${currentMapBounds._ne.lat}`,
             imageDisplay: `600,550,96`,
@@ -158,10 +159,10 @@ const Map = () => {
         .then((res) => {
           if (res.data.results.length > 0) {
             const identifyResult = [];
+            console.log(res.data.results);
             for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
               identifyResult.push(res.data.results[i]);
             }
-            console.log(identifyResult);
             setIdentifyInfo(identifyResult);
             toggleIdentifyPopup(true);
             setIdentifyPoint(e.lngLat);
