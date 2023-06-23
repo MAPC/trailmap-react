@@ -137,7 +137,6 @@ const Map = () => {
       ...existingTrails.filter((et) => trailLayers.includes(et.id)).map((et) => et["esri-id"]),
       ...proposedTrails.filter((et) => proposedLayers.includes(et.id)).map((et) => et["esri-id"]),
     ].join(",");
-    console.log(allLayers);
     if (trailLayers.length > 0 || proposedLayers.length > 0) {
       const currentMap = mapRef.current.getMap();
       const currentMapBounds = currentMap.getBounds();
@@ -157,7 +156,6 @@ const Map = () => {
           },
         })
         .then((res) => {
-          console.log(res.data);
           if (res.data.results.length > 0) {
             const identifyResult = [];
             for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
