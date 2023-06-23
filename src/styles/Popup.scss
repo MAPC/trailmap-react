@@ -1,10 +1,12 @@
 .Popup {
   font-family: $layer-font;
   color: $dark-blue;
+  // width: 240px;
+  // height: 150px;
 
   // override
   .mapboxgl-popup-content {
-    padding: 12px 10px;
+    padding: 14px 23px 18px 23px;
   }
 
   span {
@@ -22,10 +24,34 @@
     font-size: $identify-layer-font-size;
   }
 
-
   &__info {
     font-family: $identify-info-font;
     font-size: $identify-info-font-size;
   }
 
+  &__section {
+    padding-top: 0.2rem;
+  }
+}
+
+.carousel-indicators {
+  bottom: -36px;
+  button {
+    width: 15px !important;
+  }
+}
+
+.carousel-control-next {
+  position: absolute;
+  right: -25px;
+  .carousel-control-next-icon {
+    background-size: 60% 60%;
+  }
+}
+.carousel-control-prev {
+  position: absolute;
+  left: -25px;
+  .carousel-control-prev-icon {
+    background-size: 60% 60%;
+  }
 }

@@ -157,7 +157,11 @@ const Map = () => {
         })
         .then((res) => {
           if (res.data.results.length > 0) {
-            const identifyResult = res.data.results[0];
+            const identifyResult = [];
+            for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
+              identifyResult.push(res.data.results[i]);
+            }
+            console.log(identifyResult);
             setIdentifyInfo(identifyResult);
             toggleIdentifyPopup(true);
             setIdentifyPoint(e.lngLat);
