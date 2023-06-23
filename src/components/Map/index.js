@@ -157,9 +157,9 @@ const Map = () => {
           },
         })
         .then((res) => {
+          console.log(res.data);
           if (res.data.results.length > 0) {
             const identifyResult = [];
-            console.log(res.data.results);
             for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
               identifyResult.push(res.data.results[i]);
             }

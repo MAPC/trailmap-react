@@ -57,7 +57,7 @@ const Identify = ({ point, identifyResult, handleShowPopup }) => {
       anchor="bottom"
       onClose={() => handleShowPopup(false)}
     >
-      <Carousel slide={false} data-bs-theme="dark" interval={null}>
+      <Carousel slide={false} data-bs-theme="dark" interval={null} controls={identifyResult.length > 1}>
         {carouselItems}
       </Carousel>
     </Popup>
