@@ -27,6 +27,11 @@
     }
   }
 
+  &__emphasize {
+    font-family: $body-bold-font;
+    font-style: italic;
+  }
+
   &__footer {
     color: $dark-grey;
     font-family: $footer-font;
@@ -51,15 +56,69 @@
 }
 
 // Overrides
-
-.modal-dialog {
-  width: 350px;
-}
-
 #contribute-submit-form {
   margin: 0px;
 }
 
 #contribute-submit-button {
   margin: 7px 0 7px 0;
+}
+
+.modal-dialog {
+  width: 350px;
+
+  @media only screen and (max-width: 325px) {
+    width: 275px;
+  }
+
+  @media only screen and (min-width: 1600px) and (max-width: 2000px) {
+    width: 410px;
+  }
+
+  @media only screen and (min-width: 2000px) {
+    width: 450px;
+  }
+}
+
+.direct-download {
+  font-weight: bold;
+  text-decoration: underline $light-grey;
+  text-underline-offset: 0.25rem;
+}
+
+.direct-download-links {
+  padding: 0.65rem 0px 0.25rem 0px;
+}
+
+.direct-download-link {
+  list-style-type: none;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 0.6rem 0 0.6rem 0;
+
+  .direct-download-link-left {
+    float: left;
+    padding-left: 0.9rem;
+    align-self: center;
+  }
+  .direct-download-link-right {
+    float: right;
+    margin-right: 0.9rem;
+
+    .direct-download-link-btn {
+      margin-left: 0.25rem;
+    }
+  }
+}
+
+.modal-form-label {
+  display: flex;
+  padding-left: 0.25rem;
+  color: $dark-grey;
+}
+
+.modal-footer-link {
+  color: $medium-blue;
+  cursor: pointer;
 }

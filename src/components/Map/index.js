@@ -1,6 +1,8 @@
 import BasemapIcon from "../../assets/icons/basemap-icon.svg";
 import FilterIcon from "../../assets/icons/filter-icon.svg";
 import ShareIcon from "../../assets/icons/share-icon.svg";
+import Button from "react-bootstrap/Button";
+import CloseButton from "react-bootstrap/CloseButton";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
@@ -47,7 +49,7 @@ const Map = () => {
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
   const [identifyInfo, setIdentifyInfo] = useState(null);
   const [identifyPoint, setIdentifyPoint] = useState(null);
-  const [pointID, setPointID] = useState(null);
+  const [pointIndex, setPointIndex] = useState(0);
 
   const mapRef = useRef();
 
@@ -147,7 +149,7 @@ const Map = () => {
             geometry: `${e.lngLat.lng},${e.lngLat.lat}`,
             geometryType: "esriGeometryPoint",
             sr: 4326,
-            layers: allLayers,
+            layers: "visible:" + allLayers,
             tolerance: 3,
             mapExtent: `${currentMapBounds._sw.lng},${currentMapBounds._sw.lat},${currentMapBounds._ne.lng},${currentMapBounds._ne.lat}`,
             imageDisplay: `600,550,96`,
@@ -157,9 +159,11 @@ const Map = () => {
         })
         .then((res) => {
           if (res.data.results.length > 0) {
-            const identifyResult = res.data.results[0];
+            const identifyResult = [];
+            for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
+              identifyResult.push(res.data.results[i]);
+            }
             setIdentifyInfo(identifyResult);
-            setPointID(identifyResult.attributes.objectid);
             toggleIdentifyPopup(true);
             setIdentifyPoint(e.lngLat);
           }
@@ -171,7 +175,7 @@ const Map = () => {
     <>
       <ShareModal url={generateShareUrl()} />
       <GlossaryModal />
-      <EditModal trailObj={identifyInfo} />
+      <EditModal trailObj={identifyInfo !== null ? identifyInfo[pointIndex] : null} />
       <div className="Map position-relative">
         <ReactMapGL
           ref={mapRef}
@@ -191,9 +195,31 @@ const Map = () => {
               point={identifyPoint}
               identifyResult={identifyInfo}
               handleShowPopup={() => toggleIdentifyPopup(!showIdentifyPopup)}
+              handleCarousel={setPointIndex}
             ></Identify>
           )}
-          {showControlPanel && <ControlPanel />}
+          {showControlPanel && (
+            <div>
+              <ControlPanel />
+              <CloseButton
+                id="control-close-btn"
+                onClick={() => {
+                  toggleControlPanel(false);
+                }}
+              />
+            </div>
+          )}
+
+          {!showControlPanel && (
+            <Button
+              id="control-open-btn"
+              onClick={() => {
+                toggleControlPanel(true);
+              }}
+            >
+              <img src={FilterIcon} alt={"Show Control Panel"} />
+            </Button>
+          )}
           {showBasemapPanel && <BasemapPanel />}
           <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
             {visibleLayers()}
