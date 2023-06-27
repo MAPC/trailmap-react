@@ -49,8 +49,8 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
           (!identifyLayer[i] && <span className="Popup__layer Popup__section">Type: N/A</span>)}
         {(identifySteward[i] && <span className="Popup__info Popup__section">Steward: {identifySteward[i]}</span>) ||
           (!identifySteward[i] && <span className="Popup__info Popup__section">Steward: N/A</span>)}
-        {(identifyDate[i] && <span className="Popup__info Popup__section">ID Date: {identifyDate[i]}</span>) ||
-          (!identifyDate[i] && <span className="Popup__info Popup__section">ID Date: N/A</span>)}
+        {(identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
+          (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)}
       </Carousel.Item>
     );
   }

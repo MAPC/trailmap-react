@@ -17,6 +17,8 @@ import ShareModal from "../Modals/ShareModal";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import EditModal from "../Modals/EditModal";
+import SuccessModal from "../Modals/SuccessModal";
+import FailModal from "../Modals/FailModal";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
@@ -170,12 +172,15 @@ const Map = () => {
         });
     }
   };
-
   return (
     <>
       <ShareModal url={generateShareUrl()} />
       <GlossaryModal />
       <EditModal trailObj={identifyInfo !== null ? identifyInfo[pointIndex] : null} />
+
+      <SuccessModal />
+      <FailModal />
+
       <div className="Map position-relative">
         <ReactMapGL
           ref={mapRef}

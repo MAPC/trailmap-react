@@ -24,6 +24,9 @@ const App = () => {
   const [showGlossaryModal, toggleGlossaryModal] = useState(false);
   const [showEditModal, toggleEditModal] = useState(false);
 
+  const [showSuccessModal, toggleSuccessModal] = useState(false);
+  const [showFailModal, toggleFailModal] = useState(false);
+
   const [trailLayers, setTrailLayers] = useState([]);
   const [proposedLayers, setProposedLayers] = useState([]);
   const [baseLayer, setBaseLayer] = useState(basemaps[0]);
@@ -46,6 +49,10 @@ const App = () => {
             toggleGlossaryModal,
             showEditModal,
             toggleEditModal,
+            showSuccessModal,
+            toggleSuccessModal,
+            showFailModal,
+            toggleFailModal,
           }}
         >
           <Header />
