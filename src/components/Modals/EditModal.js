@@ -92,6 +92,27 @@ const EditModal = (trailObj) => {
       });
   };
 
+  let dropdownOptions = [];
+  let types = [
+    "Existing Protected Bike Lanes",
+    "Existing Paved Shared Use Paths",
+    "Existing Unimproved Shared Use Paths",
+    "Existing Bike Lanes",
+    "Paved Footway",
+    "Natural Surface Footway",
+  ];
+  for (let i = 0; i < types.length; i++) {
+    if (trailLayerType != "N/A" && trailLayerType != types[i]) {
+      dropdownOptions.push(
+        <option defaultValue={types[i]}>
+          {types[i].split(" ")[0] != "Existing"
+            ? types[i]
+            : types[i].split(" ").slice(1, types[i].split(" ").length).join(" ")}
+        </option>
+      );
+    }
+  }
+
   return (
     <Modal
       className="Modal"
@@ -127,13 +148,10 @@ const EditModal = (trailObj) => {
 
               <Form.Label className="mb-1 text-start modal-form-label">Layer Type:</Form.Label>
               <Form.Select aria-label="dropdown to select trail layer type" className="mb-3" name="trailLayerType">
-                <option defaultValue={trailLayerType}>{trailLayerType}</option>
-                <option defaultValue="Existing Paved Shared Use Paths">Paved Shared Use Paths</option>
-                <option defaultValue="Existing Unimproved Shared Use Paths">Unimproved Shared Use Paths</option>
-                <option defaultValue="Existing Bike Lanes">Bike Lanes</option>
-                <option defaultValue="Existing Protected Bike Lanes">Protected Bike Lanes</option>
-                <option defaultValue="Paved Footway">Paved Footway</option>
-                <option defaultValue="Natural Surface Footway">Natural Surface Footway</option>
+                <option defaultValue={trailLayerType}>
+                  {trailLayerType.split(" ").slice(1, trailLayerType.split(" ").length).join(" ")}
+                </option>
+                {dropdownOptions}
               </Form.Select>
 
               <Form.Label className="mb-1 text-start modal-form-label">Trail Steward:</Form.Label>

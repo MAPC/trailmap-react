@@ -45,7 +45,14 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
       <Carousel.Item key={i}>
         {(identifyTrailName[i] && <span className="Popup__name ">Name: {identifyTrailName[i]}</span>) ||
           (!identifyTrailName[i] && <span className="Popup__name">Name: N/A</span>)}
-        {(identifyLayer[i] && <span className="Popup__layer Popup__section">Type: {identifyLayer[i]}</span>) ||
+        {(identifyLayer[i] && (
+          <span className="Popup__layer Popup__section">
+            Type:{" "}
+            {identifyLayer[i].split(" ")[0] != "Existing"
+              ? identifyLayer[i]
+              : identifyLayer[i].split(" ").slice(1, identifyLayer[i].split(" ").length).join(" ")}
+          </span>
+        )) ||
           (!identifyLayer[i] && <span className="Popup__layer Popup__section">Type: N/A</span>)}
         {(identifySteward[i] && <span className="Popup__info Popup__section">Steward: {identifySteward[i]}</span>) ||
           (!identifySteward[i] && <span className="Popup__info Popup__section">Steward: N/A</span>)}

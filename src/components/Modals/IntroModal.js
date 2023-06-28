@@ -67,7 +67,7 @@ const IntroModal = () => {
         {!assist && (
           <>
             <Button
-              className="intro-button mb-2"
+              className="intro-button m-2"
               variant="primary"
               onClick={() => {
                 toggleAssist(!assist);

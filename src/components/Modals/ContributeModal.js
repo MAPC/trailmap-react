@@ -6,11 +6,14 @@ import { Link } from "react-router-dom";
 import { ModalContext } from "../../App";
 
 const ContributeModal = () => {
-  const { showContributeModal, toggleContributeModal } = useContext(ModalContext);
-
-  const handleSubmit = (event) => {
-    return;
-  };
+  const {
+    showContributeModal,
+    toggleContributeModal,
+    showSuccessModal,
+    toggleSuccessModal,
+    showFailModal,
+    toggleFailModal,
+  } = useContext(ModalContext);
 
   return (
     <Modal
@@ -27,18 +30,9 @@ const ContributeModal = () => {
       </Modal.Title>
       <Modal.Body className="Modal__body text-center">
         <span>
-          We welcome contributions to this map including adding to and editing the data!
-          <Form onSubmit={handleSubmit}>
-            <Form.Group controlId="formFile" id="contribute-submit-form">
-              <Form.Label>Submit Data:</Form.Label>
-              <Form.Control type="file" />
-            </Form.Group>
-            <Button type="submit" id="contribute-submit-button">
-              Submit
-            </Button>
-          </Form>
-          We also have an online editing tool available for you to use. To found out how to access the editing
-          functions, please contact David Loutzenheiser at:{" "}
+          We welcome contributions to this map including adding to and editing the data! <br /> <br />
+          We also have an online editing tool available for you to use. To send relevant data additions and find out how
+          to access the editing functions, please contact David Loutzenheiser at:{" "}
           <Link to={{ pathname: "mailto:dloutzenheiser@mapc.org" }} target="_blank">
             dloutzenheiser@mapc.org
           </Link>

@@ -16,14 +16,14 @@ const FailModal = () => {
     >
       <Modal.Title>
         <span className="Modal__title text-center d-block mt-1 mb-1 ms-2 me-2 p-3 lh-lg">
-          Suggesion Request <span className="fw-bold fst-italic fail-label">FAILED</span>
+          Suggestion Request <span className="fw-bold fst-italic fail-label">FAILED</span>
         </span>
       </Modal.Title>
       <Modal.Body className="Modal__body text-center">
         <span>
           <span>
             Sadly the update request you submitted failed, please try again or contact us at:{" "}
-            <span className="fst-italic">aliu@mapc.org</span> <br />
+            <span className="fst-italic">digitalservices@mapc.org</span> <br />
           </span>
         </span>
       </Modal.Body>
