@@ -43,7 +43,9 @@
 
 .carousel-control-next {
   position: absolute;
+  top: 0.75rem;
   right: -25px;
+  height: 80%;
   .carousel-control-next-icon {
     background-size: 60% 60%;
   }
@@ -51,6 +53,8 @@
 .carousel-control-prev {
   position: absolute;
   left: -25px;
+  top: 0.75rem;
+  height: 80%;
   .carousel-control-prev-icon {
     background-size: 60% 60%;
   }

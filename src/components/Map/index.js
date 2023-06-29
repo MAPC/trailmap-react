@@ -16,6 +16,9 @@ import Identify from "./Identify";
 import ShareModal from "../Modals/ShareModal";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
+import EditModal from "../Modals/EditModal";
+import SuccessModal from "../Modals/SuccessModal";
+import FailModal from "../Modals/FailModal";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
@@ -48,6 +51,7 @@ const Map = () => {
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
   const [identifyInfo, setIdentifyInfo] = useState(null);
   const [identifyPoint, setIdentifyPoint] = useState(null);
+  const [pointIndex, setPointIndex] = useState(0);
 
   const mapRef = useRef();
 
@@ -168,11 +172,15 @@ const Map = () => {
         });
     }
   };
-
   return (
     <>
       <ShareModal url={generateShareUrl()} />
       <GlossaryModal />
+      <EditModal trailObj={identifyInfo !== null ? identifyInfo[pointIndex] : null} />
+
+      <SuccessModal />
+      <FailModal />
+
       <div className="Map position-relative">
         <ReactMapGL
           ref={mapRef}
@@ -192,6 +200,7 @@ const Map = () => {
               point={identifyPoint}
               identifyResult={identifyInfo}
               handleShowPopup={() => toggleIdentifyPopup(!showIdentifyPopup)}
+              handleCarousel={setPointIndex}
             ></Identify>
           )}
           {showControlPanel && (

@@ -77,6 +77,25 @@
   z-index: 600;
 }
 
+.identify-contribute-btn {
+  position: absolute;
+  background-color: transparent;
+  left: 4px;
+  top: -1px;
+
+  opacity: 100%;
+  padding: 0px;
+  border: none;
+
+  img {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.identify-contribute-btn:hover {
+  background-color: transparent !important;
+}
 #control-close-btn {
   position: absolute;
   background-color: $lighter-blue;

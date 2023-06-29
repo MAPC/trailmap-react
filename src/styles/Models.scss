@@ -56,6 +56,13 @@
 }
 
 // Overrides
+#contribute-submit-form {
+  margin: 0px;
+}
+
+#contribute-submit-button {
+  margin: 7px 0 7px 0;
+}
 
 .modal-dialog {
   width: 350px;
@@ -105,7 +112,21 @@
   }
 }
 
+.modal-form-label {
+  display: flex;
+  padding-left: 0.25rem;
+  color: $dark-grey;
+}
+
 .modal-footer-link {
   color: $medium-blue;
   cursor: pointer;
+}
+
+.fail-label {
+  color: $medium-red;
+}
+
+.success-label {
+  color: $medium-green;
 }
