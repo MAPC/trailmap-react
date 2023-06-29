@@ -17,12 +17,6 @@ const EditModal = (trailObj) => {
   let trailSteward = "N/A";
   let trailOpenDate = "N/A";
 
-  // const [trailID, setTrailID] = useState("42");
-  // const [trailName, setTrailName] = useState("yellow brick road");
-  // const [trailLayerType, setTrailLayerType] = useState("paved path");
-  // const [trailSteward, setTrailSteward] = useState("N/A");
-  // const [trailOpenDate, setTrailOpenDate] = useState("10,000 B.C.E");
-
   if (trailObj.trailObj != null) {
     const trailAttributes = trailObj.trailObj.attributes;
     trailID =
