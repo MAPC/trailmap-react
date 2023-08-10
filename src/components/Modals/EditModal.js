@@ -10,6 +10,7 @@ import axios from "axios";
 const EditModal = (trailObj) => {
   const { showEditModal, toggleEditModal, showSuccessModal, toggleSuccessModal, showFailModal, toggleFailModal } =
     useContext(ModalContext);
+  const [editNotes, setEditNotes] = useState(null);
 
   let trailID = "N/A";
   let trailName = "N/A";
@@ -58,6 +59,7 @@ const EditModal = (trailObj) => {
             LayerType: formDataObj.trailLayerType,
             Steward: formDataObj.trailSteward,
             OpenDate: formDataObj.trailOpenDate,
+            Notes: formDataObj.editNotes,
             Attachment: null,
           },
         },
@@ -98,7 +100,7 @@ const EditModal = (trailObj) => {
   for (let i = 0; i < types.length; i++) {
     if (trailLayerType != "N/A" && trailLayerType != types[i]) {
       dropdownOptions.push(
-        <option defaultValue={types[i]}>
+        <option defaultValue={types[i]} key={"type-" + String(i)}>
           {types[i].split(" ")[0] != "Existing"
             ? types[i]
             : types[i].split(" ").slice(1, types[i].split(" ").length).join(" ")}
@@ -164,6 +166,15 @@ const EditModal = (trailObj) => {
                 defaultValue={trailOpenDate}
                 className="mb-2"
                 name="trailOpenDate"
+              />
+
+              <Form.Label className="mb-1 text-start modal-form-label">Notes:</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder={editNotes}
+                defaultValue={editNotes}
+                className="mb-2"
+                name="editNotes"
               />
             </Form.Group>
             <Button type="submit" id="contribute-submit-button">
