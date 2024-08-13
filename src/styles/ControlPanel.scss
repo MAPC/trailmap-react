@@ -227,4 +227,10 @@
       margin-left: 0.5rem;
     }
   }
+  div.ButtonGroup{
+    display: flex;
+    flex-wrap: wrap;
+    width: 260px;
+    min-width: 260px;
+  }
 }
