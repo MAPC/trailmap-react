@@ -39,11 +39,17 @@ const ControlPanel = () => {
       </div>
       <div>
         <span className="ControlPanel__subtitle mt-2 mb-2 d-block fw-bold">Existing:</span>
-        {renderTypeButton}
+        <div className="ButtonGroup">
+         {renderTypeButton}
+        </div>
+        
       </div>
       <div>
         <span className="ControlPanel__subtitle mt-2 mb-2 d-block fw-bold">Planned:</span>
+        <div className="ButtonGroup">
         {renderProposedTypeButton}
+        </div>
+       
       </div>
       <div>
         <span className="ControlPanel__subtitle mt-2 mb-2 d-block fw-bold">Regional Greenway Network:</span>
