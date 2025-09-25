@@ -10,6 +10,8 @@ import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleCo
 import BasemapPanel from "../BasemapPanel";
 import Control from "./Control";
 import ControlPanel from "../ControlPanel";
+import LegislativeDistrictsButton from '../LegislativeDistrictsButton';
+import MunicipalitiesButton from '../MunicipalitiesButton';
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import GlossaryModal from "../Modals/GlossaryModal";
 import Identify from "./Identify";
@@ -17,6 +19,7 @@ import ShareModal from "../Modals/ShareModal";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import EditModal from "../Modals/EditModal";
+import massachusettsData from "../../data/massachusetts.json";
 import SuccessModal from "../Modals/SuccessModal";
 import FailModal from "../Modals/FailModal";
 
@@ -34,6 +37,8 @@ const Map = () => {
     baseLayer,
     setBaseLayer,
     showLandlineLayer,
+    showLegislativeDistricts,
+    showMunicipalities,
     basemaps,
     existingTrails,
     proposedTrails,
@@ -86,6 +91,36 @@ const Map = () => {
     setMapParam();
   }, []);
 
+  // Ensure Legislative Districts and Municipalities layers persist across basemap changes
+  useEffect(() => {
+    if (mapRef.current) {
+      const map = mapRef.current.getMap();
+      
+      // Force re-render of legislative districts layers when basemap changes
+      if (showLegislativeDistricts) {
+        if (map.getLayer('legislative-districts-fill')) {
+          map.removeLayer('legislative-districts-fill');
+        }
+        if (map.getLayer('legislative-districts-outline')) {
+          map.removeLayer('legislative-districts-outline');
+        }
+        if (map.getLayer('legislative-districts-labels')) {
+          map.removeLayer('legislative-districts-labels');
+        }
+      }
+      
+      // Force re-render of municipalities layers when basemap changes
+      if (showMunicipalities) {
+        if (map.getLayer('municipalities-fill')) {
+          map.removeLayer('municipalities-fill');
+        }
+        if (map.getLayer('municipalities-labels')) {
+          map.removeLayer('municipalities-labels');
+        }
+      }
+    }
+  }, [baseLayer, showLegislativeDistricts, showMunicipalities]);
+
   const visibleLayers = () => {
     const visibleLayers = [];
     const allLayers = [...trailLayers, ...proposedLayers];
@@ -126,6 +161,44 @@ const Map = () => {
       });
     }
     return visibleLandlineLayers;
+  };
+
+  const legislativeDistrictsLayers = () => {
+    const visibleLegislativeLayers = [];
+    if (showLegislativeDistricts) {
+      visibleLegislativeLayers.push(
+        <Layer
+          key="legislative-districts-fill"
+          id="legislative-districts-fill"
+          type="fill"
+          source="legislative-districts"
+          paint={{
+            "fill-color": "rgba(87, 188, 56, 0.33)",
+            "fill-outline-color": "rgba(87, 188, 56,1)"
+          }}
+        />
+      );
+    }
+    return visibleLegislativeLayers;
+  };
+
+  const municipalitiesLayers = () => {
+    const visibleMunicipalitiesLayers = [];
+    if (showMunicipalities) {
+      visibleMunicipalitiesLayers.push(
+        <Layer
+          key="municipalities-fill"
+          id="municipalities-fill"
+          type="fill"
+          source="municipalities"
+          paint={{
+            "fill-color": "rgba(255, 165, 0, 0.3)",
+            "fill-outline-color": "rgba(255, 140, 0, 1)"
+          }}
+        />
+      );
+    }
+    return visibleMunicipalitiesLayers;
   };
 
   const generateShareUrl = () => {
@@ -226,11 +299,26 @@ const Map = () => {
             </Button>
           )}
           {showBasemapPanel && <BasemapPanel />}
+          
           <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
             {visibleLayers()}
           </Source>
           <Source id="MAPC landline vector tiles" type="vector" tiles={[LANDLINE_SOURCE]}>
             {landlineLayers()}
+          </Source>
+          <Source 
+            id="legislative-districts" 
+            type="geojson" 
+            data="https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/House2021/MapServer/1/query?where=1%3D1&outFields=*&f=geojson"
+          >
+            {legislativeDistrictsLayers()}
+          </Source>
+          <Source 
+            id="municipalities" 
+            type="geojson" 
+            data={massachusettsData}
+          >
+            {municipalitiesLayers()}
           </Source>
           <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
           <Control
@@ -251,6 +339,8 @@ const Map = () => {
             alt={"Show Baesmaps"}
             clickHandler={() => toggleBasemapPanel(!showBasemapPanel)}
           />
+          <MunicipalitiesButton />
+          <LegislativeDistrictsButton />
           <ScaleControl position="bottom-right" />
           <NavigationControl className="map_navigation" position="bottom-right" />
           <GeolocateControl

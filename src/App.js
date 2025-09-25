@@ -31,6 +31,8 @@ const App = () => {
   const [proposedLayers, setProposedLayers] = useState([]);
   const [baseLayer, setBaseLayer] = useState(basemaps[0]);
   const [showLandlineLayer, toggleLandlineLayer] = useState(false);
+  const [showLegislativeDistricts, toggleLegislativeDistricts] = useState(false);
+  const [showMunicipalities, toggleMunicipalities] = useState(false);
 
   return (
     <div className="App">
@@ -68,6 +70,10 @@ const App = () => {
               setBaseLayer,
               showLandlineLayer,
               toggleLandlineLayer,
+              showLegislativeDistricts,
+              toggleLegislativeDistricts,
+              showMunicipalities,
+              toggleMunicipalities,
               basemaps,
               existingTrails,
               proposedTrails,
