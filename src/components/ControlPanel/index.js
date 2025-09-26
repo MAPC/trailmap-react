@@ -56,10 +56,20 @@ const ControlPanel = () => {
         <Form.Check
           type="checkbox"
           id="default-checkbox"
-          className="ControlPanel_checkbox mb-5 d-flex align-items-center"
+          className="ControlPanel_checkbox mb-3 d-flex align-items-center"
           checked={showLandlineLayer}
           onChange={() => toggleLandlineLayer(!showLandlineLayer)}
-          label="Show LandLine greenway layer"
+          label={
+            <a 
+              href="https://mapc.github.io/embedded-map/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#0070cd', textDecoration: 'underline' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              Show LandLine greenway layer
+            </a>
+          }
         />
         <Legend />
       </div>

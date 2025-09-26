@@ -174,7 +174,7 @@ const Map = () => {
           source="legislative-districts"
           paint={{
             "fill-color": "rgba(87, 188, 56, 0.33)",
-            "fill-outline-color": "rgba(87, 188, 56,1)"
+            "fill-outline-color": "rgba(0, 100, 0, 1)"
           }}
         />
       );

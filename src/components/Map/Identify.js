@@ -4,39 +4,56 @@ import Button from "react-bootstrap/Button";
 import Carousel from "react-bootstrap/Carousel";
 import editIcon from "../../assets/icons/edit-icon.svg";
 import { ModalContext } from "../../App";
+import muniKeys from "../../data/ma_muni_keys.json";
 
 const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) => {
   const { showEditModal, toggleEditModal } = useContext(ModalContext);
   const [carouselIndex, setCarouselIndex] = useState(0);
 
+  // Function to get municipality name by muni_id
+  const getMunicipalityName = (muniId) => {
+    if (!muniId || muniId === "Null" || muniId === "") return "";
+    
+    // Handle both string and numeric muni_id
+    const municipality = muniKeys.find(muni => 
+      muni.muni_id === parseInt(muniId) || 
+      muni.muni_id === muniId ||
+      muni.muni_id.toString() === muniId.toString()
+    );
+    console.log("Looking for muni_id:", muniId, "Found:", municipality);
+    return municipality ? municipality.muni_name : "";
+  };
+
   const identifyLayer = [];
   const identifyAttributes = [];
   const identifyTrailName = [];
-  const identifySteward = [];
+  const identifyMunicipality = [];
   const identifyDate = [];
+  const identifyLength = [];
 
   identifyResult.forEach((element) => {
     identifyLayer.push(element.layerName);
     identifyAttributes.push(element.attributes);
     identifyTrailName.push(
-      element.attributes["Regional Name"] !== "Null" && element.attributes["Regional Name"] !== " "
+      element.attributes["Local Name"] !== "Null" && element.attributes["Local Name"] !== " "
+        ? element.attributes["Local Name"]
+        : element.attributes["Regional Name"] !== "Null" && element.attributes["Regional Name"] !== " "
         ? element.attributes["Regional Name"]
         : element.attributes["Property Name"] !== "Null" && element.attributes["Property Name"] !== " "
         ? element.attributes["Property Name"]
-        : element.attributes["Local Name"] !== "Null" && element.attributes["Local Name"] !== " "
-        ? element.attributes["Local Name"]
         : ""
     );
-    identifySteward.push(
-      element.attributes["Steward"] !== "Null"
-        ? element.attributes["Steward"]
-        : element.attributes["Owner / Steward"] !== "Null"
-        ? element.attributes["Owner / Steward"]
-        : ""
+    identifyMunicipality.push(
+      getMunicipalityName(element.attributes["muni_id"] || element.attributes["Municipal ID"])
+      
     );
     identifyDate.push(
       element.attributes["Facility Opening Date"] !== "Null" ? element.attributes["Facility Opening Date"] : ""
     );
+    identifyLength.push(
+      element.attributes["st_length(shape)"] !== "Null" ? element.attributes["st_length(shape)"] : ""
+    );
+    
   });
 
   const carouselItems = [];
@@ -54,10 +71,12 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
           </span>
         )) ||
           (!identifyLayer[i] && <span className="Popup__layer Popup__section">Type: N/A</span>)}
-        {(identifySteward[i] && <span className="Popup__info Popup__section">Steward: {identifySteward[i]}</span>) ||
-          (!identifySteward[i] && <span className="Popup__info Popup__section">Steward: N/A</span>)}
+        {(identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: {identifyMunicipality[i]}</span>) ||
+          (!identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: N/A</span>)}
         {(identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
           (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)}
+         {(identifyLength[i] && <span className="Popup__info Popup__section">Length: {parseFloat(identifyLength[i]).toFixed(2)} (meters)</span>) ||
+           (!identifyLength[i] && <span className="Popup__info Popup__section">Length: N/A</span>)}
       </Carousel.Item>
     );
   }
