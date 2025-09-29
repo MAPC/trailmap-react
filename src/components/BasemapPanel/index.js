@@ -15,6 +15,7 @@ const BasemapPanel = () => {
         {renderButtons}
       </ul>
     </div>
+    
   );
 };
 

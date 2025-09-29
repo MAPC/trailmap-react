@@ -1,0 +1,26 @@
+.LegislativeDistrictsButton {
+  right: 50px; // Positioned to the left of the basemap button (10px + 40px for button width)
+  top: 70px; // Same vertical position as basemap button
+  z-index: 1000; // Ensure it's visible above other elements
+
+  &__item {
+    background-color: $white;
+    border-radius: 8px;
+    border: solid rgba(0, 112, 205, 0.7) 0.5px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
+    color: $dark-blue;
+    cursor: pointer;
+    font-family: $basemap-font;
+    font-size: $layer-font-size;
+    transition: all 0.3s ease-in-out;
+    -moz-appearance: none;
+    padding: 8px 12px;
+    margin: 0;
+
+    &:hover,
+    &_selected {
+      color: $white;
+      background-color: $dark-blue;
+    }
+  }
+}
