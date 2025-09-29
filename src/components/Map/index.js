@@ -6,11 +6,12 @@ import CloseButton from "react-bootstrap/CloseButton";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
-import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl } from "react-map-gl";
+import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
 import BasemapPanel from "../BasemapPanel";
 import Control from "./Control";
 import ControlPanel from "../ControlPanel";
-import LegislativeDistrictsButton from '../LegislativeDistrictsButton';
+import MAhouseDistrictsButton from '../MAhouseDistrictsButton';
+import MASenateDistrictsButton from '../MASenateDistrictsButton';
 import MunicipalitiesButton from '../MunicipalitiesButton';
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import GlossaryModal from "../Modals/GlossaryModal";
@@ -37,7 +38,8 @@ const Map = () => {
     baseLayer,
     setBaseLayer,
     showLandlineLayer,
-    showLegislativeDistricts,
+    showMaHouseDistricts,
+    showMaSenateDistricts,
     showMunicipalities,
     basemaps,
     existingTrails,
@@ -57,6 +59,49 @@ const Map = () => {
   const [identifyInfo, setIdentifyInfo] = useState(null);
   const [identifyPoint, setIdentifyPoint] = useState(null);
   const [pointIndex, setPointIndex] = useState(0);
+  const [hoverPoint, setHoverPoint] = useState(null);
+  const [hoverFeature, setHoverFeature] = useState(null);
+  const [hoverFilterKey, setHoverFilterKey] = useState(null);
+  const [hoverFilterValue, setHoverFilterValue] = useState(null);
+  const [senateHoverPoint, setSenateHoverPoint] = useState(null);
+  const [senateHoverFeature, setSenateHoverFeature] = useState(null);
+  const [senateHoverFilterKey, setSenateHoverFilterKey] = useState(null);
+  const [senateHoverFilterValue, setSenateHoverFilterValue] = useState(null);
+  const [muniHoverPoint, setMuniHoverPoint] = useState(null);
+  const [muniHoverFeature, setMuniHoverFeature] = useState(null);
+  const [muniHoverFilterKey, setMuniHoverFilterKey] = useState(null);
+  const [muniHoverFilterValue, setMuniHoverFilterValue] = useState(null);
+  const [showOneLayerNotice, setShowOneLayerNotice] = useState(false);
+
+  // Show notice when any one of the exclusive layers turns on
+  useEffect(() => {
+    if (showMunicipalities || showMaHouseDistricts || showMaSenateDistricts) {
+      setShowOneLayerNotice(true);
+    }
+  }, [showMunicipalities, showMaHouseDistricts, showMaSenateDistricts]);
+
+  // Auto-hide the one-layer notice after 2 seconds when shown
+  useEffect(() => {
+    if (!showOneLayerNotice) return;
+    const timer = setTimeout(() => setShowOneLayerNotice(false), 2000);
+    return () => clearTimeout(timer);
+  }, [showOneLayerNotice]);
+
+  // Clear hover states when zoom changes to fix hover detection issues
+  useEffect(() => {
+    setHoverFeature(null);
+    setHoverPoint(null);
+    setHoverFilterKey(null);
+    setHoverFilterValue(null);
+    setSenateHoverFeature(null);
+    setSenateHoverPoint(null);
+    setSenateHoverFilterKey(null);
+    setSenateHoverFilterValue(null);
+    setMuniHoverFeature(null);
+    setMuniHoverPoint(null);
+    setMuniHoverFilterKey(null);
+    setMuniHoverFilterValue(null);
+  }, [viewport.zoom]);
 
   const mapRef = useRef();
 
@@ -97,29 +142,42 @@ const Map = () => {
       const map = mapRef.current.getMap();
       
       // Force re-render of legislative districts layers when basemap changes
-      if (showLegislativeDistricts) {
-        if (map.getLayer('legislative-districts-fill')) {
-          map.removeLayer('legislative-districts-fill');
+      if (showMaHouseDistricts) {
+        if (map.getLayer('ma-house-districts-fill')) {
+          map.removeLayer('ma-house-districts-fill');
         }
-        if (map.getLayer('legislative-districts-outline')) {
-          map.removeLayer('legislative-districts-outline');
+        if (map.getLayer('ma-house-districts-outline')) {
+          map.removeLayer('ma-house-districts-outline');
         }
-        if (map.getLayer('legislative-districts-labels')) {
-          map.removeLayer('legislative-districts-labels');
+        if (map.getLayer('ma-house-districts-labels')) {
+          map.removeLayer('ma-house-districts-labels');
         }
       }
-      
+
+      // Force re-render of senate districts layers when basemap changes
+      if (showMaSenateDistricts) {
+        if (map.getLayer('ma-senate-districts-fill')) {
+          map.removeLayer('ma-senate-districts-fill');
+        }
+        if (map.getLayer('ma-senate-districts-hover')) {
+          map.removeLayer('ma-senate-districts-hover');
+        }
+      }
+
       // Force re-render of municipalities layers when basemap changes
       if (showMunicipalities) {
         if (map.getLayer('municipalities-fill')) {
           map.removeLayer('municipalities-fill');
+        }
+        if (map.getLayer('municipalities-hover')) {
+          map.removeLayer('municipalities-hover');
         }
         if (map.getLayer('municipalities-labels')) {
           map.removeLayer('municipalities-labels');
         }
       }
     }
-  }, [baseLayer, showLegislativeDistricts, showMunicipalities]);
+  }, [baseLayer, showMaHouseDistricts, showMaSenateDistricts, showMunicipalities]);
 
   const visibleLayers = () => {
     const visibleLayers = [];
@@ -163,23 +221,88 @@ const Map = () => {
     return visibleLandlineLayers;
   };
 
-  const legislativeDistrictsLayers = () => {
-    const visibleLegislativeLayers = [];
-    if (showLegislativeDistricts) {
-      visibleLegislativeLayers.push(
+  const maHouseDistrictsLayers = () => {
+    const visibleMaHouseDistrictsLayers = [];
+    if (showMaHouseDistricts) {
+      visibleMaHouseDistrictsLayers.push(
         <Layer
-          key="legislative-districts-fill"
-          id="legislative-districts-fill"
+          key="ma-house-districts-fill"
+          id="ma-house-districts-fill"
           type="fill"
-          source="legislative-districts"
+          source="ma-house-districts"
           paint={{
-            "fill-color": "rgba(87, 188, 56, 0.33)",
-            "fill-outline-color": "rgba(0, 100, 0, 1)"
+            "fill-color": "transparent",
+            "fill-outline-color": "transparent"
+          }}
+        />
+      );
+      visibleMaHouseDistrictsLayers.push(
+        <Layer
+          key="ma-house-districts-hover"
+          id="ma-house-districts-hover"
+          type="fill"
+          source="ma-house-districts"
+          paint={{
+            "fill-color": "rgba(255, 165, 0, 0.6)",
+            "fill-outline-color": "red"
+          }}
+          filter={
+            hoverFilterKey && hoverFilterValue !== null
+              ? ["==", ["get", hoverFilterKey], hoverFilterValue]
+              : ["==", ["get", "__none__"], "__no_match__"]
+          }
+        />
+      );
+      visibleMaHouseDistrictsLayers.push(
+        <Layer
+          key="ma-house-districts-lines"
+          id="ma-house-districts-lines"
+          type="line"
+          source="ma-house-districts-lines"
+          paint={{
+            "line-color": "rgb(240, 40, 18)",
+            "line-width": 0.5
           }}
         />
       );
     }
-    return visibleLegislativeLayers;
+    return visibleMaHouseDistrictsLayers;
+  };
+
+  const maSenateDistrictsLayers = () => {
+    const visibleMaSenateDistrictsLayers = [];
+    if (showMaSenateDistricts) {
+      visibleMaSenateDistrictsLayers.push(
+        <Layer
+          key="ma-senate-districts-fill"
+          id="ma-senate-districts-fill"
+          type="fill"
+          source="ma-senate-districts"
+          paint={{
+            "fill-color": "transparent",
+            "fill-outline-color": "red"
+          }}
+        />
+      );
+      visibleMaSenateDistrictsLayers.push(
+        <Layer
+          key="ma-senate-districts-hover"
+          id="ma-senate-districts-hover"
+          type="fill"
+          source="ma-senate-districts"
+          paint={{
+            "fill-color": "rgba(255, 165, 0, 0.6)",
+            "fill-outline-color": "red"
+          }}
+          filter={
+            senateHoverFilterKey && senateHoverFilterValue !== null
+              ? ["==", ["get", senateHoverFilterKey], senateHoverFilterValue]
+              : ["==", ["get", "__none__"], "__no_match__"]
+          }
+        />
+      );
+    }
+    return visibleMaSenateDistrictsLayers;
   };
 
   const municipalitiesLayers = () => {
@@ -192,9 +315,26 @@ const Map = () => {
           type="fill"
           source="municipalities"
           paint={{
-            "fill-color": "rgba(255, 165, 0, 0.3)",
-            "fill-outline-color": "rgba(255, 140, 0, 1)"
+            "fill-color": "transparent",
+            "fill-outline-color": "red"
           }}
+        />
+      );
+      visibleMunicipalitiesLayers.push(
+        <Layer
+          key="municipalities-hover"
+          id="municipalities-hover"
+          type="fill"
+          source="municipalities"
+          paint={{
+            "fill-color": "rgba(255, 165, 0, 0.6)",
+            "fill-outline-color": "red"
+          }}
+          filter={
+            muniHoverFilterKey && muniHoverFilterValue !== null
+              ? ["==", ["get", muniHoverFilterKey], muniHoverFilterValue]
+              : ["==", ["get", "__none__"], "__no_match__"]
+          }
         />
       );
     }
@@ -261,8 +401,134 @@ const Map = () => {
           width="100%"
           height="100%"
           cursor="default"
+          interactiveLayerIds={["ma-house-districts-fill", "ma-senate-districts-fill", "municipalities-fill"]}
           onMove={(event) => setViewport(event.viewState)}
           onClick={(event) => getIdentifyPopup(event)}
+          onMouseMove={(event) => {
+            const map = mapRef.current && mapRef.current.getMap ? mapRef.current.getMap() : null;
+            const features = event.features || [];
+
+            // Handle MA House Districts hover (improved detection)
+            if (showMaHouseDistricts) {
+              let districtFeature = features.find((f) => f.layer && f.layer.id === "ma-house-districts-fill");
+              
+              // Enhanced fallback using queryRenderedFeatures with larger radius
+              if (!districtFeature && map) {
+                const x = event.point.x;
+                const y = event.point.y;
+                const queried = map.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {
+                  layers: ["ma-house-districts-fill"],
+                });
+                if (queried && queried.length > 0) {
+                  districtFeature = queried[0];
+                }
+              }
+              
+              if (districtFeature) {
+                setHoverFeature(districtFeature);
+                setHoverPoint(event.lngLat);
+                const props = districtFeature.properties || {};
+                const key =
+                  (props.REPDISTNUM !== undefined && "REPDISTNUM") ||
+                  (props.DIST_CODE !== undefined && "DIST_CODE") ||
+                  (props.OBJECTID !== undefined && "OBJECTID") ||
+                  null;
+                const value = key ? props[key] : null;
+                setHoverFilterKey(key);
+                setHoverFilterValue(value);
+              } else {
+                setHoverFeature(null);
+                setHoverPoint(null);
+                setHoverFilterKey(null);
+                setHoverFilterValue(null);
+              }
+            }
+
+            // Handle MA Senate Districts hover (improved detection)
+            if (showMaSenateDistricts) {
+              let senateFeature = features.find((f) => f.layer && f.layer.id === "ma-senate-districts-fill");
+              
+              // Enhanced fallback using queryRenderedFeatures with larger radius
+              if (!senateFeature && map) {
+                const x = event.point.x;
+                const y = event.point.y;
+                const queried = map.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {
+                  layers: ["ma-senate-districts-fill"],
+                });
+                if (queried && queried.length > 0) {
+                  senateFeature = queried[0];
+                }
+              }
+              
+              if (senateFeature) {
+                setSenateHoverFeature(senateFeature);
+                setSenateHoverPoint(event.lngLat);
+                const props = senateFeature.properties || {};
+                const key =
+                  (props.DIST_CODE !== undefined && "DIST_CODE") ||
+                  (props.OBJECTID !== undefined && "OBJECTID") ||
+                  null;
+                const value = key ? props[key] : null;
+                setSenateHoverFilterKey(key);
+                setSenateHoverFilterValue(value);
+              } else {
+                setSenateHoverFeature(null);
+                setSenateHoverPoint(null);
+                setSenateHoverFilterKey(null);
+                setSenateHoverFilterValue(null);
+              }
+            }
+
+            // Handle Municipalities hover (improved detection)
+            if (showMunicipalities) {
+              let muniFeature = features.find((f) => f.layer && f.layer.id === "municipalities-fill");
+              
+              // Enhanced fallback using queryRenderedFeatures with larger radius
+              if (!muniFeature && map) {
+                const x = event.point.x;
+                const y = event.point.y;
+                const queried = map.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {
+                  layers: ["municipalities-fill"],
+                });
+                if (queried && queried.length > 0) {
+                  muniFeature = queried[0];
+                }
+              }
+              
+              if (muniFeature) {
+                setMuniHoverFeature(muniFeature);
+                setMuniHoverPoint(event.lngLat);
+                const props = muniFeature.properties || {};
+                const key =
+                  (props.town !== undefined && "town") ||
+                  (props.NAME !== undefined && "NAME") ||
+                  (props.OBJECTID !== undefined && "OBJECTID") ||
+                  null;
+                const value = key ? props[key] : null;
+                setMuniHoverFilterKey(key);
+                setMuniHoverFilterValue(value);
+              } else {
+                setMuniHoverFeature(null);
+                setMuniHoverPoint(null);
+                setMuniHoverFilterKey(null);
+                setMuniHoverFilterValue(null);
+              }
+            }
+          }}
+          onMouseLeave={() => {
+            setHoverFeature(null);
+            setHoverPoint(null);
+            setHoverFilterKey(null);
+            setHoverFilterValue(null);
+            setSenateHoverFeature(null);
+            setSenateHoverPoint(null);
+            setSenateHoverFilterKey(null);
+            setSenateHoverFilterValue(null);
+            setMuniHoverFeature(null);
+            setMuniHoverPoint(null);
+            setMuniHoverFilterKey(null);
+            setMuniHoverFilterValue(null);
+          }}
           mapboxAccessToken={MAPBOX_TOKEN}
           mapStyle={baseLayer.url}
           scrollZoom={true}
@@ -307,11 +573,25 @@ const Map = () => {
             {landlineLayers()}
           </Source>
           <Source 
-            id="legislative-districts" 
+            id="ma-house-districts" 
             type="geojson" 
             data="https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/House2021/MapServer/1/query?where=1%3D1&outFields=*&f=geojson"
           >
-            {legislativeDistrictsLayers()}
+            {maHouseDistrictsLayers()}
+          </Source>
+          {showMaHouseDistricts && (
+            <Source 
+              id="ma-house-districts-lines" 
+              type="geojson" 
+              data="https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/House2021/MapServer/0/query?where=1%3D1&outFields=*&f=geojson"
+            />
+          )}
+          <Source 
+            id="ma-senate-districts" 
+            type="geojson" 
+            data="https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/Massachusetts_House_Districts/MapServer/0/query?where=1%3D1&outFields=*&f=geojson"
+          >
+            {maSenateDistrictsLayers()}
           </Source>
           <Source 
             id="municipalities" 
@@ -339,8 +619,97 @@ const Map = () => {
             alt={"Show Baesmaps"}
             clickHandler={() => toggleBasemapPanel(!showBasemapPanel)}
           />
+          {showMaHouseDistricts && hoverFeature && hoverPoint && (
+            <Popup
+              longitude={hoverPoint.lng}
+              latitude={hoverPoint.lat}
+              closeButton={false}
+              closeOnMove={true}
+              anchor="top"
+              offset={12}
+            >
+              {(() => {
+                const p = hoverFeature.properties || {};
+                const repName = p.REP || p.MEMBER || p.MEMBER_NAME || p.Rep || p.Member || "";
+                const distName = p.REP_DIST || p.DISTRICT || p.DISTRICT_NA || p.District || "";
+                const distNum = p.REPDISTNUM || p.DIST_CODE || p.DIST_NUM || "";
+                return (
+                  <div style={{minWidth: 160}}>
+                    {repName && <div style={{fontWeight: 600}}>{repName}</div>}
+                    {distName && <div>{distName}</div>}
+                    {distNum && <div>District #{distNum}</div>}
+                  </div>
+                );
+              })()}
+            </Popup>
+          )}
+          {showMaSenateDistricts && senateHoverFeature && senateHoverPoint && (
+            <Popup
+              longitude={senateHoverPoint.lng}
+              latitude={senateHoverPoint.lat}
+              closeButton={false}
+              closeOnMove={true}
+              anchor="top"
+              offset={12}
+            >
+              {(() => {
+                const p = senateHoverFeature.properties || {};
+                const repName = p.REP || p.MEMBER || p.MEMBER_NAME || p.Rep || p.Member || "";
+                const distName = p.REP_DIST || p.DISTRICT || p.DISTRICT_NA || p.District || "";
+                const distNum = p.DIST_CODE || p.DIST_NUM || "";
+                return (
+                  <div style={{minWidth: 160}}>
+                    {repName && <div style={{fontWeight: 600}}>{repName}</div>}
+                    {distName && <div>{distName}</div>}
+                    {distNum && <div>District #{distNum}</div>}
+                  </div>
+                );
+              })()}
+            </Popup>
+          )}
+          {showMunicipalities && muniHoverFeature && muniHoverPoint && (
+            <Popup
+              longitude={muniHoverPoint.lng}
+              latitude={muniHoverPoint.lat}
+              closeButton={false}
+              closeOnMove={true}
+              anchor="top"
+              offset={12}
+            >
+              {(() => {
+                const p = muniHoverFeature.properties || {};
+                const townName = p.town || "N/A";
+                return (
+                  <div style={{minWidth: 160}}>
+                    {townName && <div style={{fontWeight: 600}}>{townName}</div>}
+                  </div>
+                );
+              })()}
+            </Popup>
+          )}
           <MunicipalitiesButton />
-          <LegislativeDistrictsButton />
+          <MASenateDistrictsButton />
+          <MAhouseDistrictsButton />
+          {showOneLayerNotice && (showMunicipalities || showMaHouseDistricts || showMaSenateDistricts) && (
+            <div
+              className="Map_oneLayerNotice position-absolute"
+              style={{
+                top: 117,
+                right: 11,
+                background: "rgba(255,255,255,0.95)",
+                border: "1px solid rgba(0,0,0,0.1)",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                borderRadius: 6,
+                padding: "4px 8px",
+                fontSize: 12,
+                color: "#333",
+                zIndex: 1000
+              }}
+              onClick={() => setShowOneLayerNotice(false)}
+            >
+              For clarity, only one map (Municipalities, MA Senate, or MA House) is shown at a time
+            </div>
+          )}
           <ScaleControl position="bottom-right" />
           <NavigationControl className="map_navigation" position="bottom-right" />
           <GeolocateControl

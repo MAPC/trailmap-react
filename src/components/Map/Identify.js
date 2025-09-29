@@ -20,7 +20,6 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
       muni.muni_id === muniId ||
       muni.muni_id.toString() === muniId.toString()
     );
-    console.log("Looking for muni_id:", muniId, "Found:", municipality);
     return municipality ? municipality.muni_name : "";
   };
 
@@ -50,9 +49,13 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
     identifyDate.push(
       element.attributes["Facility Opening Date"] !== "Null" ? element.attributes["Facility Opening Date"] : ""
     );
-    identifyLength.push(
-      element.attributes["st_length(shape)"] !== "Null" ? element.attributes["st_length(shape)"] : ""
-    );
+    const rawLengthFeet =
+      element.attributes["Facility Length in Feet"] ?? element.attributes["length_ft"];
+    const normalizedLengthFeet =
+      rawLengthFeet !== undefined && rawLengthFeet !== null && rawLengthFeet !== "Null" && rawLengthFeet !== " "
+        ? rawLengthFeet
+        : "";
+    identifyLength.push(normalizedLengthFeet);
     
   });
 
@@ -75,7 +78,7 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
           (!identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: N/A</span>)}
         {(identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
           (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)}
-         {(identifyLength[i] && <span className="Popup__info Popup__section">Length: {parseFloat(identifyLength[i]).toFixed(2)} (meters)</span>) ||
+        {(identifyLength[i] && <span className="Popup__info Popup__section">Length: {parseFloat(identifyLength[i]).toFixed(2)} ft</span>) ||
            (!identifyLength[i] && <span className="Popup__info Popup__section">Length: N/A</span>)}
       </Carousel.Item>
     );

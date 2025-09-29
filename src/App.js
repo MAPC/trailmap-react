@@ -32,6 +32,8 @@ const App = () => {
   const [baseLayer, setBaseLayer] = useState(basemaps[0]);
   const [showLandlineLayer, toggleLandlineLayer] = useState(false);
   const [showLegislativeDistricts, toggleLegislativeDistricts] = useState(false);
+  const [showMaHouseDistricts, toggleMaHouseDistricts] = useState(false);
+  const [showMaSenateDistricts, toggleMaSenateDistricts] = useState(false);
   const [showMunicipalities, toggleMunicipalities] = useState(false);
 
   return (
@@ -72,6 +74,10 @@ const App = () => {
               toggleLandlineLayer,
               showLegislativeDistricts,
               toggleLegislativeDistricts,
+              showMaHouseDistricts,
+              toggleMaHouseDistricts,
+              showMaSenateDistricts,
+              toggleMaSenateDistricts,
               showMunicipalities,
               toggleMunicipalities,
               basemaps,
