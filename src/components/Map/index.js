@@ -72,6 +72,7 @@ const Map = () => {
   const [muniHoverFilterKey, setMuniHoverFilterKey] = useState(null);
   const [muniHoverFilterValue, setMuniHoverFilterValue] = useState(null);
   const [showOneLayerNotice, setShowOneLayerNotice] = useState(false);
+  const [isZooming, setIsZooming] = useState(false);
 
   // Show notice when any one of the exclusive layers turns on
   useEffect(() => {
@@ -87,21 +88,47 @@ const Map = () => {
     return () => clearTimeout(timer);
   }, [showOneLayerNotice]);
 
-  // Clear hover states when zoom changes to fix hover detection issues
+  // Handle zoom transitions and clear hover states after zoom completes
   useEffect(() => {
-    setHoverFeature(null);
-    setHoverPoint(null);
-    setHoverFilterKey(null);
-    setHoverFilterValue(null);
-    setSenateHoverFeature(null);
-    setSenateHoverPoint(null);
-    setSenateHoverFilterKey(null);
-    setSenateHoverFilterValue(null);
-    setMuniHoverFeature(null);
-    setMuniHoverPoint(null);
-    setMuniHoverFilterKey(null);
-    setMuniHoverFilterValue(null);
-  }, [viewport.zoom]);
+    if (isZooming) {
+      // Set a timer to clear hover states after zoom transition completes
+      const timer = setTimeout(() => {
+        setHoverFeature(null);
+        setHoverPoint(null);
+        setHoverFilterKey(null);
+        setHoverFilterValue(null);
+        setSenateHoverFeature(null);
+        setSenateHoverPoint(null);
+        setSenateHoverFilterKey(null);
+        setSenateHoverFilterValue(null);
+        setMuniHoverFeature(null);
+        setMuniHoverPoint(null);
+        setMuniHoverFilterKey(null);
+        setMuniHoverFilterValue(null);
+        setIsZooming(false);
+      }, 1100); // Slightly longer than transitionDuration (1000ms)
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isZooming]);
+
+  // Clear hover states when identify popup closes to fix hover detection
+  useEffect(() => {
+    if (!showIdentifyPopup) {
+      setHoverFeature(null);
+      setHoverPoint(null);
+      setHoverFilterKey(null);
+      setHoverFilterValue(null);
+      setSenateHoverFeature(null);
+      setSenateHoverPoint(null);
+      setSenateHoverFilterKey(null);
+      setSenateHoverFilterValue(null);
+      setMuniHoverFeature(null);
+      setMuniHoverPoint(null);
+      setMuniHoverFilterKey(null);
+      setMuniHoverFilterValue(null);
+    }
+  }, [showIdentifyPopup]);
 
   const mapRef = useRef();
 
@@ -402,7 +429,14 @@ const Map = () => {
           height="100%"
           cursor="default"
           interactiveLayerIds={["ma-house-districts-fill", "ma-senate-districts-fill", "municipalities-fill"]}
-          onMove={(event) => setViewport(event.viewState)}
+          onMove={(event) => {
+            const newViewport = event.viewState;
+            // Detect if zoom level changed to trigger hover state cleanup
+            if (Math.abs(newViewport.zoom - viewport.zoom) > 0.01) {
+              setIsZooming(true);
+            }
+            setViewport(newViewport);
+          }}
           onClick={(event) => getIdentifyPopup(event)}
           onMouseMove={(event) => {
             const map = mapRef.current && mapRef.current.getMap ? mapRef.current.getMap() : null;
@@ -538,7 +572,22 @@ const Map = () => {
             <Identify
               point={identifyPoint}
               identifyResult={identifyInfo}
-              handleShowPopup={() => toggleIdentifyPopup(!showIdentifyPopup)}
+              handleShowPopup={() => {
+                toggleIdentifyPopup(false);
+                // Clear all hover states when popup closes to fix hover detection
+                setHoverFeature(null);
+                setHoverPoint(null);
+                setHoverFilterKey(null);
+                setHoverFilterValue(null);
+                setSenateHoverFeature(null);
+                setSenateHoverPoint(null);
+                setSenateHoverFilterKey(null);
+                setSenateHoverFilterValue(null);
+                setMuniHoverFeature(null);
+                setMuniHoverPoint(null);
+                setMuniHoverFilterKey(null);
+                setMuniHoverFilterValue(null);
+              }}
               handleCarousel={setPointIndex}
             ></Identify>
           )}
@@ -634,10 +683,10 @@ const Map = () => {
                 const distName = p.REP_DIST || p.DISTRICT || p.DISTRICT_NA || p.District || "";
                 const distNum = p.REPDISTNUM || p.DIST_CODE || p.DIST_NUM || "";
                 return (
-                  <div style={{minWidth: 160}}>
-                    {repName && <div style={{fontWeight: 600}}>{repName}</div>}
-                    {distName && <div>{distName}</div>}
-                    {distNum && <div>District #{distNum}</div>}
+                  <div style={{minWidth: 160, color: '#2774bd'}}>
+                    {repName && <div style={{fontWeight: 600}}>Representative Name: {repName}</div>}
+                    {distName && <div>District: {distName}</div>}
+                    {distNum && <div>District Number: #{distNum}</div>}
                   </div>
                 );
               })()}
@@ -658,10 +707,10 @@ const Map = () => {
                 const distName = p.REP_DIST || p.DISTRICT || p.DISTRICT_NA || p.District || "";
                 const distNum = p.DIST_CODE || p.DIST_NUM || "";
                 return (
-                  <div style={{minWidth: 160}}>
-                    {repName && <div style={{fontWeight: 600}}>{repName}</div>}
-                    {distName && <div>{distName}</div>}
-                    {distNum && <div>District #{distNum}</div>}
+                  <div style={{minWidth: 160, color: '#2774bd'}}>
+                    {repName && <div style={{fontWeight: 600}}>Representative Name: {repName}</div>}
+                    {distName && <div>District: {distName}</div>}
+                    {distNum && <div>District Number: #{distNum}</div>}
                   </div>
                 );
               })()}
@@ -679,9 +728,10 @@ const Map = () => {
               {(() => {
                 const p = muniHoverFeature.properties || {};
                 const townName = p.town || "N/A";
+                const capitalizedTownName = townName && townName !== "N/A" ? townName.charAt(0).toUpperCase() + townName.slice(1).toLowerCase() : townName;
                 return (
-                  <div style={{minWidth: 160}}>
-                    {townName && <div style={{fontWeight: 600}}>{townName}</div>}
+                  <div style={{minWidth: 160, color: '#2774bd'}}>
+                    {capitalizedTownName && <div style={{fontWeight: 400}}>Municipality: {capitalizedTownName}</div>}
                   </div>
                 );
               })()}
