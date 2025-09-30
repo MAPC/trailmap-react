@@ -189,6 +189,9 @@ const Map = () => {
         if (map.getLayer('ma-senate-districts-hover')) {
           map.removeLayer('ma-senate-districts-hover');
         }
+        if (map.getLayer('ma-senate-districts-lines')) {
+          map.removeLayer('ma-senate-districts-lines');
+        }
       }
 
       // Force re-render of municipalities layers when basemap changes
@@ -270,8 +273,8 @@ const Map = () => {
           type="fill"
           source="ma-house-districts"
           paint={{
-            "fill-color": "rgba(255, 165, 0, 0.6)",
-            "fill-outline-color": "red"
+            "fill-color": "rgba(255, 166, 0, 0.25)",
+            "fill-outline-color": "black"
           }}
           filter={
             hoverFilterKey && hoverFilterValue !== null
@@ -287,8 +290,8 @@ const Map = () => {
           type="line"
           source="ma-house-districts-lines"
           paint={{
-            "line-color": "rgb(240, 40, 18)",
-            "line-width": 0.5
+            "line-color": "black",
+            "line-width": 1.05
           }}
         />
       );
@@ -307,7 +310,7 @@ const Map = () => {
           source="ma-senate-districts"
           paint={{
             "fill-color": "transparent",
-            "fill-outline-color": "red"
+            "fill-outline-color": "black"
           }}
         />
       );
@@ -318,14 +321,26 @@ const Map = () => {
           type="fill"
           source="ma-senate-districts"
           paint={{
-            "fill-color": "rgba(255, 165, 0, 0.6)",
-            "fill-outline-color": "red"
+            "fill-color": "rgba(255, 166, 0, 0.25)",
+            "fill-outline-color": "black"
           }}
           filter={
             senateHoverFilterKey && senateHoverFilterValue !== null
               ? ["==", ["get", senateHoverFilterKey], senateHoverFilterValue]
               : ["==", ["get", "__none__"], "__no_match__"]
           }
+        />
+      );
+      visibleMaSenateDistrictsLayers.push(
+        <Layer
+          key="ma-senate-districts-lines"
+          id="ma-senate-districts-lines"
+          type="line"
+          source="ma-senate-districts-lines"
+          paint={{
+            "line-color": "black",
+            "line-width": 1.05
+          }}
         />
       );
     }
@@ -343,7 +358,7 @@ const Map = () => {
           source="municipalities"
           paint={{
             "fill-color": "transparent",
-            "fill-outline-color": "red"
+            "fill-outline-color": "black"
           }}
         />
       );
@@ -354,8 +369,8 @@ const Map = () => {
           type="fill"
           source="municipalities"
           paint={{
-            "fill-color": "rgba(255, 165, 0, 0.6)",
-            "fill-outline-color": "red"
+            "fill-color": "rgba(255, 166, 0, 0.25)",
+            "fill-outline-color": "black"
           }}
           filter={
             muniHoverFilterKey && muniHoverFilterValue !== null
@@ -638,10 +653,17 @@ const Map = () => {
           <Source 
             id="ma-senate-districts" 
             type="geojson" 
-            data="https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/Massachusetts_House_Districts/MapServer/0/query?where=1%3D1&outFields=*&f=geojson"
+            data="https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/Senate2021/MapServer/1/query?where=1%3D1&outFields=*&f=geojson"
           >
             {maSenateDistrictsLayers()}
           </Source>
+          {showMaSenateDistricts && (
+            <Source 
+              id="ma-senate-districts-lines" 
+              type="geojson" 
+              data="https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/Senate2021/MapServer/0/query?where=1%3D1&outFields=*&f=geojson"
+            />
+          )}
           <Source 
             id="municipalities" 
             type="geojson" 
@@ -678,15 +700,17 @@ const Map = () => {
               offset={12}
             >
               {(() => {
+              
                 const p = hoverFeature.properties || {};
-                const repName = p.REP || p.MEMBER || p.MEMBER_NAME || p.Rep || p.Member || "";
-                const distName = p.REP_DIST || p.DISTRICT || p.DISTRICT_NA || p.District || "";
-                const distNum = p.REPDISTNUM || p.DIST_CODE || p.DIST_NUM || "";
+                console.log("showMaHouseDistricts", p);
+                const repName = p.REP || "";
+                const distName = p.REP_DIST || "";
+                const distNum = p.DIST_CODE || "";
                 return (
                   <div style={{minWidth: 160, color: '#2774bd'}}>
                     {repName && <div style={{fontWeight: 600}}>Representative Name: {repName}</div>}
                     {distName && <div>District: {distName}</div>}
-                    {distNum && <div>District Number: #{distNum}</div>}
+                    {distNum && <div>District Code: #{distNum}</div>}
                   </div>
                 );
               })()}
@@ -702,15 +726,17 @@ const Map = () => {
               offset={12}
             >
               {(() => {
+                
                 const p = senateHoverFeature.properties || {};
-                const repName = p.REP || p.MEMBER || p.MEMBER_NAME || p.Rep || p.Member || "";
-                const distName = p.REP_DIST || p.DISTRICT || p.DISTRICT_NA || p.District || "";
-                const distNum = p.DIST_CODE || p.DIST_NUM || "";
+                console.log("showMaSenateDistricts", p);
+                const repName = p.SENATOR || "";
+                const distName = p.SEN_DIST || "";
+                const distNum = p.SENDISTNUM || "";
                 return (
                   <div style={{minWidth: 160, color: '#2774bd'}}>
-                    {repName && <div style={{fontWeight: 600}}>Representative Name: {repName}</div>}
-                    {distName && <div>District: {distName}</div>}
-                    {distNum && <div>District Number: #{distNum}</div>}
+                    {repName && <div style={{fontWeight: 600}}>Senator: {repName}</div>}
+                    {distName && <div>Senate District: {distName}</div>}
+                    {distNum && <div>Senate District Number: #{distNum}</div>}
                   </div>
                 );
               })()}
