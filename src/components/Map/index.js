@@ -7,6 +7,9 @@ import React, { useState, useRef, useEffect, useContext } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
+import bbox from "@turf/bbox";
+import LoadingBar from "../LoadingBar";
+import TrailListWindow from "../TrailListWindow";
 import BasemapPanel from "../BasemapPanel";
 import Control from "./Control";
 import ControlPanel from "../ControlPanel";
@@ -21,8 +24,13 @@ import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import EditModal from "../Modals/EditModal";
 import massachusettsData from "../../data/massachusetts.json";
+import commuterRailData from "../../data/commuter_rail.json";
+import commuterRailStationsData from "../../data/commuter_rail_stations_point.json";
+import blueBikeStationsData from "../../data/blue_bike_stations.json";
 import SuccessModal from "../Modals/SuccessModal";
 import FailModal from "../Modals/FailModal";
+import BufferAnalysisWindow from "../BufferAnalysisWindow";
+import * as turf from "@turf/turf";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
@@ -45,6 +53,11 @@ const Map = () => {
     existingTrails,
     proposedTrails,
     landlines,
+    selectedMunicipality,
+    setSelectedMunicipality,
+    municipalityTrails,
+    setMunicipalityTrails,
+    showMunicipalityProfileMap,
   } = useContext(LayerContext);
 
   const [viewport, setViewport] = useState({
@@ -73,6 +86,45 @@ const Map = () => {
   const [muniHoverFilterValue, setMuniHoverFilterValue] = useState(null);
   const [showOneLayerNotice, setShowOneLayerNotice] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
+  const [muniClickEnabled, setMuniClickEnabled] = useState(false);
+  const [isQueryingTrails, setIsQueryingTrails] = useState(false);
+  const lastQueriedMunicipality = useRef(null);
+  const [selectedTrailFromList, setSelectedTrailFromList] = useState(null);
+  const [highlightedTrail, setHighlightedTrail] = useState(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const [geojsonTrails, setGeojsonTrails] = useState({});
+  const [intersectedTrails, setIntersectedTrails] = useState([]);
+  const [showTrailListWindow, setShowTrailListWindow] = useState(false);
+  const [selectedTrailIndex, setSelectedTrailIndex] = useState(null);
+  const [hoveredTrail, setHoveredTrail] = useState(null);
+  const [showCommuterRail, setShowCommuterRail] = useState(false);
+  const [showStationLabels, setShowStationLabels] = useState(false);
+  const [showBlueBikeStations, setShowBlueBikeStations] = useState(false);
+  
+  // Buffer analysis states
+  const [showBufferAnalysis, setShowBufferAnalysis] = useState(false);
+  const [isBufferActive, setIsBufferActive] = useState(false);
+  const [bufferCenter, setBufferCenter] = useState(null);
+  const [bufferRadius, setBufferRadius] = useState(1000); // meters
+  const [bufferResults, setBufferResults] = useState(null);
+
+  // GeoJSON trail layer definitions - using local files
+  // Colors match LayerData.js for consistency
+  const geojsonTrailLayers = [
+    { id: 0, name: "Protected Bike Lanes", filename: "existing_protected_bike_lanes.geojson", color: "#2166AC" },
+    { id: 1, name: "Planned Protected Bike Lanes", filename: "planned_protected_bike_lanes.geojson", color: "#2166AC", dashArray: [2, 2] },
+    { id: 2, name: "Bike Lanes", filename: "existing_bike_lanes.geojson", color: "#92C5DE" },
+    { id: 3, name: "Planned Bike Lanes", filename: "proposed_bike_lanes.geojson", color: "#92C5DE", dashArray: [2, 2] },
+    { id: 4, name: "Paved Foot Path", filename: "paved_footway.geojson", color: "#903366" },
+    { id: 5, name: "Planned Paved Foot Path", filename: "proposed_paved_footway.geojson", color: "#903366", dashArray: [2, 2] },
+    { id: 6, name: "Natural Surface Path", filename: "natural_surface_footway.geojson", color: "#A87196" },
+    { id: 7, name: "Planned Natural Surface Path", filename: "proposed_natural_surface_footway.geojson", color: "#A87196", dashArray: [2, 2] },
+    { id: 8, name: "Paved Shared Use", filename: "existing_paved_shared_use_paths.geojson", color: "#214A2D" },
+    { id: 9, name: "Planned Paved Shared Use", filename: "proposed_paved_shared_use_paths.geojson", color: "#214A2D", dashArray: [2, 2] },
+    { id: 10, name: "Planned Unimproved Shared Use", filename: "proposed_unimproved_shared_use_paths.geojson", color: "#4BAA40", dashArray: [2, 2] },
+    { id: 11, name: "Unimproved Shared Use", filename: "existing_unimproved_shared_use_paths.geojson", color: "#4BAA40" }
+  ];
 
   // Show notice when any one of the exclusive layers turns on
   useEffect(() => {
@@ -163,6 +215,16 @@ const Map = () => {
     setMapParam();
   }, []);
 
+  // Auto-switch to light basemap when entering municipality profile
+  useEffect(() => {
+    if (showMunicipalityProfileMap) {
+      const lightBasemap = basemaps.find((bm) => bm.id === 'mapboxLight');
+      if (lightBasemap && baseLayer.id !== 'mapboxLight') {
+        setBaseLayer(lightBasemap);
+      }
+    }
+  }, [showMunicipalityProfileMap, basemaps, baseLayer, setBaseLayer]);
+
   // Ensure Legislative Districts and Municipalities layers persist across basemap changes
   useEffect(() => {
     if (mapRef.current) {
@@ -206,28 +268,149 @@ const Map = () => {
           map.removeLayer('municipalities-labels');
         }
       }
+
+      // Force re-render of municipality profile layers when basemap changes
+      if (showMunicipalityProfileMap) {
+        if (map.getLayer('municipality-profile-base')) {
+          map.removeLayer('municipality-profile-base');
+        }
+        if (map.getLayer('municipality-profile-selected')) {
+          map.removeLayer('municipality-profile-selected');
+        }
+        if (map.getLayer('municipality-profile-outline')) {
+          map.removeLayer('municipality-profile-outline');
+        }
+        if (map.getLayer('municipality-profile-selected-outline')) {
+          map.removeLayer('municipality-profile-selected-outline');
+        }
+      }
     }
-  }, [baseLayer, showMaHouseDistricts, showMaSenateDistricts, showMunicipalities]);
+  }, [baseLayer, showMaHouseDistricts, showMaSenateDistricts, showMunicipalities, showMunicipalityProfileMap, selectedMunicipality]);
 
   const visibleLayers = () => {
     const visibleLayers = [];
-    const allLayers = [...trailLayers, ...proposedLayers];
-    allLayers.forEach((layer) => {
-      const layerSet = layer.includes("Proposed") ? proposedTrails : existingTrails;
-      const addLayer = layerSet.find((l) => l.id === layer);
-      visibleLayers.push(
-        <Layer
-          key={addLayer.id}
-          esri_id={addLayer["esri-id"]}
-          id={addLayer.id}
-          type={addLayer.type}
-          source="MAPC trail vector tiles"
-          source-layer={addLayer["source-layer"]}
-          paint={addLayer.paint}
-          layout={addLayer.layout}
-        ></Layer>
-      );
-    });
+    
+    // For municipality profile, use GeoJSON trails
+    if (showMunicipalityProfileMap && intersectedTrails.length > 0) {
+      // Group trails by layer for efficient rendering
+      const trailsByLayer = {};
+      intersectedTrails.forEach(trail => {
+        if (!trailsByLayer[trail.layerId]) {
+          trailsByLayer[trail.layerId] = [];
+        }
+        trailsByLayer[trail.layerId].push(trail);
+      });
+
+      // Create a GeoJSON source for each layer
+      Object.keys(trailsByLayer).forEach(layerId => {
+        const layerTrails = trailsByLayer[layerId];
+        const layerInfo = geojsonTrailLayers.find(l => l.id === parseInt(layerId));
+        
+        if (layerInfo) {
+          // Create GeoJSON feature collection
+          const geojsonData = {
+            type: "FeatureCollection",
+            features: layerTrails.map(trail => trail.feature)
+          };
+
+          // Build paint properties for base layer
+          const paintProps = {
+            "line-color": layerInfo.color,
+            "line-width": 3,
+            "line-opacity": 0.8
+          };
+
+          // Build paint properties for hover layer (thicker)
+          const hoverPaintProps = {
+            "line-color": layerInfo.color,
+            "line-width": 6,
+            "line-opacity": 1
+          };
+
+          // Build layout properties (for dashed lines)
+          const layoutProps = {};
+          if (layerInfo.dashArray) {
+            paintProps["line-dasharray"] = layerInfo.dashArray;
+            hoverPaintProps["line-dasharray"] = layerInfo.dashArray;
+          }
+
+          visibleLayers.push(
+            <Source key={`geojson-source-${layerId}`} id={`geojson-source-${layerId}`} type="geojson" data={geojsonData}>
+              {/* Base layer */}
+              <Layer
+                id={`geojson-trail-${layerId}`}
+                type="line"
+                paint={paintProps}
+                layout={layoutProps}
+              />
+              {/* Hover layer - only shows when hovering */}
+              <Layer
+                id={`geojson-trail-hover-${layerId}`}
+                type="line"
+                paint={hoverPaintProps}
+                layout={layoutProps}
+                filter={
+                  hoveredTrail && hoveredTrail.layerId === parseInt(layerId)
+                    ? ["==", ["get", "objectid"], hoveredTrail.attributes?.objectid || hoveredTrail.attributes?.OBJECTID || -1]
+                    : ["==", ["get", "objectid"], -1]
+                }
+              />
+            </Source>
+          );
+        }
+      });
+
+      // Add highlight layer for selected trail from list
+      if (highlightedTrail && highlightedTrail.feature) {
+        const highlightGeojson = {
+          type: "FeatureCollection",
+          features: [highlightedTrail.feature]
+        };
+
+        // Use the trail's own color for highlighting
+        const highlightPaint = {
+          "line-color": highlightedTrail.color || "#FF6B00",
+          "line-width": 7,
+          "line-opacity": 1
+        };
+
+        // Add dash array if the trail has one
+        const layerInfo = geojsonTrailLayers.find(l => l.id === highlightedTrail.layerId);
+        if (layerInfo && layerInfo.dashArray) {
+          highlightPaint["line-dasharray"] = layerInfo.dashArray;
+        }
+
+        visibleLayers.push(
+          <Source key="highlighted-trail-source" id="highlighted-trail-source" type="geojson" data={highlightGeojson}>
+            <Layer
+              id="highlighted-trail"
+              type="line"
+              paint={highlightPaint}
+            />
+          </Source>
+        );
+      }
+    } else {
+      // For regular trail filters, use vector tiles
+      const allLayers = [...trailLayers, ...proposedLayers];
+      allLayers.forEach((layer) => {
+        const layerSet = layer.includes("Proposed") ? proposedTrails : existingTrails;
+        const addLayer = layerSet.find((l) => l.id === layer);
+        visibleLayers.push(
+          <Layer
+            key={addLayer.id}
+            esri_id={addLayer["esri-id"]}
+            id={addLayer.id}
+            type={addLayer.type}
+            source="MAPC trail vector tiles"
+            source-layer={addLayer["source-layer"]}
+            paint={addLayer.paint}
+            layout={addLayer.layout}
+          ></Layer>
+        );
+      });
+    }
+
     return visibleLayers;
   };
   const landlineLayers = () => {
@@ -362,6 +545,7 @@ const Map = () => {
           }}
         />
       );
+      
       visibleMunicipalitiesLayers.push(
         <Layer
           key="municipalities-hover"
@@ -383,6 +567,429 @@ const Map = () => {
     return visibleMunicipalitiesLayers;
   };
 
+  // Separate municipality profile map layers
+  const municipalityProfileLayers = () => {
+    const profileLayers = [];
+    if (showMunicipalityProfileMap) {
+      // Base layer - all unselected municipalities with light gray fill
+      profileLayers.push(
+        <Layer
+          key="municipality-profile-base"
+          id="municipality-profile-base"
+          type="fill"
+          source="municipalities"
+          paint={{
+            "fill-color": "rgba(200, 200, 200, 0.15)",
+            "fill-outline-color": "transparent"
+          }}
+        />
+      );
+
+      // Dim unselected municipalities with light grey semi-transparent fill
+      if (selectedMunicipality && selectedMunicipality.name) {
+        profileLayers.push(
+          <Layer
+            key="municipality-profile-unselected"
+            id="municipality-profile-unselected"
+            type="fill"
+            source="municipalities"
+            paint={{
+              "fill-color": "#CCCCCC",
+              "fill-opacity": 0.4
+            }}
+            filter={["!=", ["downcase", ["get", "town"]], selectedMunicipality.name.toLowerCase()]}
+          />
+        );
+      }
+
+      // Outline for all municipalities - gray
+      profileLayers.push(
+        <Layer
+          key="municipality-profile-outline"
+          id="municipality-profile-outline"
+          type="line"
+          source="municipalities"
+          paint={{
+            "line-color": "#666666",
+            "line-width": 1
+          }}
+        />
+      );
+
+      // Selected municipality outline - darker and slightly thicker for clear boundary
+      if (selectedMunicipality && selectedMunicipality.name) {
+        profileLayers.push(
+          <Layer
+            key="municipality-profile-selected-outline"
+            id="municipality-profile-selected-outline"
+            type="line"
+            source="municipalities"
+            paint={{
+              "line-color": "#333333",
+              "line-width": 2
+            }}
+            filter={["==", ["downcase", ["get", "town"]], selectedMunicipality.name.toLowerCase()]}
+          />
+        );
+      }
+
+    }
+    return profileLayers;
+  };
+
+  const commuterRailLayers = () => {
+    if (!showCommuterRail || !showMunicipalityProfileMap) {
+      return null;
+    }
+
+    return (
+      <>
+        {/* Commuter Rail Lines */}
+        <Source key="commuter-rail-source" id="commuter-rail-source" type="geojson" data={commuterRailData}>
+          {commuterRailData.features.map((feature) => {
+            const routeColor = feature.properties?.route_color 
+              ? `#${feature.properties.route_color}` 
+              : "#808080";
+            
+            return (
+              <Layer
+                key={`commuter-rail-${feature.id}`}
+                id={`commuter-rail-${feature.id}`}
+                type="line"
+                paint={{
+                  "line-color": routeColor,
+                  "line-width": 1,
+                  "line-opacity": 0.8
+                }}
+                filter={["==", ["get", "shape_id"], feature.properties.shape_id]}
+              />
+            );
+          })}
+        </Source>
+        
+        {/* Commuter Rail Stations */}
+        <Source key="commuter-rail-stations-source" id="commuter-rail-stations-source" type="geojson" data={commuterRailStationsData}>
+          {/* Station outer circle (border) */}
+          <Layer
+            key="commuter-rail-stations-border"
+            id="commuter-rail-stations-border"
+            type="circle"
+            paint={{
+              "circle-radius": 4,
+              "circle-color": "#FFFFFF",
+              "circle-stroke-width": 1,
+              "circle-stroke-color": "#333333"
+            }}
+          />
+          
+          {/* Station inner circle (fill) */}
+          <Layer
+            key="commuter-rail-stations"
+            id="commuter-rail-stations"
+            type="circle"
+            paint={{
+              "circle-radius": 3,
+              "circle-color": "#FF6B35",
+              "circle-opacity": 0.9
+            }}
+          />
+          
+          {/* Station labels - only show when enabled */}
+          {showStationLabels && (
+            <Layer
+              key="commuter-rail-stations-labels"
+              id="commuter-rail-stations-labels"
+              type="symbol"
+              layout={{
+                "text-field": ["get", "station"],
+                "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+                "text-size": 11,
+                "text-offset": [0, 1.5],
+                "text-anchor": "top"
+              }}
+              paint={{
+                "text-color": "#333333",
+                "text-halo-color": "#FFFFFF",
+                "text-halo-width": 1.5
+              }}
+            />
+          )}
+        </Source>
+      </>
+    );
+  };
+
+  const blueBikeStationsLayers = () => {
+  
+    if (!showBlueBikeStations || !showMunicipalityProfileMap) {
+      return null;
+    }
+    return (
+      <Source key="blue-bike-stations-source" id="blue-bike-stations-source" type="geojson" data={blueBikeStationsData}>
+        {/* Blue Bike Station border circle */}
+        <Layer
+          key="blue-bike-stations-border"
+          id="blue-bike-stations-border"
+          type="circle"
+          paint={{
+            "circle-radius": 4,
+            "circle-color": "#FFFFFF",
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#FFFFFF"
+          }}
+        />
+        
+        {/* Blue Bike Station inner circle */}
+        <Layer
+          key="blue-bike-stations"
+          id="blue-bike-stations"
+          type="circle"
+          interactive={true}
+          paint={{
+            "circle-radius": 3,
+            "circle-color": "#87CEEB",
+            "circle-opacity": 0.9
+          }}
+        />
+      </Source>
+    );
+  };
+
+  // Calculate features within buffer
+  const calculateBufferAnalysis = (center, radius) => {
+    if (!center || !radius) return null;
+
+    const centerPoint = turf.point([center.lng, center.lat]);
+    const bufferCircle = turf.circle(centerPoint, radius / 1000, { units: 'kilometers' });
+
+    const results = {
+      trails: [],
+      stations: [],
+      bikeStations: []
+    };
+
+    // Check trails
+    if (intersectedTrails && intersectedTrails.length > 0) {
+      intersectedTrails.forEach((trail) => {
+        if (trail.geometry) {
+          const trailFeature = {
+            type: 'Feature',
+            geometry: trail.geometry,
+            properties: trail.attributes
+          };
+
+          // Check if trail intersects with buffer
+          const intersects = turf.booleanIntersects(bufferCircle, trailFeature);
+          
+          if (intersects) {
+            // Calculate distance from center to trail
+            let distance = 0;
+            
+            // Handle MultiLineString by converting to LineString or calculating min distance
+            if (trail.geometry.type === 'MultiLineString') {
+              // For MultiLineString, find the closest segment
+              let minDistance = Infinity;
+              trail.geometry.coordinates.forEach((lineCoords) => {
+                const lineString = turf.lineString(lineCoords);
+                const d = turf.pointToLineDistance(centerPoint, lineString, { units: 'meters' });
+                if (d < minDistance) {
+                  minDistance = d;
+                }
+              });
+              distance = minDistance;
+            } else {
+              // For LineString, calculate directly
+              distance = turf.pointToLineDistance(centerPoint, trailFeature, { units: 'meters' });
+            }
+            
+            // Get trail length
+            const lengthInFeet = trail.attributes?.length_ft || 
+                                 trail.attributes?.['Facility Length in Feet'] || 
+                                 trail.attributes?.Shape_Length || 
+                                 0;
+            
+            results.trails.push({
+              name: trail.attributes?.Name || trail.attributes?.name || 'Unnamed Trail',
+              type: trail.layerName || 'Unknown',
+              distance: distance,
+              length: Number(lengthInFeet) * 0.3048, // Convert feet to meters
+              color: trail.color
+            });
+          }
+        }
+      });
+
+      // Sort trails by distance
+      results.trails.sort((a, b) => a.distance - b.distance);
+    }
+
+    // Check commuter rail stations
+    if (commuterRailStationsData && commuterRailStationsData.features) {
+      commuterRailStationsData.features.forEach((station) => {
+        const stationPoint = turf.point(station.geometry.coordinates);
+        const distance = turf.distance(centerPoint, stationPoint, { units: 'meters' });
+
+        if (distance <= radius) {
+          results.stations.push({
+            name: station.properties?.station || 'Unknown Station',
+            line: station.properties?.line_brnch || 'Unknown Line',
+            distance: distance
+          });
+        }
+      });
+
+      // Sort stations by distance
+      results.stations.sort((a, b) => a.distance - b.distance);
+    }
+
+    // Check Blue Bike stations
+    if (blueBikeStationsData && blueBikeStationsData.features) {
+      blueBikeStationsData.features.forEach((station) => {
+        const stationPoint = turf.point(station.geometry.coordinates);
+        const distance = turf.distance(centerPoint, stationPoint, { units: 'meters' });
+
+        if (distance <= radius) {
+          results.bikeStations.push({
+            name: station.properties?.Name || 'Unknown Station',
+            district: station.properties?.District || 'Unknown District',
+            totalDocks: station.properties?.Total_docks || 0,
+            distance: distance
+          });
+        }
+      });
+
+      // Sort bike stations by distance
+      results.bikeStations.sort((a, b) => a.distance - b.distance);
+    }
+
+    return results;
+  };
+
+  // Render buffer circle on map
+  const renderBufferCircle = () => {
+    if (!bufferCenter || !bufferRadius) return null;
+
+    const centerPoint = turf.point([bufferCenter.lng, bufferCenter.lat]);
+    const bufferCircle = turf.circle(centerPoint, bufferRadius / 1000, { 
+      units: 'kilometers',
+      steps: 64 
+    });
+
+    return (
+      <Source key="buffer-circle-source" id="buffer-circle-source" type="geojson" data={bufferCircle}>
+        {/* Buffer fill */}
+        <Layer
+          key="buffer-fill"
+          id="buffer-fill"
+          type="fill"
+          paint={{
+            "fill-color": "#0080ff",
+            "fill-opacity": 0.15
+          }}
+        />
+        {/* Buffer outline */}
+        <Layer
+          key="buffer-outline"
+          id="buffer-outline"
+          type="line"
+          paint={{
+            "line-color": "#0080ff",
+            "line-width": 2,
+            "line-dasharray": [2, 2]
+          }}
+        />
+      </Source>
+    );
+  };
+
+  // Render buffer center marker
+  const renderBufferCenter = () => {
+    if (!bufferCenter) return null;
+
+    const centerGeoJSON = {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [bufferCenter.lng, bufferCenter.lat]
+        }
+      }]
+    };
+
+    return (
+      <Source key="buffer-center-source" id="buffer-center-source" type="geojson" data={centerGeoJSON}>
+        <Layer
+          key="buffer-center"
+          id="buffer-center"
+          type="circle"
+          paint={{
+            "circle-radius": 8,
+            "circle-color": "#0080ff",
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#ffffff"
+          }}
+        />
+      </Source>
+    );
+  };
+
+  // Handle trail click from Trail List Window
+  const handleTrailListClick = (trail, index) => {
+    setSelectedTrailIndex(index);
+    setHighlightedTrail(trail);
+    
+    // Calculate center point for popup first
+    let popupPoint = null;
+    if (trail.geometry && trail.geometry.coordinates && trail.geometry.coordinates.length > 0) {
+      const coords = trail.geometry.coordinates;
+      // Handle MultiLineString vs LineString
+      const coordsArray = trail.geometry.type === 'MultiLineString' 
+        ? coords[0] 
+        : coords;
+      
+      if (coordsArray && coordsArray.length > 0) {
+        const midPoint = coordsArray[Math.floor(coordsArray.length / 2)];
+        if (midPoint && midPoint.length >= 2 && !isNaN(midPoint[0]) && !isNaN(midPoint[1])) {
+          popupPoint = { lng: midPoint[0], lat: midPoint[1] };
+        }
+      }
+    }
+    
+    // Only show popup if we have a valid point
+    if (popupPoint) {
+      // Show identify popup with trail data
+      const mockResult = {
+        attributes: trail.attributes,
+        layerName: trail.layerName
+      };
+      
+      // Force popup refresh by toggling off then on
+      toggleIdentifyPopup(false);
+      
+      setTimeout(() => {
+        setIdentifyPoint(popupPoint);
+        setIdentifyInfo([mockResult]);
+        setPointIndex(0);
+        toggleIdentifyPopup(true);
+      }, 10);
+    }
+    
+    // Zoom to trail if it has geometry
+    if (trail.geometry && trail.geometry.coordinates) {
+      try {
+        const trailBbox = bbox(trail.geometry);
+        const map = mapRef.current.getMap();
+        map.fitBounds(
+          [[trailBbox[0], trailBbox[1]], [trailBbox[2], trailBbox[3]]],
+          { padding: 100, duration: 1000 }
+        );
+      } catch (error) {
+        console.error("Error zooming to trail:", error);
+      }
+    }
+  };
+
   const generateShareUrl = () => {
     //sample URL
     //http://localhost:8080/?baseLayer=mapboxDark&trailLayers=pavedPaths,unimprovedPaths,bikeLane
@@ -390,6 +997,270 @@ const Map = () => {
       ","
     )}&centroid=${viewport.latitude},${viewport.longitude}&zoom=${viewport.zoom}`;
   };
+
+  // Function to zoom to municipality
+  const handleZoomToMunicipality = (municipality) => {
+    if (municipality && municipality.geometry) {
+      try {
+        const [minLng, minLat, maxLng, maxLat] = bbox(municipality.geometry);
+        const map = mapRef.current.getMap();
+        map.fitBounds(
+          [[minLng, minLat], [maxLng, maxLat]],
+          {
+            padding: 50,
+            duration: 1000
+          }
+        );
+        
+        // Enable municipalities layer if not already enabled
+        if (!showMunicipalities) {
+          const { toggleMunicipalities } = LayerContext._currentValue || {};
+          if (toggleMunicipalities) {
+            toggleMunicipalities(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error zooming to municipality:", error);
+      }
+    }
+  };
+
+  // Function to load GeoJSON trail data and find intersections
+  const queryMunicipalityTrails = async (municipality) => {
+    if (!municipality || !municipality.geometry) {
+      setMunicipalityTrails([]);
+      setIntersectedTrails([]);
+      lastQueriedMunicipality.current = null;
+      return;
+    }
+
+    // Prevent duplicate queries
+    if (isQueryingTrails) {
+      console.log("Query already in progress, skipping...");
+      return;
+    }
+
+    // Check if we already queried this municipality
+    if (lastQueriedMunicipality.current === municipality.name) {
+      console.log("Already queried this municipality, skipping...");
+      return;
+    }
+
+    setIsQueryingTrails(true);
+    setLoadingProgress(0);
+    setLoadingMessage("Loading trail data...");
+    console.log("Starting GeoJSON query for municipality:", municipality.name);
+    console.log("Municipality town_id:", municipality.properties?.town_id);
+
+    try {
+      const allTrailResults = [];
+      const totalLayers = geojsonTrailLayers.length;
+      const municipalityId = municipality.properties?.town_id;
+      
+      if (!municipalityId) {
+        console.error("Municipality does not have a town_id");
+        setMunicipalityTrails([]);
+        setIsQueryingTrails(false);
+        return;
+      }
+      
+      // Load each GeoJSON layer from local files
+      for (let i = 0; i < geojsonTrailLayers.length; i++) {
+        const layer = geojsonTrailLayers[i];
+        setLoadingMessage(`Loading ${layer.name}...`);
+        setLoadingProgress((i / totalLayers) * 50); // First 50% for loading
+
+        try {
+          // Fetch the local GeoJSON file
+          console.log(`Fetching: ./src/data/${layer.filename}`);
+          const response = await fetch(`./src/data/${layer.filename}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${layer.filename}: ${response.status}`);
+          }
+          const geojsonData = await response.json();
+          console.log(`Loaded ${layer.filename}:`, geojsonData.features?.length || 0, 'features');
+          
+          if (geojsonData && geojsonData.features) {
+            setLoadingMessage(`Processing ${layer.name}...`);
+            setLoadingProgress(50 + (i / totalLayers) * 30); // Next 30% for processing
+
+            // Find trails that match the municipality ID (much faster than geometric intersection)
+            const intersectingFeatures = geojsonData.features.filter(feature => {
+              return feature.properties?.muni_id === municipalityId;
+            });
+            
+            console.log(`Found ${intersectingFeatures.length} trails in ${layer.name} (layer id: ${layer.id}) for muni_id ${municipalityId}`);
+
+            // Add layer information to each intersecting feature
+            const beforeCount = allTrailResults.length;
+            intersectingFeatures.forEach(feature => {
+              allTrailResults.push({
+                layerId: layer.id,
+                layerName: layer.name,
+                attributes: feature.properties,
+                geometry: feature.geometry,
+                color: layer.color,
+                feature: feature
+              });
+            });
+            const afterCount = allTrailResults.length;
+            console.log(`Added ${afterCount - beforeCount} trails from ${layer.name}. Total now: ${afterCount}`);
+          }
+        } catch (error) {
+          console.error(`Error loading layer ${layer.name}:`, error);
+        }
+      }
+
+      setLoadingMessage("Finalizing results...");
+      setLoadingProgress(90);
+
+      console.log(`Total trails found: ${allTrailResults.length}`);
+      console.log('Trails by layer ID:', allTrailResults.reduce((acc, trail) => {
+        acc[trail.layerId] = (acc[trail.layerId] || 0) + 1;
+        return acc;
+      }, {}));
+
+      setLoadingProgress(100);
+      
+      // Use all results without deduplication
+      setMunicipalityTrails(allTrailResults);
+      setIntersectedTrails(allTrailResults);
+      lastQueriedMunicipality.current = municipality.name;
+
+    } catch (error) {
+      console.error("Error querying municipality trails:", error);
+      setMunicipalityTrails([]);
+      setIntersectedTrails([]);
+    } finally {
+      setIsQueryingTrails(false);
+      setLoadingProgress(0);
+      setLoadingMessage("");
+    }
+  };
+
+  // Query trails when municipality is selected (only on municipality change, not on trail layer changes)
+  useEffect(() => {
+    if (selectedMunicipality) {
+      queryMunicipalityTrails(selectedMunicipality);
+      // Trail list window will be closed by default, user can open it manually
+    } else {
+      setMunicipalityTrails([]);
+      setShowTrailListWindow(false);
+      lastQueriedMunicipality.current = null;
+    }
+  }, [selectedMunicipality]); // Removed trailLayers and proposedLayers from dependencies to prevent re-querying
+
+  // Listen for custom event to open trail list
+  useEffect(() => {
+    const handleOpenTrailList = () => {
+      setShowTrailListWindow(true);
+    };
+    
+    const handleToggleCommuterRail = (event) => {
+      setShowCommuterRail(event.detail.show);
+    };
+    
+    const handleToggleStationLabels = (event) => {
+      setShowStationLabels(event.detail.show);
+    };
+    
+    const handleOpenBufferAnalysis = () => {
+      setShowBufferAnalysis(true);
+    };
+    
+    const handleToggleBlueBikeStations = (event) => {
+      setShowBlueBikeStations(event.detail.show);
+    };
+
+    const handleResetMunicipalityProfile = () => {
+      // Reset all municipality profile related states
+      setIntersectedTrails([]);
+      setShowTrailListWindow(false);
+      setSelectedTrailIndex(null);
+      setHoveredTrail(null);
+      setShowCommuterRail(false);
+      setShowStationLabels(false);
+      setShowBlueBikeStations(false); // Reset Blue Bike Stations state
+      setShowBufferAnalysis(false);
+      setIsBufferActive(false);
+      setBufferCenter(null);
+      setBufferResults(null);
+      console.log('🧹 Reset all municipality profile states');
+    };
+    
+    window.addEventListener('openTrailList', handleOpenTrailList);
+    window.addEventListener('toggleCommuterRail', handleToggleCommuterRail);
+    window.addEventListener('toggleStationLabels', handleToggleStationLabels);
+    window.addEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
+    window.addEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
+    window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
+    
+    return () => {
+      window.removeEventListener('openTrailList', handleOpenTrailList);
+      window.removeEventListener('toggleCommuterRail', handleToggleCommuterRail);
+      window.removeEventListener('toggleStationLabels', handleToggleStationLabels);
+      window.removeEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
+      window.removeEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
+      window.removeEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
+    };
+  }, []);
+
+  // Clear buffer when switching away from Municipality Profile
+  useEffect(() => {
+    if (!showMunicipalityProfileMap) {
+      // Clear buffer analysis when switching back to trail filters
+      setBufferCenter(null);
+      setBufferResults(null);
+      setIsBufferActive(false);
+      setShowBufferAnalysis(false);
+      console.log('🧹 Cleared buffer analysis (switched to Trail Filters)');
+    }
+  }, [showMunicipalityProfileMap]);
+
+  // Auto-zoom to municipality when selected in profile view
+  useEffect(() => {
+    if (showMunicipalityProfileMap && selectedMunicipality && selectedMunicipality.geometry) {
+      // Small delay to ensure layer is rendered before zooming
+      const timer = setTimeout(() => {
+        handleZoomToMunicipality(selectedMunicipality);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedMunicipality, showMunicipalityProfileMap]);
+
+  // Listen for trail selection from municipality profile
+  useEffect(() => {
+    const handleTrailSelection = (event) => {
+      const { trail } = event.detail;
+      if (trail) {
+        console.log("Trail selected from list:", trail);
+        
+        // Create a mock identify result to show in popup
+        const mockResult = {
+          layerId: trail.layerId,
+          layerName: trail.layerName,
+          attributes: trail.attributes
+        };
+        
+        setSelectedTrailFromList(trail);
+        setHighlightedTrail(trail);
+        setIdentifyInfo([mockResult]);
+        toggleIdentifyPopup(true);
+        setPointIndex(0);
+        
+        // Try to get a center point for the trail (you might need to adjust this)
+        // For now, use the current map center
+        if (mapRef.current) {
+          const map = mapRef.current.getMap();
+          const center = map.getCenter();
+          setIdentifyPoint({ lng: center.lng, lat: center.lat });
+        }
+      }
+    };
+
+    window.addEventListener('trailSelected', handleTrailSelection);
+    return () => window.removeEventListener('trailSelected', handleTrailSelection);
+  }, []);
 
   const getIdentifyPopup = (e) => {
     const allLayers = [
@@ -437,13 +1308,38 @@ const Map = () => {
       <FailModal />
 
       <div className="Map position-relative">
+        <LoadingBar 
+          isLoading={isQueryingTrails} 
+          progress={loadingProgress} 
+          message={loadingMessage} 
+        />
+        
+        {/* Trail List Window - Draggable and Collapsible */}
+        {showTrailListWindow && showMunicipalityProfileMap && (
+          <TrailListWindow
+            municipalityTrails={municipalityTrails}
+            selectedMunicipality={selectedMunicipality}
+            selectedTrailIndex={selectedTrailIndex}
+            onTrailClick={handleTrailListClick}
+            onClose={() => setShowTrailListWindow(false)}
+          />
+        )}
+        
         <ReactMapGL
           ref={mapRef}
           {...viewport}
           width="100%"
           height="100%"
-          cursor="default"
-          interactiveLayerIds={["ma-house-districts-fill", "ma-senate-districts-fill", "municipalities-fill"]}
+          cursor={isBufferActive ? "crosshair" : "default"}
+          interactiveLayerIds={[
+            "ma-house-districts-fill", 
+            "ma-senate-districts-fill", 
+            "municipalities-fill", 
+            "municipality-profile-base",
+            // Add GeoJSON trail layers for municipality profile
+            ...(showMunicipalityProfileMap ? 
+              geojsonTrailLayers.map(layer => `geojson-trail-${layer.id}`) : [])
+          ]}
           onMove={(event) => {
             const newViewport = event.viewState;
             // Detect if zoom level changed to trigger hover state cleanup
@@ -452,10 +1348,199 @@ const Map = () => {
             }
             setViewport(newViewport);
           }}
-          onClick={(event) => getIdentifyPopup(event)}
+          onClick={(event) => {
+            // Handle buffer creation
+            if (isBufferActive && event.lngLat) {
+              console.log('Buffer click detected at:', event.lngLat);
+              const center = { lng: event.lngLat.lng, lat: event.lngLat.lat };
+              setBufferCenter(center);
+              setIsBufferActive(false);
+              
+              // Calculate buffer analysis
+              console.log('Calculating buffer analysis with radius:', bufferRadius);
+              const results = calculateBufferAnalysis(center, bufferRadius);
+              console.log('Buffer results:', results);
+              setBufferResults(results);
+              
+              return; // Don't process other clicks
+            }
+
+            // Check if clicking on municipality profile map
+            if (showMunicipalityProfileMap && event.features) {
+              // Check for GeoJSON trail clicks first
+              const trailFeature = event.features.find((f) => 
+                f.layer && f.layer.id.startsWith("geojson-trail-")
+              );
+              if (trailFeature) {
+                const layerId = trailFeature.layer.id.replace("geojson-trail-", "");
+                const layerInfo = geojsonTrailLayers.find(l => l.id === parseInt(layerId));
+                
+                // Match by objectid (lowercase) or OBJECTID (uppercase)
+                const clickedObjectId = trailFeature.properties?.objectid || trailFeature.properties?.OBJECTID;
+                
+                const trailData = intersectedTrails.find(trail => {
+                  const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
+                  return trail.layerId === parseInt(layerId) && trailObjectId === clickedObjectId;
+                });
+                
+                if (trailData) {
+                  // Find the index in the trail list
+                  const trailIndex = intersectedTrails.findIndex(trail => {
+                    const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
+                    return trail.layerId === parseInt(layerId) && trailObjectId === clickedObjectId;
+                  });
+                  
+                  if (trailIndex >= 0) {
+                    setSelectedTrailIndex(trailIndex);
+                  }
+                  
+                  // Highlight the clicked trail
+                  setHighlightedTrail(trailData);
+                  
+                  // Show popup with trail details
+                  const mockResult = {
+                    layerId: trailData.layerId,
+                    layerName: trailData.layerName,
+                    attributes: trailData.attributes
+                  };
+                  
+                  // Ensure we have valid coordinates for the popup
+                  let popupCoords = null;
+                  
+                  // Try to use click coordinates first
+                  if (event.lngLat && !isNaN(event.lngLat.lng) && !isNaN(event.lngLat.lat)) {
+                    popupCoords = { lng: event.lngLat.lng, lat: event.lngLat.lat };
+                  }
+                  // Fallback to trail geometry center
+                  else if (trailData.geometry && trailData.geometry.coordinates) {
+                    const coords = trailData.geometry.coordinates;
+                    const coordsArray = trailData.geometry.type === 'MultiLineString' ? coords[0] : coords;
+                    if (coordsArray && coordsArray.length > 0) {
+                      const midPoint = coordsArray[Math.floor(coordsArray.length / 2)];
+                      if (midPoint && midPoint.length >= 2) {
+                        popupCoords = { lng: midPoint[0], lat: midPoint[1] };
+                      }
+                    }
+                  }
+                  
+                  if (popupCoords) {
+                    // Force popup refresh by toggling off then on
+                    toggleIdentifyPopup(false);
+                    
+                    // Use setTimeout to ensure state update completes
+                    setTimeout(() => {
+                      setIdentifyPoint(popupCoords);
+                      setIdentifyInfo([mockResult]);
+                      setPointIndex(0);
+                      toggleIdentifyPopup(true);
+                    }, 10);
+                  } else {
+                    console.warn("Could not determine valid coordinates for popup");
+                  }
+                  
+                  return;
+                }
+              }
+              
+              // Check for Blue Bike Station clicks
+              const bikeStationFeature = event.features.find((f) => 
+                f.layer && f.layer.id === "blue-bike-stations"
+              );
+              if (bikeStationFeature) {
+                const stationProps = bikeStationFeature.properties;
+                const stationInfo = {
+                  name: stationProps?.Name || 'Unknown Station',
+                  district: stationProps?.District || 'Unknown District',
+                  totalDocks: stationProps?.Total_docks || 0,
+                  number: stationProps?.Number || 'N/A',
+                  public: stationProps?.Public_ === 'Yes' ? 'Yes' : 'No'
+                };
+                
+                // Show popup with bike station details
+                const mockResult = {
+                  layerId: 'blue-bike-station',
+                  layerName: 'Blue Bike Station',
+                  attributes: stationInfo
+                };
+                
+                if (event.lngLat && !isNaN(event.lngLat.lng) && !isNaN(event.lngLat.lat)) {
+                  // Force popup refresh by toggling off then on
+                  toggleIdentifyPopup(false);
+                  
+                  // Use setTimeout to ensure state update completes
+                  setTimeout(() => {
+                    setIdentifyPoint({ lng: event.lngLat.lng, lat: event.lngLat.lat });
+                    setIdentifyInfo([mockResult]);
+                    setPointIndex(0);
+                    toggleIdentifyPopup(true);
+                  }, 10);
+                }
+                
+                return;
+              }
+              
+              // Check for municipality clicks
+              const muniFeature = event.features.find((f) => f.layer && f.layer.id === "municipality-profile-base");
+              if (muniFeature) {
+                const townName = muniFeature.properties.town || muniFeature.properties.NAME;
+                if (townName) {
+                  setSelectedMunicipality({
+                    name: townName,
+                    properties: muniFeature.properties,
+                    geometry: muniFeature.geometry
+                  });
+                  return; // Don't trigger identify popup when selecting municipality
+                }
+              }
+            }
+            
+            // Check if clicking on a municipality when municipalities layer is visible
+            if (showMunicipalities && event.features) {
+              const muniFeature = event.features.find((f) => f.layer && f.layer.id === "municipalities-fill");
+              if (muniFeature) {
+                const townName = muniFeature.properties.town || muniFeature.properties.NAME;
+                if (townName) {
+                  setSelectedMunicipality({
+                    name: townName,
+                    properties: muniFeature.properties,
+                    geometry: muniFeature.geometry
+                  });
+                  return; // Don't trigger identify popup when selecting municipality
+                }
+              }
+            }
+            getIdentifyPopup(event);
+          }}
           onMouseMove={(event) => {
             const map = mapRef.current && mapRef.current.getMap ? mapRef.current.getMap() : null;
             const features = event.features || [];
+
+            // Handle trail hover in municipality profile
+            if (showMunicipalityProfileMap && features.length > 0) {
+              const trailFeature = features.find((f) => 
+                f.layer && f.layer.id.startsWith("geojson-trail-") && !f.layer.id.includes("hover")
+              );
+              
+              if (trailFeature) {
+                const layerId = trailFeature.layer.id.replace("geojson-trail-", "");
+                const clickedObjectId = trailFeature.properties?.objectid || trailFeature.properties?.OBJECTID;
+                
+                const trailData = intersectedTrails.find(trail => {
+                  const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
+                  return trail.layerId === parseInt(layerId) && trailObjectId === clickedObjectId;
+                });
+                
+                if (trailData) {
+                  setHoveredTrail(trailData);
+                } else {
+                  setHoveredTrail(null);
+                }
+              } else {
+                setHoveredTrail(null);
+              }
+            } else {
+              setHoveredTrail(null);
+            }
 
             // Handle MA House Districts hover (improved detection)
             if (showMaHouseDistricts) {
@@ -528,7 +1613,7 @@ const Map = () => {
               }
             }
 
-            // Handle Municipalities hover (improved detection)
+            // Handle Municipalities hover (improved detection) - only for regular municipalities layer
             if (showMunicipalities) {
               let muniFeature = features.find((f) => f.layer && f.layer.id === "municipalities-fill");
               
@@ -583,12 +1668,15 @@ const Map = () => {
           scrollZoom={true}
           transitionDuration="1000"
         >
-          {showIdentifyPopup && (
+          {showIdentifyPopup && identifyInfo && identifyInfo.length > 0 && identifyPoint && (
             <Identify
               point={identifyPoint}
               identifyResult={identifyInfo}
               handleShowPopup={() => {
                 toggleIdentifyPopup(false);
+                // Clear highlighted trail when popup closes
+                setHighlightedTrail(null);
+                setSelectedTrailFromList(null);
                 // Clear all hover states when popup closes to fix hover detection
                 setHoverFeature(null);
                 setHoverPoint(null);
@@ -630,9 +1718,21 @@ const Map = () => {
           )}
           {showBasemapPanel && <BasemapPanel />}
           
-          <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
-            {visibleLayers()}
-          </Source>
+          {/* Render GeoJSON sources for municipality profile */}
+          {showMunicipalityProfileMap && visibleLayers()}
+          
+          {/* Commuter Rail Layer - only in municipality profile */}
+          {showMunicipalityProfileMap && commuterRailLayers()}
+          
+          {/* Blue Bike Stations Layer - only in municipality profile */}
+          {showMunicipalityProfileMap && blueBikeStationsLayers()}
+          
+          {/* Render vector tile source for regular trail layers */}
+          {!showMunicipalityProfileMap && (
+            <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
+              {visibleLayers()}
+            </Source>
+          )}
           <Source id="MAPC landline vector tiles" type="vector" tiles={[LANDLINE_SOURCE]}>
             {landlineLayers()}
           </Source>
@@ -670,7 +1770,14 @@ const Map = () => {
             data={massachusettsData}
           >
             {municipalitiesLayers()}
+            {municipalityProfileLayers()}
           </Source>
+          
+          
+          {/* Buffer Analysis Layers */}
+          {renderBufferCircle()}
+          {renderBufferCenter()}
+          
           <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
           <Control
             style={"Map_filter d-block position-absolute m-0 p-0"}
@@ -763,7 +1870,7 @@ const Map = () => {
               })()}
             </Popup>
           )}
-          <MunicipalitiesButton />
+          {!showMunicipalityProfileMap && <MunicipalitiesButton />}
           <MASenateDistrictsButton />
           <MAhouseDistrictsButton />
           {showOneLayerNotice && (showMunicipalities || showMaHouseDistricts || showMaSenateDistricts) && (
@@ -799,6 +1906,41 @@ const Map = () => {
           />
         </ReactMapGL>
       </div>
+      
+      {/* Buffer Analysis Window */}
+      <BufferAnalysisWindow
+        show={showBufferAnalysis}
+        onClose={() => setShowBufferAnalysis(false)}
+        bufferResults={bufferResults}
+        bufferRadius={bufferRadius}
+        onRadiusChange={(newRadius) => {
+          setBufferRadius(newRadius);
+          // Recalculate if buffer already exists
+          if (bufferCenter) {
+            const results = calculateBufferAnalysis(bufferCenter, newRadius);
+            setBufferResults(results);
+          }
+        }}
+        onActivateBuffer={(clear = false) => {
+          if (clear) {
+            // Clear buffer
+            setIsBufferActive(false);
+            setBufferCenter(null);
+            setBufferResults(null);
+          } else if (isBufferActive) {
+            // Cancel
+            setIsBufferActive(false);
+          } else {
+            // Activate
+            setIsBufferActive(true);
+            setBufferCenter(null);
+            setBufferResults(null);
+          }
+        }}
+        isBufferActive={isBufferActive}
+        bufferCenter={bufferCenter}
+        selectedMunicipality={selectedMunicipality}
+      />
     </>
   );
 };

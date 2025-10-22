@@ -1,4 +1,13 @@
 .ControlPanel {
+  &__toggle-btn {
+    transition: all 0.3s ease;
+    font-weight: 500;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+  }
   background-color: $lighter-blue;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
   font-size: $body-font-size;

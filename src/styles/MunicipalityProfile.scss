@@ -1,0 +1,404 @@
+.MunicipalityProfile {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  padding: 0.5rem;
+
+  &__header {
+    p {
+      margin-bottom: 0.5rem;
+      color: #666;
+      line-height: 1.4;
+    }
+  }
+
+  &__select {
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 0.9rem;
+    
+    &:focus {
+      border-color: #0070cd;
+      box-shadow: 0 0 0 0.2rem rgba(0, 112, 205, 0.25);
+    }
+  }
+
+  &__content {
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  &__overview {
+    background-color: #f8f9fa;
+    
+    h6 {
+      color: #2774bd;
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+  }
+
+  &__stats {
+    .small {
+      font-size: 0.875rem;
+    }
+
+    .text-muted {
+      color: #6c757d !important;
+    }
+
+    .fw-semibold {
+      font-weight: 600 !important;
+    }
+  }
+
+  &__breakdown {
+    h6 {
+      font-size: 0.9rem;
+      color: #333;
+    }
+  }
+
+  &__types {
+    .border-bottom {
+      border-bottom: 1px solid #e9ecef !important;
+      
+      &:last-child {
+        border-bottom: none !important;
+      }
+    }
+  }
+
+  &__trails {
+    h6 {
+      font-size: 0.9rem;
+      color: #333;
+    }
+  }
+
+  &__trail-list {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.5rem;
+    background-color: #fff;
+
+    /* Custom scrollbar */
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  }
+
+  &__trail-item {
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #e9ecef;
+      transform: translateX(2px);
+    }
+
+    &--selected {
+      background-color: #d4e8f7 !important;
+      border-color: #0070cd !important;
+      border-width: 2px !important;
+      
+      .fw-semibold {
+        color: #0070cd !important;
+      }
+    }
+
+    .fw-semibold {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.875rem;
+    }
+
+    .text-muted {
+      color: #6c757d !important;
+    }
+  }
+
+  .alert {
+    border-radius: 4px;
+    font-size: 0.875rem;
+    
+    &.alert-info {
+      background-color: #d1ecf1;
+      border-color: #bee5eb;
+      color: #0c5460;
+    }
+  }
+
+  .btn {
+    &.btn-outline-primary {
+      color: #0070cd;
+      border-color: #0070cd;
+      font-size: 0.875rem;
+      padding: 0.375rem 0.75rem;
+      
+      &:hover {
+        background-color: #0070cd;
+        border-color: #0070cd;
+        color: white;
+      }
+
+      &:focus {
+        box-shadow: 0 0 0 0.2rem rgba(0, 112, 205, 0.25);
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Completion Rates Modal Styles
+.CompletionRatesModal {
+  .modal-header {
+    border-bottom: 2px solid #dee2e6;
+    
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+    
+    // Smooth scroll
+    scroll-behavior: smooth;
+    
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      width: 10px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 5px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 5px;
+    }
+    
+    &::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  }
+
+  .modal-footer {
+    border-top: 2px solid #dee2e6;
+  }
+
+  // Card styles
+  .card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    background-color: #ffffff;
+    margin-bottom: 0;
+    
+    &:hover {
+      cursor: default;
+    }
+  }
+
+  // Completion Rate Card with hover effect - compact horizontal layout
+  .completion-rate-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    overflow: hidden;
+    background-color: #ffffff;
+    
+    &:hover {
+      transform: translateX(4px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .card-body {
+      padding: 0.75rem !important;
+    }
+
+    // Progress bar
+    .progress {
+      background-color: #e9ecef;
+    }
+
+    // Ensure text doesn't wrap awkwardly
+    .text-truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  // Compact row spacing
+  .row.g-2 {
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+
+    > [class*="col-"] {
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+    }
+  }
+
+  // Progress bar animation
+  .progress-bar {
+    animation: progressAnimation 1s ease-in-out;
+  }
+
+  @keyframes progressAnimation {
+    from {
+      width: 0;
+    }
+  }
+
+  // Alert styling
+  .alert {
+    border-radius: 8px;
+    border: none;
+    
+    &.alert-info {
+      background-color: #cfe2ff;
+      color: #084298;
+    }
+    
+    &.alert-warning {
+      background-color: #fff3cd;
+      color: #664d03;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .MunicipalityProfile {
+    &__trail-list {
+      max-height: 150px !important;
+    }
+  }
+
+  .CompletionRatesModal {
+    .modal-dialog {
+      margin: 0.5rem;
+    }
+    
+    .modal-body {
+      padding: 1rem;
+    }
+    
+    // Stack cards on mobile
+    .col-md-6 {
+      margin-bottom: 1rem;
+    }
+    
+    // Adjust card font sizes on mobile
+    .card {
+      .card-title {
+        font-size: 0.85rem !important;
+      }
+      
+      .fw-bold {
+        font-size: 1.5rem !important;
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .CompletionRatesModal {
+    .modal-title {
+      font-size: 1rem !important;
+      
+      span:first-child {
+        font-size: 1.2rem;
+      }
+    }
+    
+    .modal-body {
+      padding: 0.75rem;
+      max-height: 60vh !important;
+    }
+    
+    // Full width cards on small mobile
+    .col-12 {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    
+    .card-body {
+      padding: 0.75rem !important;
+    }
+  }
+}
+
+// Large screen adjustments
+@media (min-width: 1200px) {
+  .CompletionRatesModal {
+    .modal-dialog {
+      max-width: 90vw;
+      width: 90vw;
+    }
+    
+    .modal-body {
+      padding: 2rem;
+    }
+    
+    // Keep 2 columns on large screens for better readability
+    .col-md-6 {
+      flex: 0 0 50%;
+      max-width: 50%;
+    }
+  }
+}
+
+// Extra large screen adjustments
+@media (min-width: 1400px) {
+  .CompletionRatesModal {
+    .modal-dialog {
+      max-width: 85vw;
+      width: 85vw;
+    }
+    
+    .modal-body {
+      padding: 2.5rem;
+    }
+  }
+}
+
+// Ultra wide screen adjustments
+@media (min-width: 1600px) {
+  .CompletionRatesModal {
+    .modal-dialog {
+      max-width: 80vw;
+      width: 80vw;
+    }
+    
+    .modal-body {
+      padding: 3rem;
+    }
+  }
+}
+

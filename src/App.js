@@ -35,6 +35,10 @@ const App = () => {
   const [showMaHouseDistricts, toggleMaHouseDistricts] = useState(false);
   const [showMaSenateDistricts, toggleMaSenateDistricts] = useState(false);
   const [showMunicipalities, toggleMunicipalities] = useState(false);
+  
+  const [selectedMunicipality, setSelectedMunicipality] = useState(null);
+  const [municipalityTrails, setMunicipalityTrails] = useState([]);
+  const [showMunicipalityProfileMap, setShowMunicipalityProfileMap] = useState(false);
 
   return (
     <div className="App">
@@ -80,6 +84,12 @@ const App = () => {
               toggleMaSenateDistricts,
               showMunicipalities,
               toggleMunicipalities,
+              selectedMunicipality,
+              setSelectedMunicipality,
+              municipalityTrails,
+              setMunicipalityTrails,
+              showMunicipalityProfileMap,
+              setShowMunicipalityProfileMap,
               basemaps,
               existingTrails,
               proposedTrails,
