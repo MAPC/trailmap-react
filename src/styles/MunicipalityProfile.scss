@@ -6,7 +6,7 @@
   &__header {
     p {
       margin-bottom: 0.5rem;
-      color: #666;
+      color: #212529;
       line-height: 1.4;
     }
   }
@@ -47,6 +47,14 @@
 
     .fw-semibold {
       font-weight: 600 !important;
+    }
+
+    // Ensure numbers are right-aligned for consistent alignment
+    .d-flex.justify-content-between {
+      .fw-semibold {
+        text-align: right;
+        min-width: 80px; // Ensure consistent width for numbers
+      }
     }
   }
 
@@ -288,6 +296,24 @@
     &.alert-warning {
       background-color: #fff3cd;
       color: #664d03;
+    }
+  }
+
+  // Statistics cards alignment
+  .alert-light {
+    .row.g-3 {
+      .col-md-4 {
+        .text-center {
+          .fw-bold.fs-5 {
+            font-family: 'Courier New', monospace; // Use monospace font for numbers
+            text-align: center;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
     }
   }
 }

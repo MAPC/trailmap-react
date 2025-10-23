@@ -38,7 +38,14 @@ const App = () => {
   
   const [selectedMunicipality, setSelectedMunicipality] = useState(null);
   const [municipalityTrails, setMunicipalityTrails] = useState([]);
+  const [showMunicipalityView, setShowMunicipalityView] = useState(false);
   const [showMunicipalityProfileMap, setShowMunicipalityProfileMap] = useState(false);
+  
+  // Layer toggle states for municipality profile
+  const [showCommuterRail, setShowCommuterRail] = useState(false);
+  const [showStationLabels, setShowStationLabels] = useState(false);
+  const [showBlueBikeStations, setShowBlueBikeStations] = useState(false);
+  const [showSubwayStations, setShowSubwayStations] = useState(false);
 
   return (
     <div className="App">
@@ -88,8 +95,19 @@ const App = () => {
               setSelectedMunicipality,
               municipalityTrails,
               setMunicipalityTrails,
+              showMunicipalityView,
+              setShowMunicipalityView,
               showMunicipalityProfileMap,
               setShowMunicipalityProfileMap,
+              // Layer toggle states
+              showCommuterRail,
+              setShowCommuterRail,
+              showStationLabels,
+              setShowStationLabels,
+              showBlueBikeStations,
+              setShowBlueBikeStations,
+              showSubwayStations,
+              setShowSubwayStations,
               basemaps,
               existingTrails,
               proposedTrails,

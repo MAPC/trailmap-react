@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
-import "./BufferAnalysisWindow.scss";
+import "../../styles/BufferAnalysisWindow.scss";
 
 const BufferAnalysisWindow = ({ 
   show,
@@ -12,7 +12,19 @@ const BufferAnalysisWindow = ({
   isBufferActive,
   onActivateBuffer,
   bufferCenter,
-  selectedMunicipality
+  selectedMunicipality,
+  onBlueBikeStationHover,
+  onCommuterRailStationHover,
+  onSubwayStationHover,
+  onClearBuffer,
+  onZoomToBuffer,
+  // Layer visibility states
+  showCommuterRail,
+  showBlueBikeStations,
+  showSubwayStations,
+  onToggleCommuterRail,
+  onToggleBlueBikeStations,
+  onToggleSubwayStations
 }) => {
   const [position, setPosition] = useState({ x: 20, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
@@ -45,9 +57,22 @@ const BufferAnalysisWindow = ({
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (isDragging) {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const bufferWindowWidth = 380; // BufferAnalysisWindow width
+        const bufferWindowHeight = 400; // Approximate BufferAnalysisWindow height
+        
+        // Calculate new position with boundary constraints
+        let newX = e.clientX - dragOffset.x;
+        let newY = e.clientY - dragOffset.y;
+        
+        // Constrain to viewport boundaries
+        newX = Math.max(0, Math.min(newX, windowWidth - bufferWindowWidth));
+        newY = Math.max(0, Math.min(newY, windowHeight - bufferWindowHeight));
+        
         setPosition({
-          x: e.clientX - dragOffset.x,
-          y: e.clientY - dragOffset.y
+          x: newX,
+          y: newY
         });
       }
     };
@@ -91,6 +116,19 @@ const BufferAnalysisWindow = ({
     }
   };
 
+  const handleClose = () => {
+    // Clear buffer if there is one
+    if (bufferCenter || bufferResults) {
+      if (onClearBuffer) {
+        onClearBuffer();
+      }
+    }
+    // Close the window
+    if (onClose) {
+      onClose();
+    }
+  };
+
   if (!show) return null;
 
   return (
@@ -114,6 +152,16 @@ const BufferAnalysisWindow = ({
             <span className="fw-bold">Buffer Analysis</span>
           </div>
           <div className="d-flex align-items-center gap-1">
+            {bufferCenter && onZoomToBuffer && (
+              <button
+                className="BufferAnalysisWindow__zoom btn btn-sm p-1"
+                onClick={onZoomToBuffer}
+                title="Zoom to Buffer"
+                style={{ fontSize: '12px' }}
+              >
+                <i className="fas fa-search"></i>
+              </button>
+            )}
             <button
               className="BufferAnalysisWindow__collapse btn btn-sm p-0"
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -123,7 +171,7 @@ const BufferAnalysisWindow = ({
             </button>
             <button
               className="BufferAnalysisWindow__close btn btn-sm p-0"
-              onClick={onClose}
+              onClick={handleClose}
               title="Close"
             >
               ×
@@ -198,7 +246,7 @@ const BufferAnalysisWindow = ({
             {!isBufferActive && !bufferCenter && (
               <div className="alert alert-light mt-2 mb-0 p-2 small border">
                 <div className="text-muted small">
-                  💡 Adjust the radius above, then click "Start Drawing" to create a buffer zone
+                  <i className="fas fa-lightbulb me-1"></i>Adjust the radius above, then click "Start Drawing" to create a buffer zone
                 </div>
               </div>
             )}
@@ -220,19 +268,31 @@ const BufferAnalysisWindow = ({
               {/* Summary Stats */}
               <div className="BufferAnalysisWindow__summary mb-3 p-2 border rounded">
                 <div className="row g-2 small">
-                  <div className="col-3 text-center">
+                  <div className="col-2 text-center">
                     <div className="text-muted" style={{ fontSize: '0.7rem' }}>Trails</div>
-                    <div className="fw-bold fs-5">{bufferResults.trails.length}</div>
+                    <div className="fw-bold fs-5">
+                      {bufferResults.trails.length}
+                    </div>
                   </div>
-                  <div className="col-3 text-center">
+                  <div className="col-2 text-center">
                     <div className="text-muted" style={{ fontSize: '0.7rem' }}>Rail Stations</div>
-                    <div className="fw-bold fs-5">{bufferResults.stations.length}</div>
+                    <div className="fw-bold fs-5">
+                      {bufferResults.stations.length}
+                    </div>
                   </div>
-                  <div className="col-3 text-center">
-                    <div className="text-muted" style={{ fontSize: '0.7rem' }}>Bike Stations</div>
-                    <div className="fw-bold fs-5">{bufferResults.bikeStations ? bufferResults.bikeStations.length : 0}</div>
+                  <div className="col-2 text-center">
+                    <div className="text-muted" style={{ fontSize: '0.7rem', lineHeight: '1.0' }}>Blue Bike<br/>Stations</div>
+                    <div className="fw-bold fs-5">
+                      {bufferResults.bikeStations ? bufferResults.bikeStations.length : 0}
+                    </div>
                   </div>
-                  <div className="col-3 text-center">
+                  <div className="col-2 text-center">
+                    <div className="text-muted" style={{ fontSize: '0.7rem' }}>Subway Stations</div>
+                    <div className="fw-bold fs-5">
+                      {bufferResults.subwayStations ? bufferResults.subwayStations.length : 0}
+                    </div>
+                  </div>
+                  <div className="col-2 text-center">
                     <div className="text-muted" style={{ fontSize: '0.7rem' }}>Area</div>
                     <div className="fw-bold" style={{ fontSize: '0.8rem' }}>
                       {((Math.PI * Math.pow(bufferRadius, 2)) / 1000000).toFixed(2)} km²
@@ -290,16 +350,48 @@ const BufferAnalysisWindow = ({
               {/* Commuter Rail Stations in Buffer */}
               <div className="mb-2">
                 <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="small fw-semibold">Commuter Rail Stations ({bufferResults.stations.length})</span>
+                  <div className="d-flex align-items-center">
+                    <Form.Check
+                      type="checkbox"
+                      id="commuter-rail-checkbox"
+                      checked={showCommuterRail}
+                      onChange={(e) => {
+                        if (onToggleCommuterRail) {
+                          onToggleCommuterRail(e.target.checked);
+                        }
+                      }}
+                      className="me-2"
+                      style={{ transform: 'scale(0.8)' }}
+                    />
+                    <span className="small fw-semibold">Commuter Rail Stations ({bufferResults.stations.length})</span>
+                  </div>
                 </div>
-                {bufferResults.stations.length === 0 ? (
+                {!showCommuterRail ? (
+                  <div className="small text-muted text-center p-2 border rounded bg-light">
+                    <i className="fas fa-info-circle me-1"></i>
+                    Please open the layer to see calculation result
+                  </div>
+                ) : bufferResults.stations.length === 0 ? (
                   <div className="small text-muted text-center p-2 border rounded">
                     No stations found
                   </div>
                 ) : (
                   <div className="BufferAnalysisWindow__list">
                     {bufferResults.stations.slice(0, 5).map((station, idx) => (
-                      <div key={idx} className="BufferAnalysisWindow__item p-2 mb-1 border rounded">
+                      <div 
+                        key={idx} 
+                        className="BufferAnalysisWindow__item p-2 mb-1 border rounded"
+                        onMouseEnter={() => {
+                          if (onCommuterRailStationHover) {
+                            onCommuterRailStationHover(station);
+                          }
+                        }}
+                        onMouseLeave={() => {
+                          if (onCommuterRailStationHover) {
+                            onCommuterRailStationHover(null);
+                          }
+                        }}
+                      >
                         <div className="d-flex justify-content-between align-items-start">
                           <div className="flex-grow-1" style={{ minWidth: 0 }}>
                             <div className="small fw-semibold text-truncate" title={station.name}>
@@ -327,14 +419,46 @@ const BufferAnalysisWindow = ({
               </div>
 
               {/* Blue Bike Stations in Buffer */}
-              {bufferResults.bikeStations && bufferResults.bikeStations.length > 0 && (
-                <div className="mb-2">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="small fw-semibold">Blue Bike Stations ({bufferResults.bikeStations.length})</span>
+              <div className="mb-2">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <div className="d-flex align-items-center">
+                    <Form.Check
+                      type="checkbox"
+                      id="blue-bike-checkbox"
+                      checked={showBlueBikeStations}
+                      onChange={(e) => {
+                        if (onToggleBlueBikeStations) {
+                          onToggleBlueBikeStations(e.target.checked);
+                        }
+                      }}
+                      className="me-2"
+                      style={{ transform: 'scale(0.8)' }}
+                    />
+                    <span className="small fw-semibold">Blue Bike Stations ({bufferResults.bikeStations ? bufferResults.bikeStations.length : 0})</span>
                   </div>
+                </div>
+                {!showBlueBikeStations ? (
+                  <div className="small text-muted text-center p-2 border rounded bg-light">
+                    <i className="fas fa-info-circle me-1"></i>
+                    Please open the layer to see calculation result
+                  </div>
+                ) : bufferResults.bikeStations && bufferResults.bikeStations.length > 0 ? (
                   <div className="BufferAnalysisWindow__list BufferAnalysisWindow__bike-stations">
                     {bufferResults.bikeStations.map((station, idx) => (
-                      <div key={idx} className="BufferAnalysisWindow__item p-2 mb-1 border rounded">
+                      <div 
+                        key={idx} 
+                        className="BufferAnalysisWindow__item p-2 mb-1 border rounded"
+                        onMouseEnter={() => {
+                          if (onBlueBikeStationHover) {
+                            onBlueBikeStationHover(station);
+                          }
+                        }}
+                        onMouseLeave={() => {
+                          if (onBlueBikeStationHover) {
+                            onBlueBikeStationHover(null);
+                          }
+                        }}
+                      >
                         <div className="d-flex justify-content-between align-items-start">
                           <div className="flex-grow-1" style={{ minWidth: 0 }}>
                             <div className="small fw-semibold text-truncate" title={station.name}>
@@ -353,8 +477,78 @@ const BufferAnalysisWindow = ({
                       </div>
                     ))}
                   </div>
+                ) : (
+                  <div className="small text-muted text-center p-2 border rounded">
+                    No stations found
+                  </div>
+                )}
+              </div>
+
+              {/* Subway Stations in Buffer */}
+              <div className="mb-2">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <div className="d-flex align-items-center">
+                    <Form.Check
+                      type="checkbox"
+                      id="subway-checkbox"
+                      checked={showSubwayStations}
+                      onChange={(e) => {
+                        if (onToggleSubwayStations) {
+                          onToggleSubwayStations(e.target.checked);
+                        }
+                      }}
+                      className="me-2"
+                      style={{ transform: 'scale(0.8)' }}
+                    />
+                    <span className="small fw-semibold">MBTA Subway Stations ({bufferResults.subwayStations ? bufferResults.subwayStations.length : 0})</span>
+                  </div>
                 </div>
-              )}
+                {!showSubwayStations ? (
+                  <div className="small text-muted text-center p-2 border rounded bg-light">
+                    <i className="fas fa-info-circle me-1"></i>
+                    Please open the layer to see calculation result
+                  </div>
+                ) : bufferResults.subwayStations && bufferResults.subwayStations.length > 0 ? (
+                  <div className="BufferAnalysisWindow__list BufferAnalysisWindow__subway-stations">
+                    {bufferResults.subwayStations.map((station, idx) => (
+                      <div 
+                        key={idx} 
+                        className="BufferAnalysisWindow__item p-2 mb-1 border rounded"
+                        onMouseEnter={() => {
+                          if (onSubwayStationHover) {
+                            onSubwayStationHover(station);
+                          }
+                        }}
+                        onMouseLeave={() => {
+                          if (onSubwayStationHover) {
+                            onSubwayStationHover(null);
+                          }
+                        }}
+                      >
+                        <div className="d-flex justify-content-between align-items-start">
+                          <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                            <div className="small fw-semibold text-truncate" title={station.name}>
+                              {station.name}
+                            </div>
+                            <div className="small text-muted" style={{ fontSize: '0.7rem' }}>
+                              {station.line} Line
+                            </div>
+                          </div>
+                          <div className="text-end ms-2" style={{ minWidth: '60px' }}>
+                            <div className="small fw-bold text-primary" style={{ fontSize: '0.75rem' }}>
+                              {formatDistanceMeters(station.distance)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="small text-muted text-center p-2 border rounded">
+                    No stations found
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

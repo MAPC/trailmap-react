@@ -27,16 +27,23 @@ const ControlPanel = () => {
     toggleMaHouseDistricts,
     showMaSenateDistricts,
     toggleMaSenateDistricts,
+    showMunicipalityView,
+    setShowMunicipalityView,
     showMunicipalityProfileMap,
-    setShowMunicipalityProfileMap
+    setShowMunicipalityProfileMap,
+    // Layer toggle states from context
+    showCommuterRail,
+    setShowCommuterRail,
+    showStationLabels,
+    setShowStationLabels,
+    showBlueBikeStations,
+    setShowBlueBikeStations,
+    showSubwayStations,
+    setShowSubwayStations
   } = useContext(LayerContext);
 
-  const [showMunicipalityView, setShowMunicipalityView] = useState(false);
   const [savedTrailLayers, setSavedTrailLayers] = useState([]);
   const [savedProposedLayers, setSavedProposedLayers] = useState([]);
-  const [showCommuterRail, setShowCommuterRail] = useState(false);
-  const [showStationLabels, setShowStationLabels] = useState(false);
-  const [showBlueBikeStations, setShowBlueBikeStations] = useState(false);
 
   const renderTypeButton = existingTrails.map((layer, index) => {
     return <TypeButton key={index} layer={layer} type="trail" />;
@@ -98,40 +105,59 @@ const ControlPanel = () => {
       // Reset municipality profile related states
       setShowMunicipalityView(false);
       
-      // Reset commuter rail states
+      // Reset all municipality profile map layer states
       setShowCommuterRail(false);
       setShowStationLabels(false);
+      setShowBlueBikeStations(false);
+      setShowSubwayStations(false);
       
       // Re-enable the regular municipalities button (if it was previously enabled)
       // Note: We don't automatically turn it on, just ensure it can be toggled
       
       // Dispatch events to reset Map component states
       window.dispatchEvent(new CustomEvent('resetMunicipalityProfile'));
+      
+      // Clear URL parameters when switching back to trail filters
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      console.log('Cleared URL parameters when switching back to Trail Filters');
     }
   };
 
+  // Track previous municipality to avoid unnecessary layer updates
+  const prevMunicipalityNameRef = React.useRef(null);
+  
   // When municipality is selected, enable trail layers for trails in that municipality
   React.useEffect(() => {
     if (showMunicipalityView && selectedMunicipality && municipalityTrails && municipalityTrails.length > 0) {
-      const trailLayerIds = new Set();
-      const proposedLayerIds = new Set();
-      
-      municipalityTrails.forEach(trail => {
-        // Find the corresponding layer
-        const existingLayer = existingTrails.find(l => l.label === trail.layerName);
-        const proposedLayer = proposedTrails.find(l => l.label === trail.layerName);
+      // Only update layers if the municipality actually changed
+      if (prevMunicipalityNameRef.current !== selectedMunicipality.name) {
+        const trailLayerIds = new Set();
+        const proposedLayerIds = new Set();
         
-        if (existingLayer) {
-          trailLayerIds.add(existingLayer.id);
-        }
-        if (proposedLayer) {
-          proposedLayerIds.add(proposedLayer.id);
-        }
-      });
-      
-      // Enable the layers that have trails in this municipality
-      setTrailLayers(Array.from(trailLayerIds));
-      setProposedLayers(Array.from(proposedLayerIds));
+        municipalityTrails.forEach(trail => {
+          // Find the corresponding layer
+          const existingLayer = existingTrails.find(l => l.label === trail.layerName);
+          const proposedLayer = proposedTrails.find(l => l.label === trail.layerName);
+          
+          if (existingLayer) {
+            trailLayerIds.add(existingLayer.id);
+          }
+          if (proposedLayer) {
+            proposedLayerIds.add(proposedLayer.id);
+          }
+        });
+        
+        // Enable the layers that have trails in this municipality
+        setTrailLayers(Array.from(trailLayerIds));
+        setProposedLayers(Array.from(proposedLayerIds));
+        
+        // Update the ref
+        prevMunicipalityNameRef.current = selectedMunicipality.name;
+      }
+    } else if (!selectedMunicipality) {
+      // Clear the ref when no municipality is selected
+      prevMunicipalityNameRef.current = null;
     }
   }, [selectedMunicipality, municipalityTrails, showMunicipalityView]);
 
@@ -232,6 +258,8 @@ const ControlPanel = () => {
               onToggleStationLabels={setShowStationLabels}
               showBlueBikeStations={showBlueBikeStations}
               onToggleBlueBikeStations={setShowBlueBikeStations}
+              showSubwayStations={showSubwayStations}
+              onToggleSubwayStations={setShowSubwayStations}
             />
           </div>
         )}

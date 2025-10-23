@@ -24,9 +24,7 @@ import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import EditModal from "../Modals/EditModal";
 import massachusettsData from "../../data/massachusetts.json";
-import commuterRailData from "../../data/commuter_rail.json";
-import commuterRailStationsData from "../../data/commuter_rail_stations_point.json";
-import blueBikeStationsData from "../../data/blue_bike_stations.json";
+// Commuter rail and bike station data will be fetched when needed
 import SuccessModal from "../Modals/SuccessModal";
 import FailModal from "../Modals/FailModal";
 import BufferAnalysisWindow from "../BufferAnalysisWindow";
@@ -58,6 +56,15 @@ const Map = () => {
     municipalityTrails,
     setMunicipalityTrails,
     showMunicipalityProfileMap,
+    // Layer toggle states from context
+    showCommuterRail,
+    setShowCommuterRail,
+    showStationLabels,
+    setShowStationLabels,
+    showBlueBikeStations,
+    setShowBlueBikeStations,
+    showSubwayStations,
+    setShowSubwayStations,
   } = useContext(LayerContext);
 
   const [viewport, setViewport] = useState({
@@ -98,9 +105,15 @@ const Map = () => {
   const [showTrailListWindow, setShowTrailListWindow] = useState(false);
   const [selectedTrailIndex, setSelectedTrailIndex] = useState(null);
   const [hoveredTrail, setHoveredTrail] = useState(null);
-  const [showCommuterRail, setShowCommuterRail] = useState(false);
-  const [showStationLabels, setShowStationLabels] = useState(false);
-  const [showBlueBikeStations, setShowBlueBikeStations] = useState(false);
+  const [hoveredBlueBikeStation, setHoveredBlueBikeStation] = useState(null);
+  const [hoveredCommuterRailStation, setHoveredCommuterRailStation] = useState(null);
+  const [hoveredSubwayStation, setHoveredSubwayStation] = useState(null);
+  
+  // Fetched data states
+  const [commuterRailData, setCommuterRailData] = useState(null);
+  const [commuterRailStationsData, setCommuterRailStationsData] = useState(null);
+  const [blueBikeStationsData, setBlueBikeStationsData] = useState(null);
+  const [subwayStationsData, setSubwayStationsData] = useState(null);
   
   // Buffer analysis states
   const [showBufferAnalysis, setShowBufferAnalysis] = useState(false);
@@ -108,22 +121,23 @@ const Map = () => {
   const [bufferCenter, setBufferCenter] = useState(null);
   const [bufferRadius, setBufferRadius] = useState(1000); // meters
   const [bufferResults, setBufferResults] = useState(null);
+  const [bufferPreviewCenter, setBufferPreviewCenter] = useState(null); // For mouse-following circle
 
-  // GeoJSON trail layer definitions - using local files
+  // GeoJSON trail layer definitions - using local fileso 
   // Colors match LayerData.js for consistency
   const geojsonTrailLayers = [
-    { id: 0, name: "Protected Bike Lanes", filename: "existing_protected_bike_lanes.geojson", color: "#2166AC" },
-    { id: 1, name: "Planned Protected Bike Lanes", filename: "planned_protected_bike_lanes.geojson", color: "#2166AC", dashArray: [2, 2] },
-    { id: 2, name: "Bike Lanes", filename: "existing_bike_lanes.geojson", color: "#92C5DE" },
-    { id: 3, name: "Planned Bike Lanes", filename: "proposed_bike_lanes.geojson", color: "#92C5DE", dashArray: [2, 2] },
-    { id: 4, name: "Paved Foot Path", filename: "paved_footway.geojson", color: "#903366" },
-    { id: 5, name: "Planned Paved Foot Path", filename: "proposed_paved_footway.geojson", color: "#903366", dashArray: [2, 2] },
-    { id: 6, name: "Natural Surface Path", filename: "natural_surface_footway.geojson", color: "#A87196" },
-    { id: 7, name: "Planned Natural Surface Path", filename: "proposed_natural_surface_footway.geojson", color: "#A87196", dashArray: [2, 2] },
-    { id: 8, name: "Paved Shared Use", filename: "existing_paved_shared_use_paths.geojson", color: "#214A2D" },
-    { id: 9, name: "Planned Paved Shared Use", filename: "proposed_paved_shared_use_paths.geojson", color: "#214A2D", dashArray: [2, 2] },
-    { id: 10, name: "Planned Unimproved Shared Use", filename: "proposed_unimproved_shared_use_paths.geojson", color: "#4BAA40", dashArray: [2, 2] },
-    { id: 11, name: "Unimproved Shared Use", filename: "existing_unimproved_shared_use_paths.geojson", color: "#4BAA40" }
+    { id: 0, name: "Protected Bike Lanes", filename: "existing_protected_bike_lanes.json", color: "#2166AC" },
+    { id: 1, name: "Planned Protected Bike Lanes", filename: "planned_protected_bike_lanes.json", color: "#2166AC", dashArray: [2, 2] },
+    { id: 2, name: "Bike Lanes", filename: "existing_bike_lanes.json", color: "#92C5DE" },
+    { id: 3, name: "Planned Bike Lanes", filename: "proposed_bike_lanes.json", color: "#92C5DE", dashArray: [2, 2] },
+    { id: 4, name: "Paved Foot Path", filename: "paved_footway.json", color: "#903366" },
+    { id: 5, name: "Planned Paved Foot Path", filename: "proposed_paved_footway.json", color: "#903366", dashArray: [2, 2] },
+    { id: 6, name: "Natural Surface Path", filename: "natural_surface_footway.json", color: "#A87196" },
+    { id: 7, name: "Planned Natural Surface Path", filename: "proposed_natural_surface_footway.json", color: "#A87196", dashArray: [2, 2] },
+    { id: 8, name: "Paved Shared Use", filename: "existing_paved_shared_use_paths.json", color: "#214A2D" },
+    { id: 9, name: "Planned Paved Shared Use", filename: "proposed_paved_shared_use_paths.json", color: "#214A2D", dashArray: [2, 2] },
+    { id: 10, name: "Planned Unimproved Shared Use", filename: "proposed_unimproved_shared_use_paths.json", color: "#4BAA40", dashArray: [2, 2] },
+    { id: 11, name: "Unimproved Shared Use", filename: "existing_unimproved_shared_use_paths.json", color: "#4BAA40" }
   ];
 
   // Show notice when any one of the exclusive layers turns on
@@ -638,7 +652,7 @@ const Map = () => {
   };
 
   const commuterRailLayers = () => {
-    if (!showCommuterRail || !showMunicipalityProfileMap) {
+    if (!showCommuterRail || !showMunicipalityProfileMap || !commuterRailData) {
       return null;
     }
 
@@ -668,7 +682,8 @@ const Map = () => {
         </Source>
         
         {/* Commuter Rail Stations */}
-        <Source key="commuter-rail-stations-source" id="commuter-rail-stations-source" type="geojson" data={commuterRailStationsData}>
+        {commuterRailStationsData && (
+          <Source key="commuter-rail-stations-source" id="commuter-rail-stations-source" type="geojson" data={commuterRailStationsData}>
           {/* Station outer circle (border) */}
           <Layer
             key="commuter-rail-stations-border"
@@ -714,6 +729,183 @@ const Map = () => {
               }}
             />
           )}
+          
+          {/* Commuter Rail Station hover border - larger circle */}
+          <Layer
+            key="commuter-rail-stations-hover-border"
+            id="commuter-rail-stations-hover-border"
+            type="circle"
+            paint={{
+              "circle-radius": 6,
+              "circle-color": "#FFFFFF",
+              "circle-stroke-width": 2,
+              "circle-stroke-color": "#FF6B35"
+            }}
+            filter={
+              hoveredCommuterRailStation
+                ? ["==", ["get", "station"], hoveredCommuterRailStation.properties?.station || ""]
+                : ["==", ["get", "station"], ""]
+            }
+          />
+          
+          {/* Commuter Rail Station hover inner - larger circle */}
+          <Layer
+            key="commuter-rail-stations-hover"
+            id="commuter-rail-stations-hover"
+            type="circle"
+            paint={{
+              "circle-radius": 5,
+              "circle-color": "#FF6B35",
+              "circle-opacity": 1
+            }}
+            filter={
+              hoveredCommuterRailStation
+                ? ["==", ["get", "station"], hoveredCommuterRailStation.properties?.station || ""]
+                : ["==", ["get", "station"], ""]
+            }
+          />
+          </Source>
+        )}
+      </>
+    );
+  };
+
+  const subwayStationsLayers = () => {
+    if (!showSubwayStations || !showMunicipalityProfileMap || !subwayStationsData) {
+      return null;
+    }
+
+    // MBTA official line colors
+    const lineColors = {
+      'RED': '#DA020E',
+      'ORANGE': '#ED8B00', 
+      'GREEN': '#00843D',
+      'BLUE': '#003DA5'
+    };
+
+    return (
+      <>
+        {/* Subway Lines */}
+        <Source key="subway-lines-source" id="subway-lines-source" type="geojson" data={subwayStationsData.lines}>
+          {/* Subway Line background - thinner line */}
+          <Layer
+            key="subway-lines-background"
+            id="subway-lines-background"
+            type="line"
+            paint={{
+              "line-color": "#FFFFFF",
+              "line-width": 3,
+              "line-opacity": 0.8
+            }}
+          />
+          
+          {/* Subway Line foreground - colored line */}
+          <Layer
+            key="subway-lines"
+            id="subway-lines"
+            type="line"
+            paint={{
+              "line-color": [
+                "match",
+                ["get", "LINE"],
+                "RED", lineColors.RED,
+                "ORANGE", lineColors.ORANGE,
+                "GREEN", lineColors.GREEN,
+                "BLUE", lineColors.BLUE,
+                "#666666" // default color
+              ],
+              "line-width": 2,
+              "line-opacity": 0.9
+            }}
+          />
+        </Source>
+
+        {/* Subway Stations */}
+        <Source key="subway-stations-source" id="subway-stations-source" type="geojson" data={subwayStationsData.stations}>
+          {/* Subway Station border circle */}
+          <Layer
+            key="subway-stations-border"
+            id="subway-stations-border"
+            type="circle"
+            paint={{
+              "circle-radius": 4,
+              "circle-color": "#FFFFFF",
+              "circle-stroke-width": 1,
+              "circle-stroke-color": "#FFFFFF"
+            }}
+          />
+          
+          {/* Subway Station inner circle with line color */}
+          <Layer
+            key="subway-stations"
+            id="subway-stations"
+            type="circle"
+            interactive={true}
+            paint={{
+              "circle-radius": 3,
+              "circle-color": [
+                "match",
+                ["get", "LINE"],
+                "RED", lineColors.RED,
+                "ORANGE", lineColors.ORANGE,
+                "GREEN", lineColors.GREEN,
+                "BLUE", lineColors.BLUE,
+                "#666666" // default color
+              ],
+              "circle-opacity": 0.9
+            }}
+          />
+          
+          {/* Subway Station hover border - larger circle */}
+          <Layer
+            key="subway-stations-hover-border"
+            id="subway-stations-hover-border"
+            type="circle"
+            paint={{
+              "circle-radius": 6,
+              "circle-color": "#FFFFFF",
+              "circle-stroke-width": 2,
+              "circle-stroke-color": [
+                "match",
+                ["get", "LINE"],
+                "RED", lineColors.RED,
+                "ORANGE", lineColors.ORANGE,
+                "GREEN", lineColors.GREEN,
+                "BLUE", lineColors.BLUE,
+                "#666666" // default color
+              ]
+            }}
+            filter={
+              hoveredSubwayStation
+                ? ["==", ["get", "STATION"], hoveredSubwayStation.properties?.STATION || ""]
+                : ["==", ["get", "STATION"], ""]
+            }
+          />
+          
+          {/* Subway Station hover inner - larger circle */}
+          <Layer
+            key="subway-stations-hover"
+            id="subway-stations-hover"
+            type="circle"
+            paint={{
+              "circle-radius": 5,
+              "circle-color": [
+                "match",
+                ["get", "LINE"],
+                "RED", lineColors.RED,
+                "ORANGE", lineColors.ORANGE,
+                "GREEN", lineColors.GREEN,
+                "BLUE", lineColors.BLUE,
+                "#666666" // default color
+              ],
+              "circle-opacity": 0.9
+            }}
+            filter={
+              hoveredSubwayStation
+                ? ["==", ["get", "STATION"], hoveredSubwayStation.properties?.STATION || ""]
+                : ["==", ["get", "STATION"], ""]
+            }
+          />
         </Source>
       </>
     );
@@ -721,7 +913,7 @@ const Map = () => {
 
   const blueBikeStationsLayers = () => {
   
-    if (!showBlueBikeStations || !showMunicipalityProfileMap) {
+    if (!showBlueBikeStations || !showMunicipalityProfileMap || !blueBikeStationsData) {
       return null;
     }
     return (
@@ -751,6 +943,41 @@ const Map = () => {
             "circle-opacity": 0.9
           }}
         />
+        
+        {/* Blue Bike Station hover border - larger circle */}
+        <Layer
+          key="blue-bike-stations-hover-border"
+          id="blue-bike-stations-hover-border"
+          type="circle"
+          paint={{
+            "circle-radius": 6,
+            "circle-color": "#FFFFFF",
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#87CEEB"
+          }}
+          filter={
+            hoveredBlueBikeStation
+              ? ["==", ["get", "Name"], hoveredBlueBikeStation.properties?.Name || ""]
+              : ["==", ["get", "Name"], ""]
+          }
+        />
+        
+        {/* Blue Bike Station hover inner - larger circle */}
+        <Layer
+          key="blue-bike-stations-hover"
+          id="blue-bike-stations-hover"
+          type="circle"
+          paint={{
+            "circle-radius": 5,
+            "circle-color": "#87CEEB",
+            "circle-opacity": 1
+          }}
+          filter={
+            hoveredBlueBikeStation
+              ? ["==", ["get", "Name"], hoveredBlueBikeStation.properties?.Name || ""]
+              : ["==", ["get", "Name"], ""]
+          }
+        />
       </Source>
     );
   };
@@ -765,7 +992,8 @@ const Map = () => {
     const results = {
       trails: [],
       stations: [],
-      bikeStations: []
+      bikeStations: [],
+      subwayStations: []
     };
 
     // Check trails
@@ -862,6 +1090,25 @@ const Map = () => {
       results.bikeStations.sort((a, b) => a.distance - b.distance);
     }
 
+    // Check Subway stations
+    if (subwayStationsData && subwayStationsData.stations && subwayStationsData.stations.features) {
+      subwayStationsData.stations.features.forEach((station) => {
+        const stationPoint = turf.point(station.geometry.coordinates);
+        const distance = turf.distance(centerPoint, stationPoint, { units: 'meters' });
+
+        if (distance <= radius) {
+          results.subwayStations.push({
+            name: station.properties?.STATION || 'Unknown Station',
+            line: station.properties?.LINE || 'Unknown Line',
+            distance: distance
+          });
+        }
+      });
+
+      // Sort subway stations by distance
+      results.subwayStations.sort((a, b) => a.distance - b.distance);
+    }
+
     return results;
   };
 
@@ -896,6 +1143,45 @@ const Map = () => {
             "line-color": "#0080ff",
             "line-width": 2,
             "line-dasharray": [2, 2]
+          }}
+        />
+      </Source>
+    );
+  };
+
+  // Render buffer preview circle that follows mouse
+  const renderBufferPreview = () => {
+    if (!bufferPreviewCenter || !isBufferActive) {
+      return null;
+    }
+
+    const centerPoint = turf.point([bufferPreviewCenter.lng, bufferPreviewCenter.lat]);
+    const previewCircle = turf.circle(centerPoint, bufferRadius / 1000, { 
+      units: 'kilometers',
+      steps: 64 
+    });
+
+    return (
+      <Source key="buffer-preview-source" id="buffer-preview-source" type="geojson" data={previewCircle}>
+        {/* Preview fill */}
+        <Layer
+          key="buffer-preview-fill"
+          id="buffer-preview-fill"
+          type="fill"
+          paint={{
+            "fill-color": "#ff8000",
+            "fill-opacity": 0.1
+          }}
+        />
+        {/* Preview outline */}
+        <Layer
+          key="buffer-preview-outline"
+          id="buffer-preview-outline"
+          type="line"
+          paint={{
+            "line-color": "#ff8000",
+            "line-width": 2,
+            "line-dasharray": [1, 1]
           }}
         />
       </Source>
@@ -1072,14 +1358,11 @@ const Map = () => {
 
         try {
           // Fetch the local GeoJSON file
-          console.log(`Fetching: ./src/data/${layer.filename}`);
           const response = await fetch(`./src/data/${layer.filename}`);
           if (!response.ok) {
             throw new Error(`Failed to fetch ${layer.filename}: ${response.status}`);
           }
           const geojsonData = await response.json();
-          console.log(`Loaded ${layer.filename}:`, geojsonData.features?.length || 0, 'features');
-          
           if (geojsonData && geojsonData.features) {
             setLoadingMessage(`Processing ${layer.name}...`);
             setLoadingProgress(50 + (i / totalLayers) * 30); // Next 30% for processing
@@ -1088,11 +1371,7 @@ const Map = () => {
             const intersectingFeatures = geojsonData.features.filter(feature => {
               return feature.properties?.muni_id === municipalityId;
             });
-            
-            console.log(`Found ${intersectingFeatures.length} trails in ${layer.name} (layer id: ${layer.id}) for muni_id ${municipalityId}`);
-
             // Add layer information to each intersecting feature
-            const beforeCount = allTrailResults.length;
             intersectingFeatures.forEach(feature => {
               allTrailResults.push({
                 layerId: layer.id,
@@ -1103,8 +1382,6 @@ const Map = () => {
                 feature: feature
               });
             });
-            const afterCount = allTrailResults.length;
-            console.log(`Added ${afterCount - beforeCount} trails from ${layer.name}. Total now: ${afterCount}`);
           }
         } catch (error) {
           console.error(`Error loading layer ${layer.name}:`, error);
@@ -1172,6 +1449,10 @@ const Map = () => {
       setShowBlueBikeStations(event.detail.show);
     };
 
+    const handleToggleSubwayStations = (event) => {
+      setShowSubwayStations(event.detail.show);
+    };
+
     const handleResetMunicipalityProfile = () => {
       // Reset all municipality profile related states
       setIntersectedTrails([]);
@@ -1181,29 +1462,101 @@ const Map = () => {
       setShowCommuterRail(false);
       setShowStationLabels(false);
       setShowBlueBikeStations(false); // Reset Blue Bike Stations state
+      setShowSubwayStations(false); // Reset Subway Stations state
       setShowBufferAnalysis(false);
       setIsBufferActive(false);
       setBufferCenter(null);
       setBufferResults(null);
-      console.log('🧹 Reset all municipality profile states');
+      setBufferPreviewCenter(null);
+      console.log('Reset all municipality profile states');
+    };
+    
+    const handleResetBufferAnalysis = () => {
+      // Reset only buffer analysis related states
+      setShowBufferAnalysis(false);
+      setIsBufferActive(false);
+      setBufferCenter(null);
+      setBufferResults(null);
+      setBufferPreviewCenter(null);
+      console.log('Reset buffer analysis for new municipality');
     };
     
     window.addEventListener('openTrailList', handleOpenTrailList);
     window.addEventListener('toggleCommuterRail', handleToggleCommuterRail);
     window.addEventListener('toggleStationLabels', handleToggleStationLabels);
     window.addEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
+    window.addEventListener('toggleSubwayStations', handleToggleSubwayStations);
     window.addEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
+    window.addEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
     
     return () => {
       window.removeEventListener('openTrailList', handleOpenTrailList);
       window.removeEventListener('toggleCommuterRail', handleToggleCommuterRail);
       window.removeEventListener('toggleStationLabels', handleToggleStationLabels);
       window.removeEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
+      window.removeEventListener('toggleSubwayStations', handleToggleSubwayStations);
       window.removeEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
       window.removeEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
+      window.removeEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
     };
   }, []);
+
+  // Fetch commuter rail and bike station data when needed
+  useEffect(() => {
+    const fetchCommuterRailData = async () => {
+      if (!commuterRailData) {
+        try {
+          const response = await fetch('./src/data/commuter_rail.json');
+          const data = await response.json();
+          setCommuterRailData(data);
+        } catch (error) {
+          console.error('Error fetching commuter rail data:', error);
+        }
+      }
+    };
+
+    const fetchCommuterRailStationsData = async () => {
+      if (!commuterRailStationsData) {
+        try {
+          const response = await fetch('./src/data/commuter_rail_stations_point.json');
+          const data = await response.json();
+          setCommuterRailStationsData(data);
+        } catch (error) {
+          console.error('Error fetching commuter rail stations data:', error);
+        }
+      }
+    };
+
+    const fetchBlueBikeStationsData = async () => {
+      if (!blueBikeStationsData) {
+        try {
+          const response = await fetch('./src/data/blue_bike_stations.json');
+          const data = await response.json();
+          setBlueBikeStationsData(data);
+        } catch (error) {
+          console.error('Error fetching blue bike stations data:', error);
+        }
+      }
+    };
+
+    const fetchSubwayStationsData = async () => {
+      if (!subwayStationsData) {
+        try {
+          const response = await fetch('./src/data/subway.json');
+          const data = await response.json();
+          setSubwayStationsData(data);
+        } catch (error) {
+          console.error('Error fetching subway stations data:', error);
+        }
+      }
+    };
+
+    fetchCommuterRailData();
+    fetchCommuterRailStationsData();
+    fetchBlueBikeStationsData();
+    fetchSubwayStationsData();
+  }, [commuterRailData, commuterRailStationsData, blueBikeStationsData, subwayStationsData]);
 
   // Clear buffer when switching away from Municipality Profile
   useEffect(() => {
@@ -1212,8 +1565,9 @@ const Map = () => {
       setBufferCenter(null);
       setBufferResults(null);
       setIsBufferActive(false);
+      setBufferPreviewCenter(null);
       setShowBufferAnalysis(false);
-      console.log('🧹 Cleared buffer analysis (switched to Trail Filters)');
+      console.log('Cleared buffer analysis (switched to Trail Filters)');
     }
   }, [showMunicipalityProfileMap]);
 
@@ -1355,6 +1709,7 @@ const Map = () => {
               const center = { lng: event.lngLat.lng, lat: event.lngLat.lat };
               setBufferCenter(center);
               setIsBufferActive(false);
+              setBufferPreviewCenter(null); // Clear preview circle
               
               // Calculate buffer analysis
               console.log('Calculating buffer analysis with radius:', bufferRadius);
@@ -1367,42 +1722,60 @@ const Map = () => {
 
             // Check if clicking on municipality profile map
             if (showMunicipalityProfileMap && event.features) {
-              // Check for GeoJSON trail clicks first
-              const trailFeature = event.features.find((f) => 
+              // Check for GeoJSON trail clicks - find ALL overlapping trails
+              const trailFeatures = event.features.filter((f) => 
                 f.layer && f.layer.id.startsWith("geojson-trail-")
               );
-              if (trailFeature) {
-                const layerId = trailFeature.layer.id.replace("geojson-trail-", "");
-                const layerInfo = geojsonTrailLayers.find(l => l.id === parseInt(layerId));
+              
+              if (trailFeatures.length > 0) {
+                // Process all overlapping trail features
+                const trailResults = [];
                 
-                // Match by objectid (lowercase) or OBJECTID (uppercase)
-                const clickedObjectId = trailFeature.properties?.objectid || trailFeature.properties?.OBJECTID;
-                
-                const trailData = intersectedTrails.find(trail => {
-                  const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
-                  return trail.layerId === parseInt(layerId) && trailObjectId === clickedObjectId;
-                });
-                
-                if (trailData) {
-                  // Find the index in the trail list
-                  const trailIndex = intersectedTrails.findIndex(trail => {
+                trailFeatures.forEach(trailFeature => {
+                  const layerId = trailFeature.layer.id.replace("geojson-trail-", "");
+                  const layerInfo = geojsonTrailLayers.find(l => l.id === parseInt(layerId));
+                  
+                  // Match by objectid (lowercase) or OBJECTID (uppercase)
+                  const clickedObjectId = trailFeature.properties?.objectid || trailFeature.properties?.OBJECTID;
+                  
+                  const trailData = intersectedTrails.find(trail => {
                     const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
                     return trail.layerId === parseInt(layerId) && trailObjectId === clickedObjectId;
                   });
                   
-                  if (trailIndex >= 0) {
-                    setSelectedTrailIndex(trailIndex);
+                  if (trailData) {
+                    trailResults.push({
+                      layerId: trailData.layerId,
+                      layerName: trailData.layerName,
+                      attributes: trailData.attributes
+                    });
                   }
+                });
+                
+                if (trailResults.length > 0) {
+                  // If multiple trails, highlight the first one but show all in popup
+                  const firstTrail = trailResults[0];
+                  const firstTrailData = intersectedTrails.find(trail => {
+                    const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
+                    return trail.layerId === firstTrail.layerId && 
+                           trailObjectId === (firstTrail.attributes?.objectid || firstTrail.attributes?.OBJECTID);
+                  });
                   
-                  // Highlight the clicked trail
-                  setHighlightedTrail(trailData);
-                  
-                  // Show popup with trail details
-                  const mockResult = {
-                    layerId: trailData.layerId,
-                    layerName: trailData.layerName,
-                    attributes: trailData.attributes
-                  };
+                  if (firstTrailData) {
+                    // Find the index in the trail list
+                    const trailIndex = intersectedTrails.findIndex(trail => {
+                      const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
+                      return trail.layerId === firstTrail.layerId && 
+                             trailObjectId === (firstTrail.attributes?.objectid || firstTrail.attributes?.OBJECTID);
+                    });
+                    
+                    if (trailIndex >= 0) {
+                      setSelectedTrailIndex(trailIndex);
+                    }
+                    
+                    // Highlight the first trail
+                    setHighlightedTrail(firstTrailData);
+                  }
                   
                   // Ensure we have valid coordinates for the popup
                   let popupCoords = null;
@@ -1411,10 +1784,10 @@ const Map = () => {
                   if (event.lngLat && !isNaN(event.lngLat.lng) && !isNaN(event.lngLat.lat)) {
                     popupCoords = { lng: event.lngLat.lng, lat: event.lngLat.lat };
                   }
-                  // Fallback to trail geometry center
-                  else if (trailData.geometry && trailData.geometry.coordinates) {
-                    const coords = trailData.geometry.coordinates;
-                    const coordsArray = trailData.geometry.type === 'MultiLineString' ? coords[0] : coords;
+                  // Fallback to first trail geometry center
+                  else if (firstTrailData && firstTrailData.geometry && firstTrailData.geometry.coordinates) {
+                    const coords = firstTrailData.geometry.coordinates;
+                    const coordsArray = firstTrailData.geometry.type === 'MultiLineString' ? coords[0] : coords;
                     if (coordsArray && coordsArray.length > 0) {
                       const midPoint = coordsArray[Math.floor(coordsArray.length / 2)];
                       if (midPoint && midPoint.length >= 2) {
@@ -1430,7 +1803,7 @@ const Map = () => {
                     // Use setTimeout to ensure state update completes
                     setTimeout(() => {
                       setIdentifyPoint(popupCoords);
-                      setIdentifyInfo([mockResult]);
+                      setIdentifyInfo(trailResults); // Show all overlapping trails
                       setPointIndex(0);
                       toggleIdentifyPopup(true);
                     }, 10);
@@ -1478,6 +1851,40 @@ const Map = () => {
                 
                 return;
               }
+
+              // Check for Subway Station clicks
+              const subwayStationFeature = event.features.find((f) => 
+                f.layer && f.layer.id === "subway-stations"
+              );
+              if (subwayStationFeature) {
+                const stationProps = subwayStationFeature.properties;
+                const stationInfo = {
+                  name: stationProps?.STATION || 'Unknown Station',
+                  line: stationProps?.LINE || 'Unknown Line'
+                };
+                
+                // Show popup with subway station details
+                const mockResult = {
+                  layerId: 'subway-station',
+                  layerName: 'MBTA Subway Station',
+                  attributes: stationInfo
+                };
+                
+                if (event.lngLat && !isNaN(event.lngLat.lng) && !isNaN(event.lngLat.lat)) {
+                  // Force popup refresh by toggling off then on
+                  toggleIdentifyPopup(false);
+                  
+                  // Use setTimeout to ensure state update completes
+                  setTimeout(() => {
+                    setIdentifyPoint({ lng: event.lngLat.lng, lat: event.lngLat.lat });
+                    setIdentifyInfo([mockResult]);
+                    setPointIndex(0);
+                    toggleIdentifyPopup(true);
+                  }, 10);
+                }
+                
+                return;
+              }
               
               // Check for municipality clicks
               const muniFeature = event.features.find((f) => f.layer && f.layer.id === "municipality-profile-base");
@@ -1485,7 +1892,7 @@ const Map = () => {
                 const townName = muniFeature.properties.town || muniFeature.properties.NAME;
                 if (townName) {
                   setSelectedMunicipality({
-                    name: townName,
+                    name: townName.toLowerCase(),
                     properties: muniFeature.properties,
                     geometry: muniFeature.geometry
                   });
@@ -1501,7 +1908,7 @@ const Map = () => {
                 const townName = muniFeature.properties.town || muniFeature.properties.NAME;
                 if (townName) {
                   setSelectedMunicipality({
-                    name: townName,
+                    name: townName.toLowerCase(),
                     properties: muniFeature.properties,
                     geometry: muniFeature.geometry
                   });
@@ -1514,6 +1921,13 @@ const Map = () => {
           onMouseMove={(event) => {
             const map = mapRef.current && mapRef.current.getMap ? mapRef.current.getMap() : null;
             const features = event.features || [];
+
+            // Handle buffer preview circle when drawing is active
+            if (isBufferActive && event.lngLat) {
+              setBufferPreviewCenter({ lng: event.lngLat.lng, lat: event.lngLat.lat });
+            } else {
+              setBufferPreviewCenter(null);
+            }
 
             // Handle trail hover in municipality profile
             if (showMunicipalityProfileMap && features.length > 0) {
@@ -1540,6 +1954,32 @@ const Map = () => {
               }
             } else {
               setHoveredTrail(null);
+            }
+
+            // Handle Blue Bike Stations hover
+            if (showBlueBikeStations && showMunicipalityProfileMap) {
+              const blueBikeFeature = features.find((f) => f.layer && f.layer.id === "blue-bike-stations");
+              
+              if (blueBikeFeature) {
+                setHoveredBlueBikeStation(blueBikeFeature);
+              } else {
+                setHoveredBlueBikeStation(null);
+              }
+            } else {
+              setHoveredBlueBikeStation(null);
+            }
+
+            // Handle Subway Stations hover
+            if (showSubwayStations && showMunicipalityProfileMap) {
+              const subwayFeature = features.find((f) => f.layer && f.layer.id === "subway-stations");
+              
+              if (subwayFeature) {
+                setHoveredSubwayStation(subwayFeature);
+              } else {
+                setHoveredSubwayStation(null);
+              }
+            } else {
+              setHoveredSubwayStation(null);
             }
 
             // Handle MA House Districts hover (improved detection)
@@ -1727,6 +2167,9 @@ const Map = () => {
           {/* Blue Bike Stations Layer - only in municipality profile */}
           {showMunicipalityProfileMap && blueBikeStationsLayers()}
           
+          {/* MBTA Subway Stations Layer - only in municipality profile */}
+          {showMunicipalityProfileMap && subwayStationsLayers()}
+          
           {/* Render vector tile source for regular trail layers */}
           {!showMunicipalityProfileMap && (
             <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
@@ -1775,6 +2218,7 @@ const Map = () => {
           
           
           {/* Buffer Analysis Layers */}
+          {renderBufferPreview()}
           {renderBufferCircle()}
           {renderBufferCenter()}
           
@@ -1927,9 +2371,11 @@ const Map = () => {
             setIsBufferActive(false);
             setBufferCenter(null);
             setBufferResults(null);
+            setBufferPreviewCenter(null);
           } else if (isBufferActive) {
             // Cancel
             setIsBufferActive(false);
+            setBufferPreviewCenter(null);
           } else {
             // Activate
             setIsBufferActive(true);
@@ -1940,6 +2386,89 @@ const Map = () => {
         isBufferActive={isBufferActive}
         bufferCenter={bufferCenter}
         selectedMunicipality={selectedMunicipality}
+        onBlueBikeStationHover={(station) => {
+          if (station) {
+            // Find the corresponding feature in the blue bike stations data
+            if (blueBikeStationsData && blueBikeStationsData.features) {
+              const feature = blueBikeStationsData.features.find(f => 
+                f.properties?.Name === station.name
+              );
+              if (feature) {
+                setHoveredBlueBikeStation(feature);
+              }
+            }
+          } else {
+            setHoveredBlueBikeStation(null);
+          }
+        }}
+        onCommuterRailStationHover={(station) => {
+          if (station) {
+            // Find the corresponding feature in the commuter rail stations data
+            if (commuterRailStationsData && commuterRailStationsData.features) {
+              const feature = commuterRailStationsData.features.find(f => 
+                f.properties?.station === station.name
+              );
+              if (feature) {
+                setHoveredCommuterRailStation(feature);
+              }
+            }
+          } else {
+            setHoveredCommuterRailStation(null);
+          }
+        }}
+        onSubwayStationHover={(station) => {
+          if (station) {
+            // Find the corresponding feature in the subway stations data
+            if (subwayStationsData && subwayStationsData.stations && subwayStationsData.stations.features) {
+              const feature = subwayStationsData.stations.features.find(f => 
+                f.properties?.STATION === station.name
+              );
+              if (feature) {
+                setHoveredSubwayStation(feature);
+              }
+            }
+          } else {
+            setHoveredSubwayStation(null);
+          }
+        }}
+        onClearBuffer={() => {
+          setIsBufferActive(false);
+          setBufferCenter(null);
+          setBufferResults(null);
+          setBufferPreviewCenter(null);
+        }}
+        onZoomToBuffer={() => {
+          if (bufferCenter && bufferRadius) {
+            // Calculate buffer extent
+            const centerPoint = turf.point([bufferCenter.lng, bufferCenter.lat]);
+            const bufferCircle = turf.circle(centerPoint, bufferRadius / 1000, { 
+              units: 'kilometers',
+              steps: 64 
+            });
+            
+            // Get bounding box of the buffer
+            const bbox = turf.bbox(bufferCircle);
+            
+            // Fit map to buffer extent
+            if (mapRef.current && mapRef.current.getMap) {
+              const map = mapRef.current.getMap();
+              map.fitBounds([
+                [bbox[0], bbox[1]], // Southwest corner
+                [bbox[2], bbox[3]]  // Northeast corner
+              ], {
+                padding: 50, // Add some padding around the buffer
+                maxZoom: 16   // Limit max zoom level
+              });
+            }
+          }
+        }}
+        // Layer visibility states
+        showCommuterRail={showCommuterRail}
+        showBlueBikeStations={showBlueBikeStations}
+        showSubwayStations={showSubwayStations}
+        onToggleCommuterRail={setShowCommuterRail}
+        onToggleBlueBikeStations={setShowBlueBikeStations}
+        onToggleSubwayStations={setShowSubwayStations}
       />
     </>
   );

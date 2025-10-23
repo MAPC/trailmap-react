@@ -3,6 +3,7 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Dropdown from "react-bootstrap/Dropdown";
+import * as turf from '@turf/turf';
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
 
@@ -17,7 +18,9 @@ const MunicipalityProfile = ({
   showStationLabels,
   onToggleStationLabels,
   showBlueBikeStations,
-  onToggleBlueBikeStations
+  onToggleBlueBikeStations,
+  showSubwayStations,
+  onToggleSubwayStations
 }) => {
   const { existingTrails, proposedTrails } = useContext(LayerContext);
   const [municipalities, setMunicipalities] = useState([]);
@@ -33,7 +36,6 @@ const MunicipalityProfile = ({
       setSelectedTrailIndex(null);
       setShowCompletionModal(false);
       setShowShareMenu(false);
-      console.log('🧹 Reset MunicipalityProfile component states');
     };
     
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
@@ -64,6 +66,7 @@ const MunicipalityProfile = ({
       const urlParams = new URLSearchParams(window.location.search);
       const sharedMuni = urlParams.get('muni');
       const sharedView = urlParams.get('view');
+      const showCompletion = urlParams.get('showCompletion');
       
       if (sharedView === 'municipality' && sharedMuni && muniList.length > 0) {
         const foundMuni = muniList.find(m => m.name === sharedMuni.toLowerCase());
@@ -71,11 +74,52 @@ const MunicipalityProfile = ({
           // Small delay to ensure everything is loaded
           setTimeout(() => {
             onMunicipalitySelect(foundMuni);
+            
+            // If showCompletion parameter is present, open the completion modal
+            if (showCompletion === 'true') {
+              setTimeout(() => {
+                setShowCompletionModal(true);
+              }, 1000); // Additional delay to ensure municipality is selected and stats are calculated
+            }
+            
+            // Clear URL parameters after loading from shared URL
+            setTimeout(() => {
+              const newUrl = window.location.pathname;
+              window.history.replaceState({}, document.title, newUrl);
+            }, 2000); // Clear URL after municipality is fully loaded
           }, 500);
         }
       }
     }
   }, []);
+
+  // Reset municipality profile states when a new municipality is selected
+  // Track previous municipality to detect actual changes
+  const prevMunicipalityRef = useRef(null);
+  
+  useEffect(() => {
+    if (selectedMunicipality) {
+      // Only reset if the municipality actually changed (not just re-rendered)
+      const municipalityChanged = prevMunicipalityRef.current !== null && 
+                                  prevMunicipalityRef.current?.name !== selectedMunicipality.name;
+      
+      if (municipalityChanged) {
+        // Reset all municipality profile states when a new municipality is selected
+        setTrailStats(null);
+        setSelectedTrailIndex(null);
+        setShowCompletionModal(false);
+        setShowShareMenu(false);
+        
+        // Reset buffer analysis when selecting a new municipality
+        window.dispatchEvent(new CustomEvent('resetBufferAnalysis'));
+        
+        console.log('Reset municipality profile states for new municipality:', selectedMunicipality.name);
+      }
+      
+      // Update the ref to current municipality
+      prevMunicipalityRef.current = selectedMunicipality;
+    }
+  }, [selectedMunicipality]);
 
   // Calculate trail statistics when municipality or trails change
   useEffect(() => {
@@ -90,7 +134,9 @@ const MunicipalityProfile = ({
         totalTrails: 0,
         totalLength: 0,
         byType: {},
-        completionRates: {}
+        completionRates: {},
+        density: 0,
+        area: 0
       });
       return;
     }
@@ -99,8 +145,31 @@ const MunicipalityProfile = ({
       totalTrails: municipalityTrails.length,
       totalLength: 0,
       byType: {},
-      completionRates: {}
+      completionRates: {},
+      density: 0,
+      area: 0
     };
+
+    // Calculate municipality area and trail density
+    if (selectedMunicipality && selectedMunicipality.geometry) {
+      try {
+        let area = 0;
+        
+        // Handle both Polygon and MultiPolygon geometries
+        if (selectedMunicipality.geometry.type === 'Polygon') {
+          const muniPolygon = turf.polygon(selectedMunicipality.geometry.coordinates);
+          area = turf.area(muniPolygon) * 10.764; // Convert from sq meters to sq feet
+        } else if (selectedMunicipality.geometry.type === 'MultiPolygon') {
+          const muniMultiPolygon = turf.multiPolygon(selectedMunicipality.geometry.coordinates);
+          area = turf.area(muniMultiPolygon) * 10.764; // Convert from sq meters to sq feet
+        }
+        
+        stats.area = area;
+        console.log(`Municipality area calculated: ${area} sq feet for ${selectedMunicipality.name}`);
+      } catch (error) {
+        console.error('Error calculating municipality area:', error);
+      }
+    }
 
     // Initialize counts for all trail types
     [...existingTrails, ...proposedTrails].forEach(trailType => {
@@ -117,14 +186,16 @@ const MunicipalityProfile = ({
       const layerName = trail.layerName || 'Unknown';
       
       // Get length from various possible attribute names (in feet) and convert to number
+      // Use the same logic as Identify component
+      const rawLengthFeet = trail.attributes?.['Facility Length in Feet'] ?? trail.attributes?.length_ft;
       const lengthValue = 
-        trail.attributes?.length_ft || 
-        trail.attributes?.['Facility Length in Feet'] || 
-        trail.attributes?.Shape_Length || 
-        0;
+        (rawLengthFeet !== undefined && rawLengthFeet !== null && rawLengthFeet !== "Null" && rawLengthFeet !== " ")
+          ? rawLengthFeet
+          : trail.attributes?.Shape_Length || 0;
       
       // Ensure it's a number, not a string
       const lengthInFeet = Number(lengthValue) || 0;
+      
       
       if (stats.byType[layerName]) {
         stats.byType[layerName].count += 1;
@@ -133,6 +204,13 @@ const MunicipalityProfile = ({
       
       stats.totalLength += lengthInFeet;
     });
+
+    // Calculate trail density (feet per square mile)
+    if (stats.area > 0) {
+      const areaInSqMiles = stats.area / 27878400; // Convert sq feet to sq miles
+      stats.density = areaInSqMiles > 0 ? Math.round((stats.totalLength / areaInSqMiles) * 10) / 10 : 0;
+      
+    }
 
     // Calculate completion rates for trail type pairs
     // Map planned types to their existing counterparts
@@ -186,10 +264,101 @@ const MunicipalityProfile = ({
     ).join(' ');
   };
 
+  const handleShareProfile = async () => {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const params = new URLSearchParams({
+      view: 'municipality',
+      muni: selectedMunicipality?.name || '',
+      showCompletion: 'true' // Add parameter to indicate completion modal should open
+    });
+    const shareUrl = `${baseUrl}?${params.toString()}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      
+      // Create toast element and append to body
+      const toast = document.createElement('div');
+      toast.innerHTML = `
+        <div style="
+          position: fixed !important;
+          top: 20px !important;
+          right: 20px !important;
+          z-index: 999999 !important;
+          background-color: #28a745;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 6px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          font-size: 14px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          pointer-events: none;
+        ">
+          <i class="fas fa-check-circle"></i>
+          Link copied to clipboard!
+        </div>
+      `;
+      
+      document.body.appendChild(toast);
+      
+      // Remove toast after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+      }, 3000);
+      
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      // Show toast for fallback too
+      const toast = document.createElement('div');
+      toast.innerHTML = `
+        <div style="
+          position: fixed !important;
+          top: 20px !important;
+          right: 20px !important;
+          z-index: 999999 !important;
+          background-color: #28a745;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 6px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          font-size: 14px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          pointer-events: none;
+        ">
+          <i class="fas fa-check-circle"></i>
+          Link copied to clipboard!
+        </div>
+      `;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+      }, 3000);
+    }
+  };
+
   return (
     <div className="MunicipalityProfile mt-3">
       <div className="MunicipalityProfile__header mb-3">
-        <p className="small">
+        <p>
           Select a municipality from the dropdown or click on a municipality on the map to view its trail network statistics and details.
         </p>
       </div>
@@ -203,13 +372,16 @@ const MunicipalityProfile = ({
           className="w-100 mb-2"
           onClick={() => {
             const newState = !showCommuterRail;
+            // Update parent component state
             if (onToggleCommuterRail) {
               onToggleCommuterRail(newState);
             }
-            // Notify Map component
-            window.dispatchEvent(new CustomEvent('toggleCommuterRail', { 
-              detail: { show: newState } 
-            }));
+            // Notify Map component with slight delay to ensure state is updated
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('toggleCommuterRail', { 
+                detail: { show: newState } 
+              }));
+            }, 10);
           }}
         >
           {showCommuterRail ? "Hide" : "Show"} Commuter Rail
@@ -242,16 +414,40 @@ const MunicipalityProfile = ({
           className="w-100 mb-2"
           onClick={() => {
             const newState = !showBlueBikeStations;
+            // Update parent component state
             if (onToggleBlueBikeStations) {
               onToggleBlueBikeStations(newState);
             }
-            // Notify Map component
-            window.dispatchEvent(new CustomEvent('toggleBlueBikeStations', { 
-              detail: { show: newState } 
-            }));
+            // Notify Map component with slight delay to ensure state is updated
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('toggleBlueBikeStations', { 
+                detail: { show: newState } 
+              }));
+            }, 10);
           }}
         >
           {showBlueBikeStations ? "Hide" : "Show"} Blue Bike Stations
+        </Button>
+
+        <Button
+          variant={showSubwayStations ? "primary" : "outline-secondary"}
+          size="sm"
+          className="w-100 mb-2"
+          onClick={() => {
+            const newState = !showSubwayStations;
+            // Update parent component state
+            if (onToggleSubwayStations) {
+              onToggleSubwayStations(newState);
+            }
+            // Notify Map component with slight delay to ensure state is updated
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('toggleSubwayStations', { 
+                detail: { show: newState } 
+              }));
+            }, 10);
+          }}
+        >
+          {showSubwayStations ? "Hide" : "Show"} MBTA Subway Stations
         </Button>
       </div>
 
@@ -286,10 +482,16 @@ const MunicipalityProfile = ({
                     <span className="small text-muted">Total Trails:</span>
                     <span className="small fw-semibold">{trailStats.totalTrails}</span>
                   </div>
-                  <div className="d-flex justify-content-between mb-2">
+                  <div className="d-flex justify-content-between mb-1">
                     <span className="small text-muted">Total Length:</span>
                     <span className="small fw-semibold">
                       {formatLength(trailStats.totalLength)} ft
+                    </span>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span className="small text-muted">Trail Density (existing only):</span>
+                    <span className="small fw-semibold">
+                      {trailStats.density} ft/mi²
                     </span>
                   </div>
                 </div>
@@ -357,14 +559,26 @@ const MunicipalityProfile = ({
       >
         <Modal.Header closeButton className="bg-light">
           <Modal.Title className="w-100">
-            <div className="d-flex align-items-center">
-              <span>Trail Network Completion Rates</span>
-            </div>
-            {selectedMunicipality && (
-              <div className="text-muted fs-6 fw-normal mt-1">
-                {capitalizeWords(selectedMunicipality.name)}
+            <div className="d-flex align-items-center justify-content-between">
+              <div>
+                <span>Trail Network Completion Rates</span>
+                {selectedMunicipality && (
+                  <div className="text-muted fs-6 fw-normal mt-1">
+                    {capitalizeWords(selectedMunicipality.name)}
+                  </div>
+                )}
               </div>
-            )}
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={handleShareProfile}
+                className="MunicipalityProfile__share-btn"
+                title="Share this municipality profile"
+              >
+                <i className="fas fa-share-alt me-1"></i>
+                Share Profile
+              </Button>
+            </div>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
@@ -374,6 +588,32 @@ const MunicipalityProfile = ({
                 <div className="small">
                   <strong>Completion Rate</strong> shows the percentage of existing trails compared to the total planned network (existing + planned).
                   Higher percentages indicate more trail infrastructure is already built.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Trail Density Information */}
+          {trailStats && (
+            <div className="alert alert-light mb-4">
+              <div className="row g-3">
+                <div className="col-md-4">
+                  <div className="text-center">
+                    <div className="text-muted small">Total Trails</div>
+                    <div className="fw-bold fs-5">{trailStats.totalTrails}</div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="text-center">
+                    <div className="text-muted small">Total Length</div>
+                    <div className="fw-bold fs-5">{formatLength(trailStats.totalLength)} ft</div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="text-center">
+                    <div className="text-muted small">Trail Density (existing only)</div>
+                    <div className="fw-bold fs-5">{trailStats.density} ft/mi²</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -507,32 +747,6 @@ const MunicipalityProfile = ({
         <Modal.Footer className="bg-light">
           <div className="w-100 d-flex justify-content-between align-items-center">
             <div className="d-flex gap-2 align-items-center">
-              <Dropdown>
-                <Dropdown.Toggle variant="outline-primary" size="sm" id="share-profile-dropdown">
-                  Share Profile
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item
-                    onClick={() => {
-                      const baseUrl = window.location.origin + window.location.pathname;
-                      const params = new URLSearchParams({
-                        view: 'municipality',
-                        muni: selectedMunicipality?.name || ''
-                      });
-                      const shareUrl = `${baseUrl}?${params.toString()}`;
-                      
-                      navigator.clipboard.writeText(shareUrl).then(() => {
-                        alert(`Link copied to clipboard!\n\n${shareUrl}`);
-                      }).catch(err => {
-                        console.error('Failed to copy:', err);
-                        prompt('Copy this link:', shareUrl);
-                      });
-                    }}
-                  >
-                    Copy Link
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
               <small className="text-muted d-flex align-items-center">
                 {trailStats && (
                   <>
@@ -550,6 +764,7 @@ const MunicipalityProfile = ({
           </div>
         </Modal.Footer>
       </Modal>
+
     </div>
   );
 };

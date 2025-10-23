@@ -159,6 +159,35 @@
     .text-muted {
       color: #6c757d !important;
     }
+    
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      
+      .col-2 {
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+        padding: 0 0.25rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        
+        .text-muted {
+          margin-bottom: 0.25rem;
+          line-height: 1.1;
+        }
+        
+        .fw-bold {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 2rem;
+        }
+      }
+    }
   }
 
   &__list {
