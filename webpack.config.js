@@ -7,7 +7,8 @@ module.exports = {
   entry: './src/index.js',
   output: {
     path: path.join(__dirname, '/dist'),
-    filename: 'index.bundle.js'
+    filename: 'index.bundle.js',
+    publicPath: '/'
   },
   resolve: {
     modules: ["node_modules"]
@@ -58,5 +59,14 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({ template: './src/index.html', favicon: './src/favicon.png' }),
     new DotEnv()
-  ]
+  ],
+  devServer: {
+    historyApiFallback: {
+      disableDotRule: true,
+      htmlAcceptHeaders: ['text/html', 'application/xhtml+xml']
+    },
+    port: 8080,
+    hot: true,
+    open: false
+  }
 };

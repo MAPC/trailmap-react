@@ -6,8 +6,11 @@ import Legend from "./Legend";
 import MunicipalityProfile from "./MunicipalityProfile";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const ControlPanel = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { showGlossaryModal, toggleGlossaryModal } = useContext(ModalContext);
   const { 
     existingTrails, 
@@ -44,6 +47,7 @@ const ControlPanel = () => {
 
   const [savedTrailLayers, setSavedTrailLayers] = useState([]);
   const [savedProposedLayers, setSavedProposedLayers] = useState([]);
+  const isNavigatingRef = React.useRef(false);
 
   const renderTypeButton = existingTrails.map((layer, index) => {
     return <TypeButton key={index} layer={layer} type="trail" />;
@@ -53,21 +57,53 @@ const ControlPanel = () => {
     return <TypeButton key={index} layer={layer} type="proposed" />;
   });
 
-  // Check URL parameters on initial load
+  // Check URL parameters and path on initial load and when location changes
   useEffect(() => {
+    // Skip if we're in the middle of a programmatic navigation
+    if (isNavigatingRef.current) {
+      isNavigatingRef.current = false;
+      return;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const sharedView = urlParams.get('view');
+    const currentPath = location.pathname;
     
-    if (sharedView === 'municipality' && !showMunicipalityView) {
+    if ((sharedView === 'municipality' || currentPath === '/communityTrailsProfile') && !showMunicipalityView) {
       // Automatically switch to municipality view
-      handleViewToggle();
+      setSavedTrailLayers([...trailLayers]);
+      setSavedProposedLayers([...proposedLayers]);
+      setTrailLayers([]);
+      setProposedLayers([]);
+      if (showMaHouseDistricts) toggleMaHouseDistricts(false);
+      if (showMaSenateDistricts) toggleMaSenateDistricts(false);
+      if (showMunicipalities) toggleMunicipalities(false);
+      setShowMunicipalityProfileMap(true);
+      setSelectedMunicipality(null);
+      setShowMunicipalityView(true);
+    } else if (currentPath !== '/communityTrailsProfile' && showMunicipalityView) {
+      // If we're not on the community trails profile path but the view is active, switch back
+      setTrailLayers(savedTrailLayers);
+      setProposedLayers(savedProposedLayers);
+      setShowMunicipalityProfileMap(false);
+      setSelectedMunicipality(null);
+      setShowMunicipalityView(false);
+      setShowCommuterRail(false);
+      setShowStationLabels(false);
+      setShowBlueBikeStations(false);
+      setShowSubwayStations(false);
+      window.dispatchEvent(new CustomEvent('resetMunicipalityProfile'));
     }
-  }, []); // Run only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   // Handle view toggle - show municipality profile map, hide trails
   const handleViewToggle = () => {
     if (!showMunicipalityView) {
       // Switching TO municipality view
+      // Mark that we're doing a programmatic navigation
+      isNavigatingRef.current = true;
+      
       // Save current trail layers
       setSavedTrailLayers([...trailLayers]);
       setSavedProposedLayers([...proposedLayers]);
@@ -90,8 +126,14 @@ const ControlPanel = () => {
       setSelectedMunicipality(null);
       
       setShowMunicipalityView(true);
+      
+      // Navigate to /communityTrailsProfile
+      navigate('/communityTrailsProfile');
     } else {
       // Switching BACK to trail filters
+      // Mark that we're doing a programmatic navigation
+      isNavigatingRef.current = true;
+      
       // Restore saved trail layers
       setTrailLayers(savedTrailLayers);
       setProposedLayers(savedProposedLayers);
@@ -117,10 +159,8 @@ const ControlPanel = () => {
       // Dispatch events to reset Map component states
       window.dispatchEvent(new CustomEvent('resetMunicipalityProfile'));
       
-      // Clear URL parameters when switching back to trail filters
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-      console.log('Cleared URL parameters when switching back to Trail Filters');
+      // Navigate back to root path
+      navigate('/');
     }
   };
 

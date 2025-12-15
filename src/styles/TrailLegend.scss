@@ -1,0 +1,51 @@
+.TrailLegend {
+  position: absolute;
+  bottom: 200px; // Position above the map controls
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  padding: 12px;
+  z-index: 1000;
+  max-width: 280px;
+  font-size: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+
+  &__header {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    font-size: 13px;
+  }
+
+  &__items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__line-container {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  &__line {
+    display: block;
+  }
+
+  &__label {
+    flex: 1;
+    line-height: 1.3;
+    color: #333;
+  }
+}
+

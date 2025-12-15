@@ -4,7 +4,7 @@ import ShareIcon from "../../assets/icons/share-icon.svg";
 import Button from "react-bootstrap/Button";
 import CloseButton from "react-bootstrap/CloseButton";
 import React, { useState, useRef, useEffect, useContext } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
 import bbox from "@turf/bbox";
@@ -28,6 +28,7 @@ import massachusettsData from "../../data/massachusetts.json";
 import SuccessModal from "../Modals/SuccessModal";
 import FailModal from "../Modals/FailModal";
 import BufferAnalysisWindow from "../BufferAnalysisWindow";
+import TrailLegend from "./TrailLegend";
 import * as turf from "@turf/turf";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
@@ -36,6 +37,8 @@ const LANDLINE_SOURCE = process.env.REACT_APP_LANDLINE_TILE_URL;
 const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL;
 
 const Map = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { showShareModal, toggleShareModal } = useContext(ModalContext);
   const {
     trailLayers,
@@ -56,6 +59,7 @@ const Map = () => {
     municipalityTrails,
     setMunicipalityTrails,
     showMunicipalityProfileMap,
+    showMunicipalityView,
     // Layer toggle states from context
     showCommuterRail,
     setShowCommuterRail,
@@ -1371,6 +1375,7 @@ const Map = () => {
             const intersectingFeatures = geojsonData.features.filter(feature => {
               return feature.properties?.muni_id === municipalityId;
             });
+
             // Add layer information to each intersecting feature
             intersectingFeatures.forEach(feature => {
               allTrailResults.push({
@@ -1886,19 +1891,24 @@ const Map = () => {
                 return;
               }
               
-              // Check for municipality clicks
-              const muniFeature = event.features.find((f) => f.layer && f.layer.id === "municipality-profile-base");
-              if (muniFeature) {
-                const townName = muniFeature.properties.town || muniFeature.properties.NAME;
-                if (townName) {
-                  setSelectedMunicipality({
-                    name: townName.toLowerCase(),
-                    properties: muniFeature.properties,
-                    geometry: muniFeature.geometry
-                  });
-                  return; // Don't trigger identify popup when selecting municipality
+            // Check for municipality clicks
+            const muniFeature = event.features.find((f) => f.layer && f.layer.id === "municipality-profile-base");
+            if (muniFeature) {
+              const townName = muniFeature.properties.town || muniFeature.properties.NAME;
+              if (townName) {
+                const muniName = townName.toLowerCase();
+                setSelectedMunicipality({
+                  name: muniName,
+                  properties: muniFeature.properties,
+                  geometry: muniFeature.geometry
+                });
+                // Update URL if we're on community trails profile page
+                if (showMunicipalityView && location.pathname === '/communityTrailsProfile') {
+                  navigate(`/communityTrailsProfile?muni=${encodeURIComponent(muniName)}`, { replace: true });
                 }
+                return; // Don't trigger identify popup when selecting municipality
               }
+            }
             }
             
             // Check if clicking on a municipality when municipalities layer is visible
@@ -1907,11 +1917,16 @@ const Map = () => {
               if (muniFeature) {
                 const townName = muniFeature.properties.town || muniFeature.properties.NAME;
                 if (townName) {
+                  const muniName = townName.toLowerCase();
                   setSelectedMunicipality({
-                    name: townName.toLowerCase(),
+                    name: muniName,
                     properties: muniFeature.properties,
                     geometry: muniFeature.geometry
                   });
+                  // Update URL if we're on community trails profile page
+                  if (showMunicipalityView && location.pathname === '/communityTrailsProfile') {
+                    navigate(`/communityTrailsProfile?muni=${encodeURIComponent(muniName)}`, { replace: true });
+                  }
                   return; // Don't trigger identify popup when selecting municipality
                 }
               }
@@ -2348,6 +2363,10 @@ const Map = () => {
             trackUserLocation={false}
             position="bottom-right"
           />
+          {/* Trail Legend - shown when municipality is selected */}
+          {showMunicipalityView && selectedMunicipality && (
+            <TrailLegend />
+          )}
         </ReactMapGL>
       </div>
       

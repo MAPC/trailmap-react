@@ -3,9 +3,12 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Dropdown from "react-bootstrap/Dropdown";
+import OverlayTrigger from "react-bootstrap/OverlayTrigger";
+import Tooltip from "react-bootstrap/Tooltip";
 import * as turf from '@turf/turf';
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const MunicipalityProfile = ({ 
   selectedMunicipality, 
@@ -22,6 +25,8 @@ const MunicipalityProfile = ({
   showSubwayStations,
   onToggleSubwayStations
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { existingTrails, proposedTrails } = useContext(LayerContext);
   const [municipalities, setMunicipalities] = useState([]);
   const [trailStats, setTrailStats] = useState(null);
@@ -68,7 +73,10 @@ const MunicipalityProfile = ({
       const sharedView = urlParams.get('view');
       const showCompletion = urlParams.get('showCompletion');
       
-      if (sharedView === 'municipality' && sharedMuni && muniList.length > 0) {
+      // Check if we're on communityTrailsProfile path or have view=municipality parameter
+      const isCommunityTrailsProfile = location.pathname === '/communityTrailsProfile';
+      
+      if ((sharedView === 'municipality' || isCommunityTrailsProfile) && sharedMuni && muniList.length > 0) {
         const foundMuni = muniList.find(m => m.name === sharedMuni.toLowerCase());
         if (foundMuni && onMunicipalitySelect) {
           // Small delay to ensure everything is loaded
@@ -80,13 +88,23 @@ const MunicipalityProfile = ({
               setTimeout(() => {
                 setShowCompletionModal(true);
               }, 1000); // Additional delay to ensure municipality is selected and stats are calculated
+              
+              // Remove showCompletion from URL after processing
+              setTimeout(() => {
+                const params = new URLSearchParams(window.location.search);
+                params.delete('showCompletion');
+                const newUrl = params.toString() 
+                  ? `${location.pathname}?${params.toString()}`
+                  : location.pathname;
+                navigate(newUrl, { replace: true });
+              }, 1500); // Remove after modal opens
             }
             
-            // Clear URL parameters after loading from shared URL
-            setTimeout(() => {
-              const newUrl = window.location.pathname;
-              window.history.replaceState({}, document.title, newUrl);
-            }, 2000); // Clear URL after municipality is fully loaded
+            // Update URL to include municipality parameter (but keep it in URL, don't clear)
+            if (isCommunityTrailsProfile && !sharedMuni) {
+              // If we're on the path but don't have muni param, add it
+              navigate(`/communityTrailsProfile?muni=${encodeURIComponent(foundMuni.name)}`, { replace: true });
+            }
           }, 500);
         }
       }
@@ -127,6 +145,7 @@ const MunicipalityProfile = ({
       calculateTrailStats();
     }
   }, [selectedMunicipality, municipalityTrails]);
+
 
   const calculateTrailStats = () => {
     if (!municipalityTrails || municipalityTrails.length === 0) {
@@ -182,6 +201,8 @@ const MunicipalityProfile = ({
     });
 
     // Count trails by type
+    let existingTrailsLength = 0; // Track length of existing trails only for density calculation
+    
     municipalityTrails.forEach(trail => {
       const layerName = trail.layerName || 'Unknown';
       
@@ -203,13 +224,18 @@ const MunicipalityProfile = ({
       }
       
       stats.totalLength += lengthInFeet;
+      
+      // Track existing trails length separately (exclude "Planned" trails)
+      if (!layerName.startsWith('Planned')) {
+        existingTrailsLength += lengthInFeet;
+      }
     });
 
-    // Calculate trail density (feet per square mile)
+    // Calculate trail density (miles per square mile) - only for existing trails
     if (stats.area > 0) {
       const areaInSqMiles = stats.area / 27878400; // Convert sq feet to sq miles
-      stats.density = areaInSqMiles > 0 ? Math.round((stats.totalLength / areaInSqMiles) * 10) / 10 : 0;
-      
+      const existingTrailsLengthInMiles = existingTrailsLength / 5280; // Convert feet to miles
+      stats.density = areaInSqMiles > 0 ? parseFloat((existingTrailsLengthInMiles / areaInSqMiles).toFixed(2)) : 0;
     }
 
     // Calculate completion rates for trail type pairs
@@ -247,15 +273,27 @@ const MunicipalityProfile = ({
     if (muniName) {
       const selected = municipalities.find(m => m.name === muniName);
       onMunicipalitySelect(selected);
+      // Update URL to include municipality parameter
+      if (location.pathname === '/communityTrailsProfile') {
+        navigate(`/communityTrailsProfile?muni=${encodeURIComponent(muniName)}`, { replace: true });
+      }
     } else {
       onMunicipalitySelect(null);
+      // Remove municipality parameter from URL
+      if (location.pathname === '/communityTrailsProfile') {
+        navigate('/communityTrailsProfile', { replace: true });
+      }
     }
   };
 
   const formatLength = (feet) => {
-    // Ensure feet is a number, then format with commas for readability
+    // Convert feet to miles and format with 2 decimal places
     const numFeet = Number(feet) || 0;
-    return numFeet.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    const miles = numFeet / 5280; // 1 mile = 5280 feet
+    return parseFloat(miles.toFixed(2)).toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
   };
 
   const capitalizeWords = (str) => {
@@ -266,12 +304,19 @@ const MunicipalityProfile = ({
 
   const handleShareProfile = async () => {
     const baseUrl = window.location.origin + window.location.pathname;
-    const params = new URLSearchParams({
-      view: 'municipality',
-      muni: selectedMunicipality?.name || '',
-      showCompletion: 'true' // Add parameter to indicate completion modal should open
-    });
-    const shareUrl = `${baseUrl}?${params.toString()}`;
+    // Get current URL parameters
+    const currentParams = new URLSearchParams(window.location.search);
+    
+    // Ensure muni parameter is set if municipality is selected
+    if (selectedMunicipality?.name) {
+      currentParams.set('muni', selectedMunicipality.name);
+    }
+    
+    // Add showCompletion=true to the share URL so the modal opens when shared
+    currentParams.set('showCompletion', 'true');
+    
+    // Build share URL with showCompletion parameter
+    const shareUrl = `${baseUrl}?${currentParams.toString()}`;
     
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -485,13 +530,32 @@ const MunicipalityProfile = ({
                   <div className="d-flex justify-content-between mb-1">
                     <span className="small text-muted">Total Length:</span>
                     <span className="small fw-semibold">
-                      {formatLength(trailStats.totalLength)} ft
+                      {formatLength(trailStats.totalLength)} mi
                     </span>
                   </div>
                   <div className="d-flex justify-content-between mb-2">
-                    <span className="small text-muted">Trail Density (existing only):</span>
+                    <span className="small text-muted d-flex align-items-center">
+                      Trail Density (existing only):
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id="density-tooltip" style={{ backgroundColor: 'rgba(59, 131, 199, 0.75)', color: 'white', borderRadius: '5px' }}>
+                            Trail Density = Existing Trails Length (miles) / Municipality Area (sq miles)
+                          </Tooltip>
+                        }
+                      >
+                        <span 
+                          className="ms-1" 
+                          style={{ cursor: 'help', fontSize: '0.85em', color: '#0070cd', display: 'inline-block' }}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          <i className="fas fa-question-circle"></i>
+                        </span>
+                      </OverlayTrigger>
+                    </span>
                     <span className="small fw-semibold">
-                      {trailStats.density} ft/mi²
+                      {trailStats.density} mi/mi²
                     </span>
                   </div>
                 </div>
@@ -606,13 +670,32 @@ const MunicipalityProfile = ({
                 <div className="col-md-4">
                   <div className="text-center">
                     <div className="text-muted small">Total Length</div>
-                    <div className="fw-bold fs-5">{formatLength(trailStats.totalLength)} ft</div>
+                    <div className="fw-bold fs-5">{formatLength(trailStats.totalLength)} mi</div>
                   </div>
                 </div>
                 <div className="col-md-4">
                   <div className="text-center">
-                    <div className="text-muted small">Trail Density (existing only)</div>
-                    <div className="fw-bold fs-5">{trailStats.density} ft/mi²</div>
+                    <div className="text-muted small d-flex align-items-center justify-content-center">
+                      Trail Density (existing only)
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id="density-modal-tooltip" style={{ backgroundColor: 'rgba(59, 131, 199, 0.75)', color: 'white', borderRadius: '5px' }}>
+                            Trail Density = Existing Trails Length (miles) / Municipality Area (sq miles)
+                          </Tooltip>
+                        }
+                      >
+                        <span 
+                          className="ms-1" 
+                          style={{ cursor: 'help', fontSize: '0.85em', color: '#0070cd', display: 'inline-block' }}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          <i className="fas fa-question-circle"></i>
+                        </span>
+                      </OverlayTrigger>
+                    </div>
+                    <div className="fw-bold fs-5">{trailStats.density} mi/mi²</div>
                   </div>
                 </div>
               </div>
@@ -655,7 +738,7 @@ const MunicipalityProfile = ({
                                 </div>
                                 <div className="col-6">
                                   <div className="text-muted small" style={{ fontSize: '0.7rem' }}>LENGTH</div>
-                                  <div className="fw-bold">{formatLength(data.length)} ft</div>
+                                  <div className="fw-bold">{formatLength(data.length)} mi</div>
                                 </div>
                               </div>
                             </div>
@@ -711,13 +794,13 @@ const MunicipalityProfile = ({
                             </div>
                             <div className="d-flex align-items-center small" style={{ fontSize: '0.75rem' }}>
                               <span className="text-success me-3">
-                                <strong>Existing:</strong> {formatLength(data.existing)} ft
+                                <strong>Existing:</strong> {formatLength(data.existing)} mi
                               </span>
                               <span className="text-warning me-3">
-                                <strong>Planned:</strong> {formatLength(data.planned)} ft
+                                <strong>Planned:</strong> {formatLength(data.planned)} mi
                               </span>
                               <span className="text-muted">
-                                <strong>Total:</strong> {formatLength(data.total)} ft
+                                <strong>Total:</strong> {formatLength(data.total)} mi
                               </span>
                             </div>
                           </div>

@@ -428,3 +428,40 @@
   }
 }
 
+// Custom tooltip styles to match website theme
+.tooltip {
+  &.show {
+    opacity: 1;
+  }
+  
+  .tooltip-inner {
+    background-color: rgba(59, 131, 199, 0.75) !important;
+    color: white !important;
+    font-size: 0.875rem;
+    padding: 8px 12px;
+    border-radius: 5px;
+    max-width: 300px;
+    border: none !important;
+  }
+  
+  .tooltip-arrow::before {
+    border-top-color: rgba(59, 131, 199, 0.75) !important;
+  }
+  
+  &[data-popper-placement^="top"] .tooltip-arrow::before {
+    border-top-color: rgba(59, 131, 199, 0.75) !important;
+  }
+  
+  &[data-popper-placement^="bottom"] .tooltip-arrow::before {
+    border-bottom-color: rgba(59, 131, 199, 0.75) !important;
+  }
+  
+  &[data-popper-placement^="left"] .tooltip-arrow::before {
+    border-left-color: rgba(59, 131, 199, 0.75) !important;
+  }
+  
+  &[data-popper-placement^="right"] .tooltip-arrow::before {
+    border-right-color: rgba(59, 131, 199, 0.75) !important;
+  }
+}
+

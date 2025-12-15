@@ -91,8 +91,13 @@ const TrailListWindow = ({
   }, [isCollapsed]);
 
   const formatLength = (feet) => {
+    // Convert feet to miles and format with 2 decimal places
     const numFeet = Number(feet) || 0;
-    return numFeet.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    const miles = numFeet / 5280; // 1 mile = 5280 feet
+    return parseFloat(miles.toFixed(2)).toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
   };
 
   // Calculate trail density (total length / polygon area)
@@ -293,24 +298,32 @@ const TrailListWindow = ({
                     }}
                   >
                     <div className="TrailListWindow__trail-name">
-                      {trail.attributes?.Trail_Name || 
-                       trail.attributes?.TRAILNAME || 
-                       trail.attributes?.['Local Name'] || 
-                       trail.attributes?.['Regional Name'] || 
-                       trail.attributes?.local_name ||
-                       'Unnamed Trail'}
+                      {(() => {
+                        const name = trail.attributes?.Trail_Name || 
+                                     trail.attributes?.TRAILNAME || 
+                                     trail.attributes?.['Local Name'] || 
+                                     trail.attributes?.['Regional Name'] || 
+                                     trail.attributes?.local_name;
+                        // Check if name exists and is not empty string
+                        return (name && name.trim() !== '') ? name : 'Unnamed Trail';
+                      })()}
                     </div>
                     <div className="TrailListWindow__trail-meta">
-                      {(trail.attributes?.length_ft || trail.attributes?.['Facility Length in Feet'] || trail.attributes?.Shape_Length) && (
-                        <span className="TrailListWindow__trail-length">
-                          {formatLength(
-                            trail.attributes?.length_ft || 
-                            trail.attributes?.['Facility Length in Feet'] || 
-                            trail.attributes?.Shape_Length || 
-                            0
-                          )} ft
-                        </span>
-                      )}
+                      {(() => {
+                        const lengthValue = trail.attributes?.length_ft || 
+                                          trail.attributes?.['Facility Length in Feet'] || 
+                                          trail.attributes?.Shape_Length;
+                        const lengthInFeet = Number(lengthValue) || 0;
+                        // Only show length if it's greater than 0
+                        if (lengthInFeet > 0) {
+                          return (
+                            <span className="TrailListWindow__trail-length">
+                              {formatLength(lengthInFeet)} mi
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                   ))}

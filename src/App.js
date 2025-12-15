@@ -1,4 +1,4 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import "./styles/App.scss";
 import Header from "./components/Header";
 import IntroModal from "./components/Modals/IntroModal";
@@ -7,17 +7,29 @@ import AboutModal from "./components/Modals/AboutModal";
 import EditModal from "./components/Modals/EditModal";
 import Map from "./components/Map";
 import LayerData from "./data/LayerData";
+import { useLocation } from "react-router-dom";
 
 export const ModalContext = createContext();
 export const LayerContext = createContext();
 
 const App = () => {
+  const location = useLocation();
   const basemaps = LayerData.basemap;
   const existingTrails = LayerData.existing;
   const proposedTrails = LayerData.proposed;
   const landlines = LayerData.landline;
 
-  const [showIntroModal, toggleIntroModal] = useState(true);
+  // Don't show intro modal if user navigates directly to communityTrailsProfile
+  const [showIntroModal, toggleIntroModal] = useState(
+    location.pathname !== '/communityTrailsProfile'
+  );
+
+  // Update intro modal visibility when path changes
+  useEffect(() => {
+    if (location.pathname === '/communityTrailsProfile' && showIntroModal) {
+      toggleIntroModal(false);
+    }
+  }, [location.pathname]);
   const [showAboutModal, toggleAboutModal] = useState(false);
   const [showContributeModal, toggleContributeModal] = useState(false);
   const [showShareModal, toggleShareModal] = useState(false);
