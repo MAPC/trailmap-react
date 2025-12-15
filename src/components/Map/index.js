@@ -123,7 +123,7 @@ const Map = () => {
   const [showBufferAnalysis, setShowBufferAnalysis] = useState(false);
   const [isBufferActive, setIsBufferActive] = useState(false);
   const [bufferCenter, setBufferCenter] = useState(null);
-  const [bufferRadius, setBufferRadius] = useState(1000); // meters
+  const [bufferRadius, setBufferRadius] = useState(1609); // Default: 1 mile in meters
   const [bufferResults, setBufferResults] = useState(null);
   const [bufferPreviewCenter, setBufferPreviewCenter] = useState(null); // For mouse-following circle
 

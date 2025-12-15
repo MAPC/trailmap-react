@@ -32,7 +32,14 @@ const BufferAnalysisWindow = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const windowRef = useRef(null);
 
-  const MAX_RADIUS = 1500; // 1500 meters = ~0.93 miles
+  const MAX_RADIUS_MILES = 1.5; // Maximum radius in miles
+  const MIN_RADIUS_MILES = 0.1; // Minimum radius in miles
+  const STEP_RADIUS_MILES = 0.1; // Step size in miles
+  
+  // Convert miles to meters for internal calculations
+  const milesToMeters = (miles) => miles * 1609.34;
+  // Convert meters to miles for display
+  const metersToMiles = (meters) => meters / 1609.34;
 
   // Reset position when municipality changes
   useEffect(() => {
@@ -41,6 +48,13 @@ const BufferAnalysisWindow = ({
       setIsCollapsed(false);
     }
   }, [selectedMunicipality]);
+
+  // Ensure window is expanded when it's shown
+  useEffect(() => {
+    if (show) {
+      setIsCollapsed(false);
+    }
+  }, [show]);
 
   const handleMouseDown = (e) => {
     if (e.target.closest('.BufferAnalysisWindow__header') && 
@@ -56,11 +70,14 @@ const BufferAnalysisWindow = ({
 
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (isDragging) {
+      if (isDragging && windowRef.current) {
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
-        const bufferWindowWidth = 380; // BufferAnalysisWindow width
-        const bufferWindowHeight = 400; // Approximate BufferAnalysisWindow height
+        
+        // Get actual window dimensions from the DOM element
+        const rect = windowRef.current.getBoundingClientRect();
+        const bufferWindowWidth = rect.width;
+        const bufferWindowHeight = rect.height;
         
         // Calculate new position with boundary constraints
         let newX = e.clientX - dragOffset.x;
@@ -108,12 +125,9 @@ const BufferAnalysisWindow = ({
   const formatDistanceMeters = (meters) => {
     if (!meters && meters !== 0) return "N/A";
     
-    if (meters < 1000) {
-      return `${Math.round(meters)} m`;
-    } else {
-      const km = meters / 1000;
-      return `${km.toFixed(2)} km`;
-    }
+    // Convert meters to miles
+    const miles = meters / 1609.34;
+    return `${miles.toFixed(2)} mi`;
   };
 
   const handleClose = () => {
@@ -190,21 +204,23 @@ const BufferAnalysisWindow = ({
             <Form.Group className="mb-2">
               <div className="d-flex justify-content-between align-items-center mb-1">
                 <Form.Label className="small mb-0">
-                  Radius: <strong>{bufferRadius}m</strong>
+                  Radius: <strong>{metersToMiles(bufferRadius).toFixed(2)} mi</strong>
                 </Form.Label>
-                <span className="small text-muted">{formatDistance(bufferRadius)}</span>
               </div>
               <Form.Range
-                min="100"
-                max={MAX_RADIUS}
-                step="100"
-                value={bufferRadius}
-                onChange={(e) => onRadiusChange(parseInt(e.target.value))}
+                min={MIN_RADIUS_MILES * 10}
+                max={MAX_RADIUS_MILES * 10}
+                step={STEP_RADIUS_MILES * 10}
+                value={metersToMiles(bufferRadius) * 10}
+                onChange={(e) => {
+                  const miles = parseFloat(e.target.value) / 10;
+                  onRadiusChange(Math.round(milesToMeters(miles)));
+                }}
                 size="sm"
               />
               <div className="d-flex justify-content-between small text-muted" style={{ fontSize: '0.7rem' }}>
-                <span>100m</span>
-                <span>{MAX_RADIUS}m</span>
+                <span>{MIN_RADIUS_MILES} mi</span>
+                <span>{MAX_RADIUS_MILES} mi</span>
               </div>
             </Form.Group>
 
@@ -237,7 +253,7 @@ const BufferAnalysisWindow = ({
                 <div className="d-flex align-items-center">
                   <div>
                     <strong>Drawing Mode Active!</strong><br/>
-                    Click anywhere on the map to draw a {bufferRadius}m radius circle
+                    Click anywhere on the map to draw a {metersToMiles(bufferRadius).toFixed(2)} mi radius circle
                   </div>
                 </div>
               </div>
@@ -295,7 +311,7 @@ const BufferAnalysisWindow = ({
                   <div className="col-2 text-center">
                     <div className="text-muted" style={{ fontSize: '0.7rem' }}>Area</div>
                     <div className="fw-bold" style={{ fontSize: '0.8rem' }}>
-                      {((Math.PI * Math.pow(bufferRadius, 2)) / 1000000).toFixed(2)} km²
+                      {(Math.PI * Math.pow(metersToMiles(bufferRadius), 2)).toFixed(2)} mi²
                     </div>
                   </div>
                 </div>
@@ -349,6 +365,12 @@ const BufferAnalysisWindow = ({
 
               {/* Commuter Rail Stations in Buffer */}
               <div className="mb-2">
+                {/* Distance Explanation */}
+                <div className="alert alert-info mb-2 p-2 small" style={{ fontSize: '0.75rem', lineHeight: '1.3' }}>
+                  <i className="fas fa-info-circle me-1"></i>
+                  <strong>Distance:</strong> Straight-line distance from buffer center to each station, measured in miles.
+                </div>
+                
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <div className="d-flex align-items-center">
                     <Form.Check
