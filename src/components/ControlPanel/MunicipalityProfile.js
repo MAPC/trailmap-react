@@ -524,35 +524,44 @@ const MunicipalityProfile = ({
               <>
                 <div className="MunicipalityProfile__stats">
                   <div className="d-flex justify-content-between mb-1">
-                    <span className="small text-muted">Total Trails:</span>
+                    <span className="small text-muted">
+                      Total Trails:<br/>
+                      <span className="text-muted" style={{ fontSize: '0.75rem' }}>(existing + planned)</span>
+                    </span>
                     <span className="small fw-semibold">{trailStats.totalTrails}</span>
                   </div>
                   <div className="d-flex justify-content-between mb-1">
-                    <span className="small text-muted">Total Length:</span>
+                    <span className="small text-muted">
+                      Total Length:<br/>
+                      <span className="text-muted" style={{ fontSize: '0.75rem' }}>(existing + planned)</span>
+                    </span>
                     <span className="small fw-semibold">
                       {formatLength(trailStats.totalLength)} mi
                     </span>
                   </div>
                   <div className="d-flex justify-content-between mb-2">
-                    <span className="small text-muted d-flex align-items-center">
-                      Trail Density (existing only):
-                      <OverlayTrigger
-                        placement="top"
-                        overlay={
-                          <Tooltip id="density-tooltip" style={{ backgroundColor: 'rgba(59, 131, 199, 0.75)', color: 'white', borderRadius: '5px' }}>
-                            Trail Density = Existing Trails Length (miles) / Municipality Area (sq miles)
-                          </Tooltip>
-                        }
-                      >
-                        <span 
-                          className="ms-1" 
-                          style={{ cursor: 'help', fontSize: '0.85em', color: '#0070cd', display: 'inline-block' }}
-                          role="button"
-                          tabIndex={0}
+                    <span className="small text-muted">
+                      Trail Density:<br/>
+                      <span className="text-muted d-flex align-items-center" style={{ fontSize: '0.75rem' }}>
+                        (existing only)
+                        <OverlayTrigger
+                          placement="top"
+                          overlay={
+                            <Tooltip id="density-tooltip" style={{ backgroundColor: 'rgba(59, 131, 199, 0.75)', color: 'white', borderRadius: '5px' }}>
+                              Trail Density = Existing Trails Length (miles) / Municipality Area (sq miles)
+                            </Tooltip>
+                          }
                         >
-                          <i className="fas fa-question-circle"></i>
-                        </span>
-                      </OverlayTrigger>
+                          <span 
+                            className="ms-1" 
+                            style={{ cursor: 'help', fontSize: '0.85em', color: '#0070cd', display: 'inline-block' }}
+                            role="button"
+                            tabIndex={0}
+                          >
+                            <i className="fas fa-question-circle"></i>
+                          </span>
+                        </OverlayTrigger>
+                      </span>
                     </span>
                     <span className="small fw-semibold">
                       {trailStats.density} mi/mi²
@@ -663,13 +672,13 @@ const MunicipalityProfile = ({
               <div className="row g-3">
                 <div className="col-md-4">
                   <div className="text-center">
-                    <div className="text-muted small">Total Trails</div>
+                    <div className="text-muted small">Total Trails (existing + planned)</div>
                     <div className="fw-bold fs-5">{trailStats.totalTrails}</div>
                   </div>
                 </div>
                 <div className="col-md-4">
                   <div className="text-center">
-                    <div className="text-muted small">Total Length</div>
+                    <div className="text-muted small">Total Length (existing + planned)</div>
                     <div className="fw-bold fs-5">{formatLength(trailStats.totalLength)} mi</div>
                   </div>
                 </div>
