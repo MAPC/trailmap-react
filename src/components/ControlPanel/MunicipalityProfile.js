@@ -131,7 +131,6 @@ const MunicipalityProfile = ({
         // Reset buffer analysis when selecting a new municipality
         window.dispatchEvent(new CustomEvent('resetBufferAnalysis'));
         
-        console.log('Reset municipality profile states for new municipality:', selectedMunicipality.name);
       }
       
       // Update the ref to current municipality
@@ -184,7 +183,6 @@ const MunicipalityProfile = ({
         }
         
         stats.area = area;
-        console.log(`Municipality area calculated: ${area} sq feet for ${selectedMunicipality.name}`);
       } catch (error) {
         console.error('Error calculating municipality area:', error);
       }

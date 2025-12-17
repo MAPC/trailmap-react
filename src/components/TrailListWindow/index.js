@@ -261,6 +261,9 @@ const TrailListWindow = ({
       
       {!isCollapsed && (
         <div className="TrailListWindow__body">
+          <div className="alert alert-info py-1 px-2 mb-2 small" style={{ fontSize: "0.75rem", lineHeight: "1.2" }}>
+            <strong>Note:</strong> Lengths are shown in miles (mi), rounded to 2 decimal places.
+          </div>
           <div className="TrailListWindow__trail-list">
             {Object.entries(trailsByType).map(([typeName, typeData]) => {
               const isTypeCollapsed = collapsedTypes[typeName];
@@ -299,13 +302,27 @@ const TrailListWindow = ({
                   >
                     <div className="TrailListWindow__trail-name">
                       {(() => {
-                        const name = trail.attributes?.Trail_Name || 
-                                     trail.attributes?.TRAILNAME || 
-                                     trail.attributes?.['Local Name'] || 
-                                     trail.attributes?.['Regional Name'] || 
-                                     trail.attributes?.local_name;
-                        // Check if name exists and is not empty string
-                        return (name && name.trim() !== '') ? name : 'Unnamed Trail';
+                        // Match Identify.js rules: Local Name -> Regional Name -> Property Name
+                        // Treat "Null" and " " as missing.
+                        const attrs = trail.attributes || {};
+                        const normalizeCandidate = (value) => {
+                          const v = (value ?? "").toString().trim();
+                          // Treat these as missing:
+                          // - empty
+                          // - "Null"
+                          // - single-space (some datasets use " ")
+                          // - "0" (as requested: if localname=0, try next)
+                          if (v === "" || v === "Null" || v === "0") return "";
+                          return v;
+                        };
+
+                        // Priority: local name -> regional name -> property name
+                        const localName = normalizeCandidate(attrs["local_name"]);
+                        const regionalName = normalizeCandidate(attrs["reg_name"]);
+                        const propertyName = normalizeCandidate(attrs["prop_name"]);
+
+                        const resolved = localName || regionalName || propertyName || "";
+                        return resolved !== "" ? resolved : "Unnamed Trail";
                       })()}
                     </div>
                     <div className="TrailListWindow__trail-meta">

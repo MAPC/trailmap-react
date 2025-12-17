@@ -19,6 +19,7 @@ import MunicipalitiesButton from '../MunicipalitiesButton';
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import GlossaryModal from "../Modals/GlossaryModal";
 import Identify from "./Identify";
+import CommunityIdentify from "./CommunityIdentify";
 import ShareModal from "../Modals/ShareModal";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
@@ -1336,60 +1337,176 @@ const Map = () => {
       return;
     }
 
+    const FEATURE_SERVER_BASE =
+      "https://geo.mapc.org/server/rest/services/transportation/AllTrails/FeatureServer";
+
+    const geojsonPolygonToEsriPolygon = (geometry) => {
+      // GeoJSON Polygon/MultiPolygon (lon/lat, EPSG:4326) -> ESRI Polygon JSON
+      if (!geometry || !geometry.type || !geometry.coordinates) return null;
+
+      const toRingsFromPolygonCoords = (polyCoords) =>
+        polyCoords.map((ring) => ring.map(([lng, lat]) => [lng, lat]));
+
+      let rings = [];
+      if (geometry.type === "Polygon") {
+        rings = toRingsFromPolygonCoords(geometry.coordinates);
+      } else if (geometry.type === "MultiPolygon") {
+        geometry.coordinates.forEach((polyCoords) => {
+          rings = rings.concat(toRingsFromPolygonCoords(polyCoords));
+        });
+      } else {
+        return null;
+      }
+
+      return { rings, spatialReference: { wkid: 4326 } };
+    };
+
+    const esriPolylineToGeoJSON = (esriGeom) => {
+      if (!esriGeom || !esriGeom.paths) return null;
+      const paths = esriGeom.paths;
+      if (!Array.isArray(paths) || paths.length === 0) return null;
+      if (paths.length === 1) return { type: "LineString", coordinates: paths[0] };
+      return { type: "MultiLineString", coordinates: paths };
+    };
+
+    const ensureLengthFeet = (attributes, geojsonGeometry) => {
+      // Use the source `length_ft` field directly (no fallback / no computed length).
+      if (!attributes) attributes = {};
+      // Normalize to number when present; otherwise leave as-is/undefined.
+      if (attributes.length_ft != null) {
+        attributes.length_ft = Number(attributes.length_ft) || 0;
+      }
+      return attributes;
+    };
+
+    const fetchAllFeaturesForLayer = async ({ layerId, esriPolygon }) => {
+      const all = [];
+      const pageSize = 2000;
+      let offset = 0;
+
+      while (true) {
+        const params = new URLSearchParams();
+        params.set("where", "1=1");
+        params.set("geometry", JSON.stringify(esriPolygon));
+        params.set("geometryType", "esriGeometryPolygon");
+        params.set("spatialRel", "esriSpatialRelIntersects");
+        params.set("inSR", "4326");
+        params.set("outSR", "4326");
+        params.set("outFields", "*");
+        params.set("returnGeometry", "true");
+        params.set("f", "pjson");
+        params.set("resultOffset", String(offset));
+        params.set("resultRecordCount", String(pageSize));
+
+        // Use POST to avoid "request too long" for large polygons (e.g., Boston)
+        const url = `${FEATURE_SERVER_BASE}/${layerId}/query`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          },
+          body: params.toString(),
+        });
+        if (!res.ok) throw new Error(`FeatureServer query failed (${layerId}): ${res.status}`);
+        const json = await res.json();
+        const features = json?.features || [];
+        all.push(...features);
+
+        const exceeded = Boolean(json?.exceededTransferLimit);
+        if (!exceeded && features.length < pageSize) break;
+        if (features.length === 0) break;
+        offset += features.length;
+      }
+
+      return all;
+    };
+
     setIsQueryingTrails(true);
     setLoadingProgress(0);
     setLoadingMessage("Loading trail data...");
-    console.log("Starting GeoJSON query for municipality:", municipality.name);
-    console.log("Municipality town_id:", municipality.properties?.town_id);
+    console.log("Starting FeatureServer query for municipality:", municipality.name);
 
     try {
       const allTrailResults = [];
       const totalLayers = geojsonTrailLayers.length;
-      const municipalityId = municipality.properties?.town_id;
-      
-      if (!municipalityId) {
-        console.error("Municipality does not have a town_id");
-        setMunicipalityTrails([]);
-        setIsQueryingTrails(false);
-        return;
-      }
-      
-      // Load each GeoJSON layer from local files
-      for (let i = 0; i < geojsonTrailLayers.length; i++) {
-        const layer = geojsonTrailLayers[i];
-        setLoadingMessage(`Loading ${layer.name}...`);
-        setLoadingProgress((i / totalLayers) * 50); // First 50% for loading
 
-        try {
-          // Fetch the local GeoJSON file
-          const response = await fetch(`./src/data/${layer.filename}`);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch ${layer.filename}: ${response.status}`);
-          }
-          const geojsonData = await response.json();
-          if (geojsonData && geojsonData.features) {
-            setLoadingMessage(`Processing ${layer.name}...`);
-            setLoadingProgress(50 + (i / totalLayers) * 30); // Next 30% for processing
+      const isCommunityTrailsProfile = location?.pathname === "/communityTrailsProfile";
 
-            // Find trails that match the municipality ID (much faster than geometric intersection)
-            const intersectingFeatures = geojsonData.features.filter(feature => {
-              return feature.properties?.muni_id === municipalityId;
+      // CommunityTrailsProfile: read ALL trail layers from FeatureServer
+      const esriPolygon = geojsonPolygonToEsriPolygon(municipality.geometry);
+
+      if (isCommunityTrailsProfile) {
+        if (!esriPolygon) {
+          console.error("Municipality geometry not supported for FeatureServer query");
+          setMunicipalityTrails([]);
+          setIntersectedTrails([]);
+          return;
+        }
+
+        for (let i = 0; i < geojsonTrailLayers.length; i++) {
+          const layer = geojsonTrailLayers[i];
+          setLoadingMessage(`Querying ${layer.name}...`);
+          setLoadingProgress((i / totalLayers) * 80);
+
+          try {
+            const features = await fetchAllFeaturesForLayer({
+              layerId: layer.id,
+              esriPolygon,
             });
 
-            // Add layer information to each intersecting feature
-            intersectingFeatures.forEach(feature => {
+            features.forEach((f) => {
+              const geometry = esriPolylineToGeoJSON(f.geometry);
+              const attributes = ensureLengthFeet(f.attributes || {}, geometry);
+
               allTrailResults.push({
                 layerId: layer.id,
                 layerName: layer.name,
-                attributes: feature.properties,
-                geometry: feature.geometry,
+                attributes,
+                geometry,
                 color: layer.color,
-                feature: feature
+                feature: { type: "Feature", geometry, properties: attributes },
               });
             });
+          } catch (error) {
+            console.error(`Error querying FeatureServer layer ${layer.name}:`, error);
           }
-        } catch (error) {
-          console.error(`Error loading layer ${layer.name}:`, error);
+        }
+      } else {
+        // Default (non-community) behavior: query all layers from FeatureServer
+        if (!esriPolygon) {
+          console.error("Municipality geometry not supported for FeatureServer query");
+          setMunicipalityTrails([]);
+          setIntersectedTrails([]);
+          return;
+        }
+
+        for (let i = 0; i < geojsonTrailLayers.length; i++) {
+          const layer = geojsonTrailLayers[i];
+          setLoadingMessage(`Querying ${layer.name}...`);
+          setLoadingProgress((i / totalLayers) * 80);
+
+          try {
+            const features = await fetchAllFeaturesForLayer({
+              layerId: layer.id,
+              esriPolygon,
+            });
+
+            features.forEach((f) => {
+              const geometry = esriPolylineToGeoJSON(f.geometry);
+              const attributes = ensureLengthFeet(f.attributes || {}, geometry);
+
+              allTrailResults.push({
+                layerId: layer.id,
+                layerName: layer.name,
+                attributes,
+                geometry,
+                color: layer.color,
+                feature: { type: "Feature", geometry, properties: attributes },
+              });
+            });
+          } catch (error) {
+            console.error(`Error querying FeatureServer layer ${layer.name}:`, error);
+          }
         }
       }
 
@@ -2124,30 +2241,57 @@ const Map = () => {
           transitionDuration="1000"
         >
           {showIdentifyPopup && identifyInfo && identifyInfo.length > 0 && identifyPoint && (
-            <Identify
-              point={identifyPoint}
-              identifyResult={identifyInfo}
-              handleShowPopup={() => {
-                toggleIdentifyPopup(false);
-                // Clear highlighted trail when popup closes
-                setHighlightedTrail(null);
-                setSelectedTrailFromList(null);
-                // Clear all hover states when popup closes to fix hover detection
-                setHoverFeature(null);
-                setHoverPoint(null);
-                setHoverFilterKey(null);
-                setHoverFilterValue(null);
-                setSenateHoverFeature(null);
-                setSenateHoverPoint(null);
-                setSenateHoverFilterKey(null);
-                setSenateHoverFilterValue(null);
-                setMuniHoverFeature(null);
-                setMuniHoverPoint(null);
-                setMuniHoverFilterKey(null);
-                setMuniHoverFilterValue(null);
-              }}
-              handleCarousel={setPointIndex}
-            ></Identify>
+            location?.pathname === "/communityTrailsProfile" ? (
+              <CommunityIdentify
+                point={identifyPoint}
+                identifyResult={identifyInfo}
+                handleShowPopup={() => {
+                  toggleIdentifyPopup(false);
+                  // Clear highlighted trail when popup closes
+                  setHighlightedTrail(null);
+                  setSelectedTrailFromList(null);
+                  // Clear all hover states when popup closes to fix hover detection
+                  setHoverFeature(null);
+                  setHoverPoint(null);
+                  setHoverFilterKey(null);
+                  setHoverFilterValue(null);
+                  setSenateHoverFeature(null);
+                  setSenateHoverPoint(null);
+                  setSenateHoverFilterKey(null);
+                  setSenateHoverFilterValue(null);
+                  setMuniHoverFeature(null);
+                  setMuniHoverPoint(null);
+                  setMuniHoverFilterKey(null);
+                  setMuniHoverFilterValue(null);
+                }}
+                handleCarousel={setPointIndex}
+              />
+            ) : (
+              <Identify
+                point={identifyPoint}
+                identifyResult={identifyInfo}
+                handleShowPopup={() => {
+                  toggleIdentifyPopup(false);
+                  // Clear highlighted trail when popup closes
+                  setHighlightedTrail(null);
+                  setSelectedTrailFromList(null);
+                  // Clear all hover states when popup closes to fix hover detection
+                  setHoverFeature(null);
+                  setHoverPoint(null);
+                  setHoverFilterKey(null);
+                  setHoverFilterValue(null);
+                  setSenateHoverFeature(null);
+                  setSenateHoverPoint(null);
+                  setSenateHoverFilterKey(null);
+                  setSenateHoverFilterValue(null);
+                  setMuniHoverFeature(null);
+                  setMuniHoverPoint(null);
+                  setMuniHoverFilterKey(null);
+                  setMuniHoverFilterValue(null);
+                }}
+                handleCarousel={setPointIndex}
+              ></Identify>
+            )
           )}
           {showControlPanel && (
             <div>
