@@ -1,47 +1,110 @@
 import React from 'react';
 import '../../styles/TrailLegend.scss';
+import { geojsonTrailLayers } from './constants/geojsonTrailLayers';
 
-const TrailLegend = () => {
-  // Trail types with their colors and line styles
-  const trailTypes = [
-    { name: "Protected Bike Lanes", color: "#2166AC", isDashed: false },
-    { name: "Planned Protected Bike Lanes", color: "#2166AC", isDashed: true },
-    { name: "Bike Lanes", color: "#92C5DE", isDashed: false },
-    { name: "Planned Bike Lanes", color: "#92C5DE", isDashed: true },
-    { name: "Paved Foot Path", color: "#903366", isDashed: false },
-    { name: "Planned Paved Foot Path", color: "#903366", isDashed: true },
-    { name: "Natural Surface Path", color: "#A87196", isDashed: false },
-    { name: "Planned Natural Surface Path", color: "#A87196", isDashed: true },
-    { name: "Paved Shared Use", color: "#214A2D", isDashed: false },
-    { name: "Planned Paved Shared Use", color: "#214A2D", isDashed: true },
-    { name: "Unimproved Shared Use", color: "#4BAA40", isDashed: false },
-    { name: "Planned Unimproved Shared Use", color: "#4BAA40", isDashed: true }
-  ];
+const TrailLegend = ({ visibleTrailTypes, onToggleTrailType }) => {
+  // If no visibility state provided, show all by default
+  const isVisible = (layerId) => {
+    if (!visibleTrailTypes) return true;
+    return visibleTrailTypes[layerId] !== false;
+  };
+
+  const handleClick = (layerId) => {
+    if (onToggleTrailType) {
+      onToggleTrailType(layerId);
+    }
+  };
+
+  // Separate trails into existing and planned
+  const existingTrails = geojsonTrailLayers.filter(layer => !layer.name.includes('Planned'));
+  const plannedTrails = geojsonTrailLayers.filter(layer => layer.name.includes('Planned'));
+
+  const renderTrailItem = (layer) => {
+    const visible = isVisible(layer.id);
+    return (
+      <div 
+        key={layer.id} 
+        className="TrailLegend__item"
+        onClick={() => handleClick(layer.id)}
+        style={{
+          cursor: 'pointer',
+          opacity: visible ? 1 : 0.4,
+          backgroundColor: visible ? 'transparent' : 'rgba(0, 0, 0, 0.05)',
+          padding: '4px',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = visible ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = visible ? 'transparent' : 'rgba(0, 0, 0, 0.05)';
+        }}
+      >
+        <div 
+          className="TrailLegend__icon"
+          style={{
+            width: '20px',
+            height: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            cursor: 'pointer',
+            color: visible ? '#666' : '#999'
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick(layer.id);
+          }}
+        >
+          <i className={visible ? "fas fa-eye" : "fas fa-eye-slash"}></i>
+        </div>
+        <div className="TrailLegend__line-container">
+          <svg width="40" height="3" className="TrailLegend__line">
+            <line
+              x1="0"
+              y1="1.5"
+              x2="40"
+              y2="1.5"
+              stroke={layer.color}
+              strokeWidth="3"
+              strokeDasharray={layer.dashArray ? layer.dashArray.join(' ') : "0"}
+              opacity={visible ? 1 : 0.4}
+            />
+          </svg>
+        </div>
+        <span className="TrailLegend__label" style={{ opacity: visible ? 1 : 0.4 }}>
+          {layer.name.replace('Planned ', '')}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <div className="TrailLegend">
       <div className="TrailLegend__header">
         <strong>Trail Types</strong>
       </div>
-      <div className="TrailLegend__items">
-        {trailTypes.map((trail, index) => (
-          <div key={index} className="TrailLegend__item">
-            <div className="TrailLegend__line-container">
-              <svg width="40" height="3" className="TrailLegend__line">
-                <line
-                  x1="0"
-                  y1="1.5"
-                  x2="40"
-                  y2="1.5"
-                  stroke={trail.color}
-                  strokeWidth="3"
-                  strokeDasharray={trail.isDashed ? "4 2" : "0"}
-                />
-              </svg>
-            </div>
-            <span className="TrailLegend__label">{trail.name}</span>
-          </div>
-        ))}
+      
+      {/* Existing Trails Section */}
+      <div className="TrailLegend__section">
+        <div className="TrailLegend__section-header">
+          <strong style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase' }}>Existing</strong>
+        </div>
+        <div className="TrailLegend__items">
+          {existingTrails.map(layer => renderTrailItem(layer))}
+        </div>
+      </div>
+
+      {/* Planned Trails Section */}
+      <div className="TrailLegend__section">
+        <div className="TrailLegend__section-header">
+          <strong style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase' }}>Planned</strong>
+        </div>
+        <div className="TrailLegend__items">
+          {plannedTrails.map(layer => renderTrailItem(layer))}
+        </div>
       </div>
     </div>
   );

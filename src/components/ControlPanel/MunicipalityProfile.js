@@ -15,7 +15,6 @@ const MunicipalityProfile = ({
   onMunicipalitySelect,
   municipalityTrails,
   onTrailClick,
-  onOpenTrailList,
   showCommuterRail,
   onToggleCommuterRail,
   showStationLabels,
@@ -23,7 +22,11 @@ const MunicipalityProfile = ({
   showBlueBikeStations,
   onToggleBlueBikeStations,
   showSubwayStations,
-  onToggleSubwayStations
+  onToggleSubwayStations,
+  showEnvironmentalJustice,
+  onToggleEnvironmentalJustice,
+  showOpenSpace,
+  onToggleOpenSpace
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -492,6 +495,48 @@ const MunicipalityProfile = ({
         >
           {showSubwayStations ? "Hide" : "Show"} MBTA Subway Stations
         </Button>
+
+        <Button
+          variant={showEnvironmentalJustice ? "primary" : "outline-secondary"}
+          size="sm"
+          className="w-100 mb-2"
+          onClick={() => {
+            const newState = !showEnvironmentalJustice;
+            // Update parent component state
+            if (onToggleEnvironmentalJustice) {
+              onToggleEnvironmentalJustice(newState);
+            }
+            // Notify Map component with slight delay to ensure state is updated
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('toggleEnvironmentalJustice', { 
+                detail: { show: newState } 
+              }));
+            }, 10);
+          }}
+        >
+          {showEnvironmentalJustice ? "Hide" : "Show"} Environmental Justice
+        </Button>
+
+        <Button
+          variant={showOpenSpace ? "primary" : "outline-secondary"}
+          size="sm"
+          className="w-100 mb-2"
+          onClick={() => {
+            const newState = !showOpenSpace;
+            // Update parent component state
+            if (onToggleOpenSpace) {
+              onToggleOpenSpace(newState);
+            }
+            // Notify Map component with slight delay to ensure state is updated
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('toggleOpenSpace', { 
+                detail: { show: newState } 
+              }));
+            }, 10);
+          }}
+        >
+          {showOpenSpace ? "Hide" : "Show"} OpenSpace
+        </Button>
       </div>
 
       <Form.Group className="mb-3">
@@ -521,13 +566,6 @@ const MunicipalityProfile = ({
             {trailStats && (
               <>
                 <div className="MunicipalityProfile__stats">
-                  <div className="d-flex justify-content-between mb-1">
-                    <span className="small text-muted">
-                      Total Trails:<br/>
-                      <span className="text-muted" style={{ fontSize: '0.75rem' }}>(existing + planned)</span>
-                    </span>
-                    <span className="small fw-semibold">{trailStats.totalTrails}</span>
-                  </div>
                   <div className="d-flex justify-content-between mb-1">
                     <span className="small text-muted">
                       Total Length:<br/>
@@ -583,20 +621,6 @@ const MunicipalityProfile = ({
 
           {municipalityTrails && municipalityTrails.length > 0 && (
             <div className="mb-2">
-              <Button 
-                variant="outline-success" 
-                size="sm" 
-                className="w-100 mb-2"
-                onClick={() => {
-                  if (onOpenTrailList) {
-                    onOpenTrailList();
-                  }
-                }}
-              >
-                <span className="fw-semibold">{municipalityTrails.length} trails found</span>
-                <span className="ms-2">→ Open Trail List</span>
-              </Button>
-              
               <Button 
                 variant="outline-info" 
                 size="sm" 
@@ -668,19 +692,13 @@ const MunicipalityProfile = ({
           {trailStats && (
             <div className="alert alert-light mb-4">
               <div className="row g-3">
-                <div className="col-md-4">
-                  <div className="text-center">
-                    <div className="text-muted small">Total Trails (existing + planned)</div>
-                    <div className="fw-bold fs-5">{trailStats.totalTrails}</div>
-                  </div>
-                </div>
-                <div className="col-md-4">
+                <div className="col-md-6">
                   <div className="text-center">
                     <div className="text-muted small">Total Length (existing + planned)</div>
                     <div className="fw-bold fs-5">{formatLength(trailStats.totalLength)} mi</div>
                   </div>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-6">
                   <div className="text-center">
                     <div className="text-muted small d-flex align-items-center justify-content-center">
                       Trail Density (existing only)
@@ -717,7 +735,7 @@ const MunicipalityProfile = ({
               </h6>
               <div className="row g-2">
                 {Object.entries(trailStats.byType)
-                  .filter(([_, data]) => data.count > 0)
+                  .filter(([_, data]) => data.length > 0)
                   .sort(([, a], [, b]) => b.length - a.length)
                   .map(([type, data]) => (
                     <div key={type} className="col-12 col-md-6">
@@ -738,15 +756,9 @@ const MunicipalityProfile = ({
                               <h6 className="mb-1 fw-semibold" style={{ fontSize: '0.9rem' }}>
                                 {type}
                               </h6>
-                              <div className="row g-2 mt-1">
-                                <div className="col-6">
-                                  <div className="text-muted small" style={{ fontSize: '0.7rem' }}>COUNT</div>
-                                  <div className="fw-bold">{data.count} trails</div>
-                                </div>
-                                <div className="col-6">
-                                  <div className="text-muted small" style={{ fontSize: '0.7rem' }}>LENGTH</div>
-                                  <div className="fw-bold">{formatLength(data.length)} mi</div>
-                                </div>
+                              <div className="mt-1">
+                                <div className="text-muted small" style={{ fontSize: '0.7rem' }}>LENGTH</div>
+                                <div className="fw-bold">{formatLength(data.length)} mi</div>
                               </div>
                             </div>
                           </div>
