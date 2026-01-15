@@ -60,6 +60,7 @@ const App = () => {
   const [showSubwayStations, setShowSubwayStations] = useState(false);
   const [showEnvironmentalJustice, setShowEnvironmentalJustice] = useState(false);
   const [showOpenSpace, setShowOpenSpace] = useState(false);
+  const [showLandlinesFeatureService, setShowLandlinesFeatureService] = useState(false);
 
   return (
     <div className="App">
@@ -126,6 +127,8 @@ const App = () => {
               setShowEnvironmentalJustice,
               showOpenSpace,
               setShowOpenSpace,
+              showLandlinesFeatureService,
+              setShowLandlinesFeatureService,
               basemaps,
               existingTrails,
               proposedTrails,

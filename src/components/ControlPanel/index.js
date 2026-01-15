@@ -46,7 +46,9 @@ const ControlPanel = () => {
     showEnvironmentalJustice,
     setShowEnvironmentalJustice,
     showOpenSpace,
-    setShowOpenSpace
+    setShowOpenSpace,
+    showLandlinesFeatureService,
+    setShowLandlinesFeatureService
   } = useContext(LayerContext);
 
   const [savedTrailLayers, setSavedTrailLayers] = useState([]);

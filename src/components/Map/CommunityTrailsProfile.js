@@ -25,6 +25,7 @@ import SubwayStationsLayers from "./layers/SubwayStationsLayers";
 import BlueBikeStationsLayers from "./layers/BlueBikeStationsLayers";
 import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
 import OpenSpaceLayer from "./layers/OpenSpaceLayer";
+import LandlinesLayer from "./layers/LandlinesLayer";
 import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
@@ -59,6 +60,8 @@ const CommunityTrailsProfile = ({
     setShowEnvironmentalJustice,
     showOpenSpace,
     setShowOpenSpace,
+    showLandlinesFeatureService,
+    setShowLandlinesFeatureService,
   } = useContext(LayerContext);
 
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
@@ -187,6 +190,7 @@ const CommunityTrailsProfile = ({
     const handleToggleSubwayStations = (event) => setShowSubwayStations(event.detail.show);
     const handleToggleEnvironmentalJustice = (event) => setShowEnvironmentalJustice(event.detail.show);
     const handleToggleOpenSpace = (event) => setShowOpenSpace(event.detail.show);
+    const handleToggleLandlinesFeatureService = (event) => setShowLandlinesFeatureService(event.detail.show);
     
     const handleResetMunicipalityProfile = () => {
       setIntersectedTrails([]);
@@ -197,6 +201,7 @@ const CommunityTrailsProfile = ({
       setShowSubwayStations(false);
       setShowEnvironmentalJustice(false);
       setShowOpenSpace(false);
+      setShowLandlinesFeatureService(false);
       setShowBufferAnalysis(false);
       setIsBufferActive(false);
       setBufferCenter(null);
@@ -224,6 +229,7 @@ const CommunityTrailsProfile = ({
     window.addEventListener('toggleSubwayStations', handleToggleSubwayStations);
     window.addEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
     window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
+    window.addEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
     window.addEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
     window.addEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
@@ -235,6 +241,7 @@ const CommunityTrailsProfile = ({
       window.removeEventListener('toggleSubwayStations', handleToggleSubwayStations);
       window.removeEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
       window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
+      window.removeEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
       window.removeEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
       window.removeEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
       window.removeEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
@@ -811,6 +818,15 @@ const CommunityTrailsProfile = ({
         {showOpenSpace && (
           <OpenSpaceLayer
             showOpenSpace={showOpenSpace}
+            showMunicipalityProfileMap={true}
+            mapRef={mapRef}
+          />
+        )}
+
+        {/* Landlines Feature Service Layer */}
+        {showLandlinesFeatureService && (
+          <LandlinesLayer
+            showLandlines={showLandlinesFeatureService}
             showMunicipalityProfileMap={true}
             mapRef={mapRef}
           />
