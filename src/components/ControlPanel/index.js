@@ -42,7 +42,13 @@ const ControlPanel = () => {
     showBlueBikeStations,
     setShowBlueBikeStations,
     showSubwayStations,
-    setShowSubwayStations
+    setShowSubwayStations,
+    showEnvironmentalJustice,
+    setShowEnvironmentalJustice,
+    showOpenSpace,
+    setShowOpenSpace,
+    showLandlinesFeatureService,
+    setShowLandlinesFeatureService
   } = useContext(LayerContext);
 
   const [savedTrailLayers, setSavedTrailLayers] = useState([]);
@@ -288,10 +294,6 @@ const ControlPanel = () => {
                   detail: { trail } 
                 }));
               }}
-              onOpenTrailList={() => {
-                // Trigger opening trail list window
-                window.dispatchEvent(new CustomEvent('openTrailList'));
-              }}
               showCommuterRail={showCommuterRail}
               onToggleCommuterRail={setShowCommuterRail}
               showStationLabels={showStationLabels}
@@ -300,6 +302,10 @@ const ControlPanel = () => {
               onToggleBlueBikeStations={setShowBlueBikeStations}
               showSubwayStations={showSubwayStations}
               onToggleSubwayStations={setShowSubwayStations}
+              showEnvironmentalJustice={showEnvironmentalJustice}
+              onToggleEnvironmentalJustice={setShowEnvironmentalJustice}
+              showOpenSpace={showOpenSpace}
+              onToggleOpenSpace={setShowOpenSpace}
             />
           </div>
         )}

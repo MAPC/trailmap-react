@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
+import axios from "axios";
 import bbox from "@turf/bbox";
 import * as turf from "@turf/turf";
 import LoadingBar from "../LoadingBar";
-import TrailListWindow from "../TrailListWindow";
 import BasemapPanel from "../BasemapPanel";
 import Control from "./Control";
 import ControlPanel from "../ControlPanel";
@@ -23,6 +23,9 @@ import MunicipalityMapLayer from "./layers/MunicipalityMapLayer";
 import CommuterRailLayers from "./layers/CommuterRailLayers";
 import SubwayStationsLayers from "./layers/SubwayStationsLayers";
 import BlueBikeStationsLayers from "./layers/BlueBikeStationsLayers";
+import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
+import OpenSpaceLayer from "./layers/OpenSpaceLayer";
+import LandlinesLayer from "./layers/LandlinesLayer";
 import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
@@ -53,6 +56,12 @@ const CommunityTrailsProfile = ({
     setShowBlueBikeStations,
     showSubwayStations,
     setShowSubwayStations,
+    showEnvironmentalJustice,
+    setShowEnvironmentalJustice,
+    showOpenSpace,
+    setShowOpenSpace,
+    showLandlinesFeatureService,
+    setShowLandlinesFeatureService,
   } = useContext(LayerContext);
 
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
@@ -66,12 +75,31 @@ const CommunityTrailsProfile = ({
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [intersectedTrails, setIntersectedTrails] = useState([]);
-  const [showTrailListWindow, setShowTrailListWindow] = useState(false);
-  const [selectedTrailIndex, setSelectedTrailIndex] = useState(null);
   const [hoveredTrail, setHoveredTrail] = useState(null);
   const [hoveredBlueBikeStation, setHoveredBlueBikeStation] = useState(null);
   const [hoveredCommuterRailStation, setHoveredCommuterRailStation] = useState(null);
   const [hoveredSubwayStation, setHoveredSubwayStation] = useState(null);
+  const [ejHoverPoint, setEjHoverPoint] = useState(null);
+  const [ejHoverInfo, setEjHoverInfo] = useState(null);
+  const ejIdentifyTimeoutRef = useRef(null);
+  
+  // OpenSpace hover state
+  const [openSpaceHoverInfo, setOpenSpaceHoverInfo] = useState(null);
+  
+  // Handle OpenSpace hover
+  const handleOpenSpaceHover = (hoverInfo) => {
+    setOpenSpaceHoverInfo(hoverInfo);
+  };
+  
+  // Trail type visibility state - default all visible
+  const [visibleTrailTypes, setVisibleTrailTypes] = useState(() => {
+    // Initialize all trail types as visible by default
+    const initialVisibility = {};
+    geojsonTrailLayers.forEach(layer => {
+      initialVisibility[layer.id] = true;
+    });
+    return initialVisibility;
+  });
   
   // Fetched data states
   const [commuterRailData, setCommuterRailData] = useState(null);
@@ -118,51 +146,13 @@ const CommunityTrailsProfile = ({
     );
   };
 
-  // Handle trail click from Trail List Window
-  const handleTrailListClick = (trail, index) => {
-    setSelectedTrailIndex(index);
-    setHighlightedTrail(trail);
-    
-    let popupPoint = null;
-    if (trail.geometry && trail.geometry.coordinates && trail.geometry.coordinates.length > 0) {
-      const coords = trail.geometry.coordinates;
-      const coordsArray = trail.geometry.type === 'MultiLineString' ? coords[0] : coords;
-      
-      if (coordsArray && coordsArray.length > 0) {
-        const midPoint = coordsArray[Math.floor(coordsArray.length / 2)];
-        if (midPoint && midPoint.length >= 2 && !isNaN(midPoint[0]) && !isNaN(midPoint[1])) {
-          popupPoint = { lng: midPoint[0], lat: midPoint[1] };
-        }
-      }
-    }
-    
-    if (popupPoint) {
-      const mockResult = {
-        attributes: trail.attributes,
-        layerName: trail.layerName
-      };
-      
-      toggleIdentifyPopup(false);
-      setTimeout(() => {
-        setIdentifyPoint(popupPoint);
-        setIdentifyInfo([mockResult]);
-        setPointIndex(0);
-        toggleIdentifyPopup(true);
-      }, 10);
-    }
-    
-    if (trail.geometry && trail.geometry.coordinates) {
-      try {
-        const trailBbox = bbox(trail.geometry);
-        const map = mapRef.current.getMap();
-        map.fitBounds(
-          [[trailBbox[0], trailBbox[1]], [trailBbox[2], trailBbox[3]]],
-          { padding: 100, duration: 1000 }
-        );
-      } catch (error) {
-        console.error("Error zooming to trail:", error);
-      }
-    }
+
+  // Toggle trail type visibility
+  const handleToggleTrailType = (layerId) => {
+    setVisibleTrailTypes(prev => ({
+      ...prev,
+      [layerId]: !prev[layerId]
+    }));
   };
 
   // Function to zoom to municipality
@@ -187,34 +177,42 @@ const CommunityTrailsProfile = ({
       handleQueryMunicipalityTrails(selectedMunicipality);
     } else {
       setMunicipalityTrails([]);
-      setShowTrailListWindow(false);
       lastQueriedMunicipality.current = null;
     }
   }, [selectedMunicipality]);
 
   // Listen for custom events
   useEffect(() => {
-    const handleOpenTrailList = () => setShowTrailListWindow(true);
     const handleToggleCommuterRail = (event) => setShowCommuterRail(event.detail.show);
     const handleToggleStationLabels = (event) => setShowStationLabels(event.detail.show);
     const handleOpenBufferAnalysis = () => setShowBufferAnalysis(true);
     const handleToggleBlueBikeStations = (event) => setShowBlueBikeStations(event.detail.show);
     const handleToggleSubwayStations = (event) => setShowSubwayStations(event.detail.show);
+    const handleToggleEnvironmentalJustice = (event) => setShowEnvironmentalJustice(event.detail.show);
+    const handleToggleOpenSpace = (event) => setShowOpenSpace(event.detail.show);
+    const handleToggleLandlinesFeatureService = (event) => setShowLandlinesFeatureService(event.detail.show);
     
     const handleResetMunicipalityProfile = () => {
       setIntersectedTrails([]);
-      setShowTrailListWindow(false);
-      setSelectedTrailIndex(null);
       setHoveredTrail(null);
       setShowCommuterRail(false);
       setShowStationLabels(false);
       setShowBlueBikeStations(false);
       setShowSubwayStations(false);
+      setShowEnvironmentalJustice(false);
+      setShowOpenSpace(false);
+      setShowLandlinesFeatureService(false);
       setShowBufferAnalysis(false);
       setIsBufferActive(false);
       setBufferCenter(null);
       setBufferResults(null);
       setBufferPreviewCenter(null);
+      // Reset trail type visibility to all visible
+      const resetVisibility = {};
+      geojsonTrailLayers.forEach(layer => {
+        resetVisibility[layer.id] = true;
+      });
+      setVisibleTrailTypes(resetVisibility);
     };
     
     const handleResetBufferAnalysis = () => {
@@ -225,21 +223,25 @@ const CommunityTrailsProfile = ({
       setBufferPreviewCenter(null);
     };
     
-    window.addEventListener('openTrailList', handleOpenTrailList);
     window.addEventListener('toggleCommuterRail', handleToggleCommuterRail);
     window.addEventListener('toggleStationLabels', handleToggleStationLabels);
     window.addEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
     window.addEventListener('toggleSubwayStations', handleToggleSubwayStations);
+    window.addEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
+    window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
+    window.addEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
     window.addEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
     window.addEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
     
     return () => {
-      window.removeEventListener('openTrailList', handleOpenTrailList);
       window.removeEventListener('toggleCommuterRail', handleToggleCommuterRail);
       window.removeEventListener('toggleStationLabels', handleToggleStationLabels);
       window.removeEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
       window.removeEventListener('toggleSubwayStations', handleToggleSubwayStations);
+      window.removeEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
+      window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
+      window.removeEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
       window.removeEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
       window.removeEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
       window.removeEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
@@ -320,16 +322,6 @@ const CommunityTrailsProfile = ({
         message={loadingMessage} 
       />
       
-      {showTrailListWindow && (
-        <TrailListWindow
-          municipalityTrails={municipalityTrails}
-          selectedMunicipality={selectedMunicipality}
-          selectedTrailIndex={selectedTrailIndex}
-          onTrailClick={handleTrailListClick}
-          onClose={() => setShowTrailListWindow(false)}
-        />
-      )}
-      
       <ReactMapGL
         ref={mapRef}
         {...viewport}
@@ -337,6 +329,7 @@ const CommunityTrailsProfile = ({
         height="100%"
         cursor={isBufferActive ? "crosshair" : "default"}
         interactiveLayerIds={[
+          ...(showOpenSpace ? ['openspace-layer', 'openspace-outline'] : []),
           "municipality-profile-base",
           ...geojsonTrailLayers.map(layer => `geojson-trail-${layer.id}`)
         ]}
@@ -520,6 +513,40 @@ const CommunityTrailsProfile = ({
             setBufferPreviewCenter(null);
           }
 
+          // Handle OpenSpace layer hover FIRST (before other features)
+          if (showOpenSpace && event.lngLat) {
+            const map = mapRef.current?.getMap();
+            if (map) {
+              // First check event.features
+              const openSpaceFeature = features.find(f => 
+                f.layer && (f.layer.id === 'openspace-layer' || f.layer.id === 'openspace-outline')
+              );
+              
+              if (openSpaceFeature) {
+                setOpenSpaceHoverInfo({
+                  point: event.lngLat,
+                  feature: openSpaceFeature
+                });
+              } else {
+                // If not in event.features, query the map directly
+                const queriedFeatures = map.queryRenderedFeatures(event.point, {
+                  layers: ['openspace-layer', 'openspace-outline']
+                });
+                if (queriedFeatures.length > 0) {
+                  const feature = queriedFeatures.find(f => f.layer.id === 'openspace-layer') || queriedFeatures[0];
+                  setOpenSpaceHoverInfo({
+                    point: event.lngLat,
+                    feature: feature
+                  });
+                } else {
+                  setOpenSpaceHoverInfo(null);
+                }
+              }
+            }
+          } else {
+            setOpenSpaceHoverInfo(null);
+          }
+
           // Handle trail hover
           if (features.length > 0) {
             const trailFeature = features.find((f) => 
@@ -568,6 +595,73 @@ const CommunityTrailsProfile = ({
             setHoveredBlueBikeStation(null);
             setHoveredSubwayStation(null);
           }
+
+          // Handle Environmental Justice layer hover
+          // Note: Raster layers don't appear in features, so we query identify endpoint when layer is visible
+          if (showEnvironmentalJustice && event.lngLat) {
+            setEjHoverPoint(event.lngLat);
+            
+            // Debounce identify requests to avoid too many API calls
+            if (ejIdentifyTimeoutRef.current) {
+              clearTimeout(ejIdentifyTimeoutRef.current);
+            }
+            
+            ejIdentifyTimeoutRef.current = setTimeout(() => {
+              const EJ2020_IDENTIFY_URL = "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/EJ2020/MapServer/identify";
+              const map = mapRef.current?.getMap();
+              
+              if (map) {
+                const mapBounds = map.getBounds();
+                const sw = mapBounds.getSouthWest();
+                const ne = mapBounds.getNorthEast();
+                
+                axios
+                  .get(EJ2020_IDENTIFY_URL, {
+                    params: {
+                      geometry: `${event.lngLat.lng},${event.lngLat.lat}`,
+                      geometryType: "esriGeometryPoint",
+                      sr: 4326,
+                      layers: "all:0",
+                      tolerance: 5,
+                      mapExtent: `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`,
+                      imageDisplay: `${map.getContainer().clientWidth || 1024},${map.getContainer().clientHeight || 768},96`,
+                      returnGeometry: false,
+                      f: "pjson",
+                    },
+                  })
+                  .then((res) => {
+                    if (res.data.results && res.data.results.length > 0) {
+                      setEjHoverInfo(res.data.results[0]);
+                    } else {
+                      setEjHoverInfo(null);
+                    }
+                  })
+                  .catch((error) => {
+                    console.error("Error identifying EJ feature:", error);
+                    setEjHoverInfo(null);
+                  });
+              }
+            }, 200);
+          } else {
+            // Clear EJ hover when layer is not visible
+            setEjHoverPoint(null);
+            setEjHoverInfo(null);
+            if (ejIdentifyTimeoutRef.current) {
+              clearTimeout(ejIdentifyTimeoutRef.current);
+            }
+          }
+        }}
+        onMouseLeave={() => {
+          // Clear all hover states when mouse leaves the map
+          setHoveredTrail(null);
+          setHoveredBlueBikeStation(null);
+          setHoveredSubwayStation(null);
+          setOpenSpaceHoverInfo(null);
+          setEjHoverPoint(null);
+          setEjHoverInfo(null);
+          if (ejIdentifyTimeoutRef.current) {
+            clearTimeout(ejIdentifyTimeoutRef.current);
+          }
         }}
         mapboxAccessToken={MAPBOX_TOKEN}
         mapStyle={baseLayer.url}
@@ -586,6 +680,89 @@ const CommunityTrailsProfile = ({
             handleCarousel={setPointIndex}
           />
         )}
+
+        {/* Environmental Justice Tooltip */}
+        {showEnvironmentalJustice && ejHoverPoint && ejHoverInfo && (
+          <Popup
+            longitude={ejHoverPoint.lng}
+            latitude={ejHoverPoint.lat}
+            closeButton={false}
+            closeOnMove={true}
+            anchor="top"
+            offset={12}
+          >
+            {(() => {
+              const attributes = ejHoverInfo.attributes || {};
+              const layerName = ejHoverInfo.layerName || "Environmental Justice";
+              
+              // Extract relevant EJ attributes
+              const geographicAreaName = attributes["Geographic Area Name"] || attributes.Geographic_Area_Name || null;
+              const totalHouseholds = attributes["Total Number of Households"] || attributes.Total_Number_of_Households || null;
+              const totalPopulation = attributes["Total Poputation"] || attributes.Total_Poputation || attributes["Total Population"] || attributes.Total_Population || null;
+              
+              return (
+                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
+                  <div style={{fontWeight: 600, marginBottom: '6px'}}>{layerName}</div>
+                  {geographicAreaName && (
+                    <div style={{marginBottom: '4px', fontWeight: 500}}>{geographicAreaName}</div>
+                  )}
+                  {totalHouseholds !== null && (
+                    <div style={{marginBottom: '2px'}}>Total Number of Households: {totalHouseholds}</div>
+                  )}
+                  {totalPopulation !== null && (
+                    <div style={{marginBottom: '2px'}}>Total Population: {totalPopulation}</div>
+                  )}
+                  {!geographicAreaName && !totalHouseholds && totalPopulation === null && (
+                    <div>No data available</div>
+                  )}
+                </div>
+              );
+            })()}
+          </Popup>
+        )}
+
+        {/* OpenSpace Tooltip */}
+        {showOpenSpace && openSpaceHoverInfo && openSpaceHoverInfo.point && openSpaceHoverInfo.feature && (
+          <Popup
+            longitude={openSpaceHoverInfo.point.lng}
+            latitude={openSpaceHoverInfo.point.lat}
+            closeButton={false}
+            closeOnMove={true}
+            anchor="top"
+            offset={12}
+          >
+            {(() => {
+              const properties = openSpaceHoverInfo.feature.properties || {};
+              
+              return (
+                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
+                  <div style={{fontWeight: 600, marginBottom: '6px'}}>OpenSpace</div>
+                  {properties.SITE_NAME && (
+                    <div style={{marginBottom: '4px', fontWeight: 500}}>{properties.SITE_NAME}</div>
+                  )}
+                  {properties.FEE_OWNER && (
+                    <div style={{marginBottom: '2px'}}>Owner: {properties.FEE_OWNER}</div>
+                  )}
+                  {properties.OWNER_TYPE && (
+                    <div style={{marginBottom: '2px'}}>Owner Type: {properties.OWNER_TYPE}</div>
+                  )}
+                  {properties.PRIM_PURP && (
+                    <div style={{marginBottom: '2px'}}>Primary Purpose: {properties.PRIM_PURP}</div>
+                  )}
+                  {properties.PUB_ACCESS && (
+                    <div style={{marginBottom: '2px'}}>Public Access: {properties.PUB_ACCESS}</div>
+                  )}
+                  {properties.GIS_ACRES !== null && properties.GIS_ACRES !== undefined && (
+                    <div style={{marginBottom: '2px'}}>Acres: {parseFloat(properties.GIS_ACRES).toFixed(2)}</div>
+                  )}
+                  {!properties.SITE_NAME && !properties.FEE_OWNER && (
+                    <div>No data available</div>
+                  )}
+                </div>
+              );
+            })()}
+          </Popup>
+        )}
         
         {showControlPanel && (
           <div>
@@ -601,6 +778,7 @@ const CommunityTrailsProfile = ({
           intersectedTrails={intersectedTrails}
           hoveredTrail={hoveredTrail}
           highlightedTrail={highlightedTrail}
+          visibleTrailTypes={visibleTrailTypes}
         />
         
         {/* Commuter Rail Layer */}
@@ -628,6 +806,31 @@ const CommunityTrailsProfile = ({
           subwayStationsData={subwayStationsData}
           hoveredSubwayStation={hoveredSubwayStation}
         />
+        
+        {/* Environmental Justice 2020 Layer */}
+        <EnvironmentalJusticeLayer
+          showEnvironmentalJustice={showEnvironmentalJustice}
+          showMunicipalityProfileMap={true}
+          mapRef={mapRef}
+        />
+
+        {/* OpenSpace Layer */}
+        {showOpenSpace && (
+          <OpenSpaceLayer
+            showOpenSpace={showOpenSpace}
+            showMunicipalityProfileMap={true}
+            mapRef={mapRef}
+          />
+        )}
+
+        {/* Landlines Feature Service Layer */}
+        {showLandlinesFeatureService && (
+          <LandlinesLayer
+            showLandlines={showLandlinesFeatureService}
+            showMunicipalityProfileMap={true}
+            mapRef={mapRef}
+          />
+        )}
         
         <Source 
           id="municipalities" 
@@ -661,7 +864,10 @@ const CommunityTrailsProfile = ({
         
         {/* Trail Legend */}
         {showMunicipalityView && selectedMunicipality && (
-          <TrailLegend />
+          <TrailLegend 
+            visibleTrailTypes={visibleTrailTypes}
+            onToggleTrailType={handleToggleTrailType}
+          />
         )}
       </ReactMapGL>
       

@@ -9,7 +9,8 @@ const CommunityTrailsProfileLayers = ({
   showMunicipalityProfileMap, 
   intersectedTrails, 
   hoveredTrail, 
-  highlightedTrail 
+  highlightedTrail,
+  visibleTrailTypes = {} // Default to empty object (all visible)
 }) => {
   const profileLayers = [];
   
@@ -31,7 +32,10 @@ const CommunityTrailsProfileLayers = ({
     const layerTrails = trailsByLayer[layerId];
     const layerInfo = geojsonTrailLayers.find(l => l.id === parseInt(layerId));
     
-    if (layerInfo) {
+    // Check if this trail type is visible (default to true if not specified)
+    const isVisible = visibleTrailTypes[layerId] !== false;
+    
+    if (layerInfo && isVisible) {
       // Create GeoJSON feature collection
       const geojsonData = {
         type: "FeatureCollection",
