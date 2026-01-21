@@ -7,16 +7,17 @@ import { Source, Layer } from "react-map-gl";
  * 
  * Uses ArcGIS FeatureServer query endpoint to fetch GeoJSON features within current map bounds.
  */
-const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, mapRef }) => {
+const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef, onDataChange }) => {
   const [openSpaceData, setOpenSpaceData] = useState(null);
   const [bounds, setBounds] = useState(null);
   const updateTimeoutRef = useRef(null);
   const queryTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (!showOpenSpace || !showMunicipalityProfileMap || !mapRef?.current) {
+    if (!showOpenSpace || (!showMunicipalityProfileMap && !showProjectTrailsProfile) || !mapRef?.current) {
       setOpenSpaceData(null);
       setBounds(null);
+      if (onDataChange) onDataChange(null);
       return;
     }
 
@@ -56,16 +57,19 @@ const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, mapRef }) =
           const data = await response.json();
           
           if (data.features && data.features.length > 0) {
-            setOpenSpaceData({
+            const featureCollection = {
               type: "FeatureCollection",
               features: data.features
-            });
+            };
+            setOpenSpaceData(featureCollection);
             setBounds([
               [sw.lng, sw.lat],
               [ne.lng, ne.lat]
             ]);
+            if (onDataChange) onDataChange(featureCollection);
           } else {
             setOpenSpaceData(null);
+            if (onDataChange) onDataChange(null);
           }
         } catch (error) {
           console.error("Error fetching OpenSpace data:", error);
@@ -101,11 +105,11 @@ const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, mapRef }) =
         }
       };
     }
-  }, [showOpenSpace, showMunicipalityProfileMap, mapRef]);
+  }, [showOpenSpace, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef, onDataChange]);
 
   // Handle hover events - removed, will be handled in parent component's onMouseMove
 
-  if (!showOpenSpace || !showMunicipalityProfileMap || !openSpaceData) {
+  if (!showOpenSpace || (!showMunicipalityProfileMap && !showProjectTrailsProfile) || !openSpaceData) {
     return null;
   }
 

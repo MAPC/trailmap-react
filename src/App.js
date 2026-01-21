@@ -52,6 +52,8 @@ const App = () => {
   const [municipalityTrails, setMunicipalityTrails] = useState([]);
   const [showMunicipalityView, setShowMunicipalityView] = useState(false);
   const [showMunicipalityProfileMap, setShowMunicipalityProfileMap] = useState(false);
+  const [showProjectTrailsView, setShowProjectTrailsView] = useState(false);
+  const [showProjectTrailsProfileMap, setShowProjectTrailsProfileMap] = useState(false);
   
   // Layer toggle states for municipality profile
   const [showCommuterRail, setShowCommuterRail] = useState(false);
@@ -61,6 +63,12 @@ const App = () => {
   const [showEnvironmentalJustice, setShowEnvironmentalJustice] = useState(false);
   const [showOpenSpace, setShowOpenSpace] = useState(false);
   const [showLandlinesFeatureService, setShowLandlinesFeatureService] = useState(false);
+  const [showTrailsRegNameSync, setShowTrailsRegNameSync] = useState(false);
+  
+  // Project trails profile state
+  const [projectRegNames, setProjectRegNames] = useState([]);
+  const [selectedProjectRegName, setSelectedProjectRegName] = useState(null);
+  const [projectColorPalette, setProjectColorPalette] = useState({});
 
   return (
     <div className="App">
@@ -114,6 +122,10 @@ const App = () => {
               setShowMunicipalityView,
               showMunicipalityProfileMap,
               setShowMunicipalityProfileMap,
+              showProjectTrailsView,
+              setShowProjectTrailsView,
+              showProjectTrailsProfileMap,
+              setShowProjectTrailsProfileMap,
               // Layer toggle states
               showCommuterRail,
               setShowCommuterRail,
@@ -129,6 +141,14 @@ const App = () => {
               setShowOpenSpace,
               showLandlinesFeatureService,
               setShowLandlinesFeatureService,
+              showTrailsRegNameSync,
+              setShowTrailsRegNameSync,
+              projectRegNames,
+              setProjectRegNames,
+              selectedProjectRegName,
+              setSelectedProjectRegName,
+              projectColorPalette,
+              setProjectColorPalette,
               basemaps,
               existingTrails,
               proposedTrails,

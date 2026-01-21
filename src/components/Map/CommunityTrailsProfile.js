@@ -8,6 +8,7 @@ import LoadingBar from "../LoadingBar";
 import BasemapPanel from "../BasemapPanel";
 import Control from "./Control";
 import ControlPanel from "../ControlPanel";
+import FilterIcon from "../../assets/icons/filter-icon.svg";
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import CommunityIdentify from "./CommunityIdentify";
 import TrailLegend from "./TrailLegend";
@@ -26,6 +27,7 @@ import BlueBikeStationsLayers from "./layers/BlueBikeStationsLayers";
 import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
 import OpenSpaceLayer from "./layers/OpenSpaceLayer";
 import LandlinesLayer from "./layers/LandlinesLayer";
+import TrailsRegNameSyncLayer from "./layers/TrailsRegNameSyncLayer";
 import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
@@ -62,6 +64,8 @@ const CommunityTrailsProfile = ({
     setShowOpenSpace,
     showLandlinesFeatureService,
     setShowLandlinesFeatureService,
+    showTrailsRegNameSync,
+    setShowTrailsRegNameSync,
   } = useContext(LayerContext);
 
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
@@ -191,6 +195,7 @@ const CommunityTrailsProfile = ({
     const handleToggleEnvironmentalJustice = (event) => setShowEnvironmentalJustice(event.detail.show);
     const handleToggleOpenSpace = (event) => setShowOpenSpace(event.detail.show);
     const handleToggleLandlinesFeatureService = (event) => setShowLandlinesFeatureService(event.detail.show);
+    const handleToggleTrailsRegNameSync = (event) => setShowTrailsRegNameSync(event.detail.show);
     
     const handleResetMunicipalityProfile = () => {
       setIntersectedTrails([]);
@@ -202,6 +207,7 @@ const CommunityTrailsProfile = ({
       setShowEnvironmentalJustice(false);
       setShowOpenSpace(false);
       setShowLandlinesFeatureService(false);
+      setShowTrailsRegNameSync(false);
       setShowBufferAnalysis(false);
       setIsBufferActive(false);
       setBufferCenter(null);
@@ -230,6 +236,7 @@ const CommunityTrailsProfile = ({
     window.addEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
     window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
     window.addEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
+    window.addEventListener('toggleTrailsRegNameSync', handleToggleTrailsRegNameSync);
     window.addEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
     window.addEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
@@ -242,6 +249,7 @@ const CommunityTrailsProfile = ({
       window.removeEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
       window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
       window.removeEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
+      window.removeEventListener('toggleTrailsRegNameSync', handleToggleTrailsRegNameSync);
       window.removeEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
       window.removeEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
       window.removeEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
@@ -384,15 +392,6 @@ const CommunityTrailsProfile = ({
                 });
                 
                 if (firstTrailData) {
-                  const trailIndex = intersectedTrails.findIndex(trail => {
-                    const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
-                    return trail.layerId === firstTrail.layerId && 
-                           trailObjectId === (firstTrail.attributes?.objectid || firstTrail.attributes?.OBJECTID);
-                  });
-                  
-                  if (trailIndex >= 0) {
-                    setSelectedTrailIndex(trailIndex);
-                  }
                   setHighlightedTrail(firstTrailData);
                 }
                 
@@ -831,6 +830,16 @@ const CommunityTrailsProfile = ({
             mapRef={mapRef}
           />
         )}
+
+        {/* Trails Reg Name Sync Layer */}
+        {showTrailsRegNameSync && (
+          <TrailsRegNameSyncLayer
+            showTrailsRegNameSync={showTrailsRegNameSync}
+            showMunicipalityProfileMap={true}
+            showProjectTrailsProfile={false}
+            mapRef={mapRef}
+          />
+        )}
         
         <Source 
           id="municipalities" 
@@ -869,6 +878,14 @@ const CommunityTrailsProfile = ({
             onToggleTrailType={handleToggleTrailType}
           />
         )}
+        
+        {/* Control Panel Toggle Button */}
+        <Control
+          style={"Map_filter d-block position-absolute m-0 p-0"}
+          icon={FilterIcon}
+          alt={"Show Control Panel"}
+          clickHandler={() => toggleControlPanel(!showControlPanel)}
+        />
       </ReactMapGL>
       
       {/* Buffer Analysis Window */}

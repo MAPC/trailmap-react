@@ -1,0 +1,56 @@
+.ProjectMetricsPanel {
+  position: absolute;
+  left: 280px; // Position after the control panel
+  top: 60px; // Below header
+  width: 350px;
+  height: calc(100vh - 60px);
+  background-color: $lighter-blue;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
+  z-index: 5; // Below control panel
+  display: flex;
+  flex-direction: column;
+
+  &__header {
+    padding: 20px;
+    border-bottom: 2px solid #dee2e6;
+    background-color: rgba(255, 255, 255, 0.5);
+
+    h5 {
+      font-family: $title-font;
+      font-size: 16px;
+      font-weight: 600;
+      color: #2774bd;
+    }
+  }
+
+  &__content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    
+    // Custom scrollbar styling
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(39, 116, 189, 0.3);
+      border-radius: 4px;
+      
+      &:hover {
+        background: rgba(39, 116, 189, 0.5);
+      }
+    }
+  }
+
+  // Responsive width for larger screens
+  @media only screen and (min-width: 1200px) {
+    width: 400px;
+  }
+}
+
