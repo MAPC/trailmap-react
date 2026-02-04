@@ -64,7 +64,9 @@ const ControlPanel = ({
     showLandlinesFeatureService,
     setShowLandlinesFeatureService,
     showTrailsRegNameSync,
-    setShowTrailsRegNameSync
+    setShowTrailsRegNameSync,
+    showTransitLandStops,
+    setShowTransitLandStops
   } = useContext(LayerContext);
 
   const [savedTrailLayers, setSavedTrailLayers] = useState([]);
@@ -467,6 +469,8 @@ const ControlPanel = ({
               onToggleEnvironmentalJustice={setShowEnvironmentalJustice}
               showOpenSpace={showOpenSpace}
               onToggleOpenSpace={setShowOpenSpace}
+              showTransitLandStops={showTransitLandStops}
+              onToggleTransitLandStops={setShowTransitLandStops}
               showTrailsRegNameSync={showTrailsRegNameSync}
               onToggleTrailsRegNameSync={setShowTrailsRegNameSync}
             />

@@ -65,6 +65,7 @@ const ProjectTrailsProfile = ({
   const allRegNamesRef = useRef(new Set()); // Track all unique reg_names seen using ref
   const [allTrailsData, setAllTrailsData] = useState(null); // Store all trail data from TrailsRegNameSyncLayer
   const [openSpaceData, setOpenSpaceData] = useState(null); // Store OpenSpace data for park intersection calculations
+  const [openSpaceClickInfo, setOpenSpaceClickInfo] = useState(null); // Store OpenSpace click info for popup
 
   // Get trail type label based on seg_type and fac_stat
   const getTrailTypeLabel = (segType, facStat) => {
@@ -222,7 +223,30 @@ const ProjectTrailsProfile = ({
     const map = mapRef.current?.getMap();
     if (!map || !event.lngLat) {
       toggleIdentifyPopup(false);
+      setOpenSpaceClickInfo(null);
       return;
+    }
+
+    // Check for OpenSpace clicks first
+    if (showOpenSpace && event.features) {
+      const openSpaceFeature = event.features.find((f) => 
+        f.layer && (f.layer.id === 'openspace-layer' || f.layer.id === 'openspace-outline')
+      );
+      
+      if (openSpaceFeature) {
+        // If clicking on the same OpenSpace feature, close the popup
+        if (openSpaceClickInfo && 
+            openSpaceClickInfo.feature.properties?.OBJECTID === openSpaceFeature.properties?.OBJECTID) {
+          setOpenSpaceClickInfo(null);
+        } else {
+          setOpenSpaceClickInfo({
+            point: { lng: event.lngLat.lng, lat: event.lngLat.lat },
+            feature: openSpaceFeature
+          });
+        }
+        toggleIdentifyPopup(false);
+        return;
+      }
     }
 
     let trailFeatures = [];
@@ -263,6 +287,7 @@ const ProjectTrailsProfile = ({
         const popupCoords = { lng: event.lngLat.lng, lat: event.lngLat.lat };
 
         toggleIdentifyPopup(false);
+        setOpenSpaceClickInfo(null);
         setTimeout(() => {
           setIdentifyPoint(popupCoords);
           setIdentifyInfo(trailResults);
@@ -271,8 +296,17 @@ const ProjectTrailsProfile = ({
         }, 10);
       }
     } else {
-      // If clicking on empty space, close popup
+      // If clicking on empty space, close popups
       toggleIdentifyPopup(false);
+      if (showOpenSpace) {
+        const point = [event.lngLat.lng, event.lngLat.lat];
+        const queriedFeatures = map.queryRenderedFeatures(point, {
+          layers: ['openspace-layer', 'openspace-outline']
+        });
+        if (queriedFeatures.length === 0) {
+          setOpenSpaceClickInfo(null);
+        }
+      }
     }
   };
 
@@ -506,6 +540,11 @@ const ProjectTrailsProfile = ({
       // Add gap layer
       layerIds.push("gaps-reg-name-sync-layer");
     }
+    // Add OpenSpace layers if OpenSpace is shown
+    if (showOpenSpace) {
+      layerIds.push("openspace-layer");
+      layerIds.push("openspace-outline");
+    }
     // Don't add municipalities-fill to interactive layers since we don't want hover
     return layerIds;
   };
@@ -596,6 +635,49 @@ const ProjectTrailsProfile = ({
             }}
             handleCarousel={setPointIndex}
           />
+        )}
+        
+        {/* OpenSpace Click Popup */}
+        {showOpenSpace && openSpaceClickInfo && openSpaceClickInfo.point && openSpaceClickInfo.feature && (
+          <Popup
+            longitude={openSpaceClickInfo.point.lng}
+            latitude={openSpaceClickInfo.point.lat}
+            closeButton={true}
+            onClose={() => setOpenSpaceClickInfo(null)}
+            anchor="top"
+            offset={12}
+          >
+            {(() => {
+              const properties = openSpaceClickInfo.feature.properties || {};
+              
+              return (
+                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
+                  <div style={{fontWeight: 600, marginBottom: '6px'}}>OpenSpace</div>
+                  {properties.SITE_NAME && (
+                    <div style={{marginBottom: '4px', fontWeight: 500}}>{properties.SITE_NAME}</div>
+                  )}
+                  {properties.FEE_OWNER && (
+                    <div style={{marginBottom: '2px'}}>Owner: {properties.FEE_OWNER}</div>
+                  )}
+                  {properties.OWNER_TYPE && (
+                    <div style={{marginBottom: '2px'}}>Owner Type: {properties.OWNER_TYPE}</div>
+                  )}
+                  {properties.PRIM_PURP && (
+                    <div style={{marginBottom: '2px'}}>Primary Purpose: {properties.PRIM_PURP}</div>
+                  )}
+                  {properties.PUB_ACCESS && (
+                    <div style={{marginBottom: '2px'}}>Public Access: {properties.PUB_ACCESS}</div>
+                  )}
+                  {properties.GIS_ACRES !== null && properties.GIS_ACRES !== undefined && (
+                    <div style={{marginBottom: '2px'}}>Acres: {parseFloat(properties.GIS_ACRES).toFixed(2)}</div>
+                  )}
+                  {!properties.SITE_NAME && !properties.FEE_OWNER && (
+                    <div>No data available</div>
+                  )}
+                </div>
+              );
+            })()}
+          </Popup>
         )}
 
         {/* Municipality Map Layer - always visible */}

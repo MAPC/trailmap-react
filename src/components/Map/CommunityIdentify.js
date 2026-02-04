@@ -51,10 +51,27 @@ const CommunityIdentify = ({ point, identifyResult, handleShowPopup, handleCarou
     identifyLayer.push(element.layerName);
 
     const attrs = element.attributes || {};
-    const localName = normalizeCandidate(attrs["local_name"]);
-    const regionalName = normalizeCandidate(attrs["reg_name"]);
-    const propertyName = normalizeCandidate(attrs["prop_name"]);
-    identifyTrailName.push(localName || regionalName || propertyName || "");
+    
+    // Handle different layer types
+    let name = "";
+    if (element.layerId === 'transit-land-stop' || element.layerName === 'Transit Stop') {
+      // For transit stops, use Stop Name
+      name = normalizeCandidate(attrs["Stop Name"] || attrs["stop_name"] || attrs["name"]);
+    } else if (element.layerId === 'subway-station' || element.layerName === 'MBTA Subway Station') {
+      // For subway stations, use name field
+      name = normalizeCandidate(attrs["name"]);
+    } else if (element.layerId === 'blue-bike-station' || element.layerName === 'Blue Bike Station') {
+      // For blue bike stations, use name field
+      name = normalizeCandidate(attrs["name"]);
+    } else {
+      // For trails, use the standard trail name logic
+      const localName = normalizeCandidate(attrs["local_name"]);
+      const regionalName = normalizeCandidate(attrs["reg_name"]);
+      const propertyName = normalizeCandidate(attrs["prop_name"]);
+      name = localName || regionalName || propertyName || "";
+    }
+    
+    identifyTrailName.push(name);
 
     identifyMunicipality.push(getMunicipalityName(attrs["muni_id"]));
     identifyDate.push(attrs["open_date"] !== "Null" ? attrs["open_date"] : "");
@@ -67,30 +84,41 @@ const CommunityIdentify = ({ point, identifyResult, handleShowPopup, handleCarou
     identifyLength.push(normalizedLengthFeet);
   });
 
+  // Check if any result is a transit stop
+  const isTransitStop = identifyResult.some(result => 
+    result.layerId === 'transit-land-stop' || result.layerName === 'Transit Stop'
+  );
+  
   const carouselItems = [];
   for (let i = 0; i < identifyResult.length; i++) {
+    const itemIsTransitStop = identifyResult[i].layerId === 'transit-land-stop' || identifyResult[i].layerName === 'Transit Stop';
+    
     carouselItems.push(
       <Carousel.Item key={i}>
         {(identifyTrailName[i] && <span className="Popup__name ">Name: {identifyTrailName[i]}</span>) ||
           (!identifyTrailName[i] && <span className="Popup__name">Name: N/A</span>)}
-        {(identifyLayer[i] && (
-          <span className="Popup__layer Popup__section">
-            Type:{" "}
-            {identifyLayer[i].split(" ")[0] !== "Existing"
-              ? identifyLayer[i]
-              : identifyLayer[i].split(" ").slice(1, identifyLayer[i].split(" ").length).join(" ")}
-          </span>
-        )) ||
-          (!identifyLayer[i] && <span className="Popup__layer Popup__section">Type: N/A</span>)}
-        {(identifyMunicipality[i] && (
-          <span className="Popup__info Popup__section">Municipality: {identifyMunicipality[i]}</span>
-        )) ||
-          (!identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: N/A</span>)}
-        {(identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
-          (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)}
-        {(identifyLength[i] && (
-          <span className="Popup__info Popup__section">Length: {parseFloat(identifyLength[i]).toFixed(2)} ft</span>
-        )) || (!identifyLength[i] && <span className="Popup__info Popup__section">Length: N/A</span>)}
+        {!itemIsTransitStop && (
+          <>
+            {(identifyLayer[i] && (
+              <span className="Popup__layer Popup__section">
+                Type:{" "}
+                {identifyLayer[i].split(" ")[0] !== "Existing"
+                  ? identifyLayer[i]
+                  : identifyLayer[i].split(" ").slice(1, identifyLayer[i].split(" ").length).join(" ")}
+              </span>
+            )) ||
+              (!identifyLayer[i] && <span className="Popup__layer Popup__section">Type: N/A</span>)}
+            {(identifyMunicipality[i] && (
+              <span className="Popup__info Popup__section">Municipality: {identifyMunicipality[i]}</span>
+            )) ||
+              (!identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: N/A</span>)}
+            {(identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
+              (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)}
+            {(identifyLength[i] && (
+              <span className="Popup__info Popup__section">Length: {parseFloat(identifyLength[i]).toFixed(2)} ft</span>
+            )) || (!identifyLength[i] && <span className="Popup__info Popup__section">Length: N/A</span>)}
+          </>
+        )}
       </Carousel.Item>
     );
   }
@@ -112,14 +140,17 @@ const CommunityIdentify = ({ point, identifyResult, handleShowPopup, handleCarou
       >
         {carouselItems}
       </Carousel>
-      <Button
-        className="identify-contribute-btn"
-        onClick={() => {
-          toggleEditModal(true);
-        }}
-      >
-        <img src={editIcon} alt={"Contribute Data"}></img>
-      </Button>
+      {/* Hide edit button for transit stops */}
+      {!isTransitStop && (
+        <Button
+          className="identify-contribute-btn"
+          onClick={() => {
+            toggleEditModal(true);
+          }}
+        >
+          <img src={editIcon} alt={"Contribute Data"}></img>
+        </Button>
+      )}
     </Popup>
   );
 };
