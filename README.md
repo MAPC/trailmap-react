@@ -13,8 +13,9 @@ Landline legend and trail identification rely on Esri MapServices from https://g
 * webpack
 
 ## Setup
-1. Create a .env file in the root directory and copy and paste the .env variables in Dashlane.
-2. Install local dependencies by running `npm install` .
+1. Create a `.env` file in the root directory and copy variables from `.env.example` or Dashlane.
+2. Install local dependencies by running `npm install`.
+3. Add your Transit.land API key to the `.env` file as `REACT_APP_TRANSIT_LAND_API_KEY`.
 
 ## Run Application
 `npm start`

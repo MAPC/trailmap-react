@@ -34,6 +34,7 @@ import * as turf from "@turf/turf";
 // Extracted components
 import CommunityTrailsProfile from "./CommunityTrailsProfile";
 import OriginalTrailsMap from "./OriginalTrailsMap";
+import ProjectTrailsProfile from "./ProjectTrailsProfile";
 // Extracted constants
 import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
 
@@ -66,6 +67,8 @@ const Map = () => {
     setMunicipalityTrails,
     showMunicipalityProfileMap,
     showMunicipalityView,
+    showProjectTrailsProfileMap,
+    showProjectTrailsView,
     // Layer toggle states from context
     showCommuterRail,
     setShowCommuterRail,
@@ -124,15 +127,15 @@ const Map = () => {
     setMapParam();
   }, []);
 
-  // Auto-switch to light basemap when entering municipality profile
+  // Auto-switch to light basemap when entering municipality or project trails profile
   useEffect(() => {
-    if (showMunicipalityProfileMap) {
+    if (showMunicipalityProfileMap || showProjectTrailsProfileMap) {
       const lightBasemap = basemaps.find((bm) => bm.id === 'mapboxLight');
       if (lightBasemap && baseLayer.id !== 'mapboxLight') {
         setBaseLayer(lightBasemap);
       }
     }
-  }, [showMunicipalityProfileMap, basemaps, baseLayer, setBaseLayer]);
+  }, [showMunicipalityProfileMap, showProjectTrailsProfileMap, basemaps, baseLayer, setBaseLayer]);
 
   const generateShareUrl = () => {
     return `${window.location.href.split("?")[0]}?baseLayer=${baseLayer.id}&trailLayers=${trailLayers.join(
@@ -148,8 +151,8 @@ const Map = () => {
       <FailModal />
 
       <div className="Map position-relative">
-        {showMunicipalityProfileMap ? (
-          <CommunityTrailsProfile
+        {showProjectTrailsProfileMap ? (
+          <ProjectTrailsProfile
             viewport={viewport}
             setViewport={setViewport}
             baseLayer={baseLayer}
@@ -159,7 +162,18 @@ const Map = () => {
             toggleControlPanel={toggleControlPanel}
             mapRef={mapRef}
           />
-        ) : (
+        ) : showMunicipalityProfileMap ? (
+          <CommunityTrailsProfile
+            viewport={viewport}
+            setViewport={setViewport}
+            baseLayer={baseLayer}
+            showBasemapPanel={showBasemapPanel}
+            toggleBasemapPanel={toggleBasemapPanel}
+            showControlPanel={showControlPanel}
+            toggleControlPanel={toggleControlPanel}
+            mapRef={mapRef}
+              />
+            ) : (
           <OriginalTrailsMap
             viewport={viewport}
             setViewport={setViewport}
@@ -173,17 +187,19 @@ const Map = () => {
             proposedLayers={proposedLayers}
             existingTrails={existingTrails}
             proposedTrails={proposedTrails}
+            />
+          )}
+        
+        {/* Share Control Button - hidden in community trails profile */}
+        {!showMunicipalityProfileMap && (
+          <Control
+            style={"Map_share d-block position-absolute m-0 p-0"}
+            icon={ShareIcon}
+            alt={"Share Map"}
+            clickHandler={() => toggleShareModal(!showShareModal)}
           />
         )}
-        
-        {/* Share Control Button - shown for both views */}
-        <Control
-          style={"Map_share d-block position-absolute m-0 p-0"}
-          icon={ShareIcon}
-          alt={"Share Map"}
-          clickHandler={() => toggleShareModal(!showShareModal)}
-        />
-      </div>
+                  </div>
     </>
   );
 };

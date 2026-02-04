@@ -3,6 +3,8 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import Dropdown from "react-bootstrap/Dropdown";
+import DropdownButton from "react-bootstrap/DropdownButton";
+import ButtonGroup from "react-bootstrap/ButtonGroup";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Tooltip from "react-bootstrap/Tooltip";
 import * as turf from '@turf/turf';
@@ -26,7 +28,9 @@ const MunicipalityProfile = ({
   showEnvironmentalJustice,
   onToggleEnvironmentalJustice,
   showOpenSpace,
-  onToggleOpenSpace
+  onToggleOpenSpace,
+  showTransitLandStops,
+  onToggleTransitLandStops
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,6 +40,7 @@ const MunicipalityProfile = ({
   const [selectedTrailIndex, setSelectedTrailIndex] = useState(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [downloadOption, setDownloadOption] = useState('both'); // 'existing', 'planned', or 'both'
 
   // Reset component states when switching back to trail filters
   useEffect(() => {
@@ -303,6 +308,116 @@ const MunicipalityProfile = ({
     ).join(' ');
   };
 
+  const handleDownloadTrailsData = (option = downloadOption) => {
+    if (!selectedMunicipality || !municipalityTrails || municipalityTrails.length === 0) {
+      return;
+    }
+
+    // Separate trails into existing and planned
+    const existingTrails = municipalityTrails.filter(trail => 
+      !trail.layerName || !trail.layerName.startsWith('Planned')
+    );
+    const plannedTrails = municipalityTrails.filter(trail => 
+      trail.layerName && trail.layerName.startsWith('Planned')
+    );
+
+    // Convert to GeoJSON FeatureCollection format
+    const existingGeoJSON = {
+      type: "FeatureCollection",
+      features: existingTrails.map(trail => trail.feature || {
+        type: "Feature",
+        geometry: trail.geometry,
+        properties: trail.attributes || {}
+      })
+    };
+
+    const plannedGeoJSON = {
+      type: "FeatureCollection",
+      features: plannedTrails.map(trail => trail.feature || {
+        type: "Feature",
+        geometry: trail.geometry,
+        properties: trail.attributes || {}
+      })
+    };
+
+    // Create filenames with municipality name
+    const muniName = capitalizeWords(selectedMunicipality.name).replace(/\s+/g, '_');
+    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    let downloadedCount = 0;
+    
+    // Download based on selected option
+    if (option === 'existing' || option === 'both') {
+      if (existingGeoJSON.features.length > 0) {
+        const existingBlob = new Blob([JSON.stringify(existingGeoJSON, null, 2)], { type: 'application/json' });
+        const existingUrl = URL.createObjectURL(existingBlob);
+        const existingLink = document.createElement('a');
+        existingLink.href = existingUrl;
+        existingLink.download = `${muniName}_existing_trails_${timestamp}.geojson`;
+        document.body.appendChild(existingLink);
+        existingLink.click();
+        document.body.removeChild(existingLink);
+        URL.revokeObjectURL(existingUrl);
+        downloadedCount++;
+      }
+    }
+
+    if (option === 'planned' || option === 'both') {
+      if (plannedGeoJSON.features.length > 0) {
+        const plannedBlob = new Blob([JSON.stringify(plannedGeoJSON, null, 2)], { type: 'application/json' });
+        const plannedUrl = URL.createObjectURL(plannedBlob);
+        const plannedLink = document.createElement('a');
+        plannedLink.href = plannedUrl;
+        plannedLink.download = `${muniName}_planned_trails_${timestamp}.geojson`;
+        document.body.appendChild(plannedLink);
+        plannedLink.click();
+        document.body.removeChild(plannedLink);
+        URL.revokeObjectURL(plannedUrl);
+        downloadedCount++;
+      }
+    }
+
+    // Show success message
+    if (downloadedCount > 0) {
+      const toast = document.createElement('div');
+      const message = option === 'both' 
+        ? 'Trail data downloaded successfully!'
+        : option === 'existing'
+        ? 'Existing trails downloaded successfully!'
+        : 'Planned trails downloaded successfully!';
+      
+      toast.innerHTML = `
+        <div style="
+          position: fixed !important;
+          top: 20px !important;
+          right: 20px !important;
+          z-index: 999999 !important;
+          background-color: #28a745;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 6px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          font-size: 14px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          pointer-events: none;
+        ">
+          <i class="fas fa-check-circle"></i>
+          ${message}
+        </div>
+      `;
+      
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+      }, 3000);
+    }
+  };
+
   const handleShareProfile = async () => {
     const baseUrl = window.location.origin + window.location.pathname;
     // Get current URL parameters
@@ -493,7 +608,7 @@ const MunicipalityProfile = ({
             }, 10);
           }}
         >
-          {showSubwayStations ? "Hide" : "Show"} MBTA Subway Stations
+          {showSubwayStations ? "Hide" : "Show"} T-stops
         </Button>
 
         <Button
@@ -536,6 +651,27 @@ const MunicipalityProfile = ({
           }}
         >
           {showOpenSpace ? "Hide" : "Show"} OpenSpace
+        </Button>
+
+        <Button
+          variant={showTransitLandStops ? "primary" : "outline-secondary"}
+          size="sm"
+          className="w-100 mb-2"
+          onClick={() => {
+            const newState = !showTransitLandStops;
+            // Update parent component state
+            if (onToggleTransitLandStops) {
+              onToggleTransitLandStops(newState);
+            }
+            // Notify Map component with slight delay to ensure state is updated
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('toggleTransitLandStops', { 
+                detail: { show: newState } 
+              }));
+            }, 10);
+          }}
+        >
+          {showTransitLandStops ? "Hide" : "Show"} Transit Stops
         </Button>
       </div>
 
@@ -620,6 +756,7 @@ const MunicipalityProfile = ({
 
 
           {municipalityTrails && municipalityTrails.length > 0 && (
+            <>
             <div className="mb-2">
               <Button 
                 variant="outline-info" 
@@ -632,6 +769,29 @@ const MunicipalityProfile = ({
                 Buffer Analysis Tool
               </Button>
             </div>
+              <div className="mb-2">
+                <Form.Label className="small fw-semibold d-block mb-2">Download Trail Data</Form.Label>
+                <Form.Select 
+                  size="sm"
+                  value={downloadOption}
+                  onChange={(e) => setDownloadOption(e.target.value)}
+                  className="mb-2"
+                >
+                  <option value="both">Both (Existing + Planned)</option>
+                  <option value="existing">Existing Trails Only</option>
+                  <option value="planned">Planned Trails Only</option>
+                </Form.Select>
+                <Button 
+                  variant="outline-success" 
+                  size="sm" 
+                  className="w-100"
+                  onClick={() => handleDownloadTrailsData(downloadOption)}
+                >
+                  <i className="fas fa-download me-1"></i>
+                  Download {downloadOption === 'both' ? 'Trail Data' : downloadOption === 'existing' ? 'Existing Trails' : 'Planned Trails'} (GeoJSON)
+                </Button>
+              </div>
+            </>
           )}
 
           {(!municipalityTrails || municipalityTrails.length === 0) && selectedMunicipality && (
@@ -654,7 +814,6 @@ const MunicipalityProfile = ({
       >
         <Modal.Header closeButton className="bg-light">
           <Modal.Title className="w-100">
-            <div className="d-flex align-items-center justify-content-between">
               <div>
                 <span>Trail Network Completion Rates</span>
                 {selectedMunicipality && (
@@ -662,17 +821,6 @@ const MunicipalityProfile = ({
                     {capitalizeWords(selectedMunicipality.name)}
                   </div>
                 )}
-              </div>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={handleShareProfile}
-                className="MunicipalityProfile__share-btn"
-                title="Share this municipality profile"
-              >
-                <i className="fas fa-share-alt me-1"></i>
-                Share Profile
-              </Button>
             </div>
           </Modal.Title>
         </Modal.Header>

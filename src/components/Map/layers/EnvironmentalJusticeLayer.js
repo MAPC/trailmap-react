@@ -9,13 +9,13 @@ import { Source, Layer } from "react-map-gl";
  * Note: This creates a single image overlay that updates with map movement.
  * For better performance with large datasets, consider using a tile proxy service.
  */
-const EnvironmentalJusticeLayer = ({ showEnvironmentalJustice, showMunicipalityProfileMap, mapRef }) => {
+const EnvironmentalJusticeLayer = ({ showEnvironmentalJustice, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef }) => {
   const [imageUrl, setImageUrl] = useState(null);
   const [bounds, setBounds] = useState(null);
   const updateTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (!showEnvironmentalJustice || !showMunicipalityProfileMap || !mapRef?.current) {
+    if (!showEnvironmentalJustice || (!showMunicipalityProfileMap && !showProjectTrailsProfile) || !mapRef?.current) {
       setImageUrl(null);
       setBounds(null);
       return;
@@ -81,7 +81,7 @@ const EnvironmentalJusticeLayer = ({ showEnvironmentalJustice, showMunicipalityP
         }
       };
     }
-  }, [showEnvironmentalJustice, showMunicipalityProfileMap, mapRef]);
+  }, [showEnvironmentalJustice, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef]);
 
   if (!showEnvironmentalJustice || !showMunicipalityProfileMap || !imageUrl || !bounds) {
     return null;
