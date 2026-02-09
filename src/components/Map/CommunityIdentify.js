@@ -57,7 +57,7 @@ const CommunityIdentify = ({ point, identifyResult, handleShowPopup, handleCarou
     if (element.layerId === 'transit-land-stop' || element.layerName === 'Transit Stop') {
       // For transit stops, use Stop Name
       name = normalizeCandidate(attrs["Stop Name"] || attrs["stop_name"] || attrs["name"]);
-    } else if (element.layerId === 'subway-station' || element.layerName === 'MBTA Subway Station') {
+    } else if (element.layerId === 'subway-station' || element.layerName === 'T-stop' || element.layerName === 'MBTA Subway Station') {
       // For subway stations, use name field
       name = normalizeCandidate(attrs["name"]);
     } else if (element.layerId === 'blue-bike-station' || element.layerName === 'Blue Bike Station') {

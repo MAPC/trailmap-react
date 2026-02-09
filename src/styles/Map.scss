@@ -67,8 +67,8 @@
   }
 }
 
-// Project Trails Profile Map - prevent scrolling
-.project-trails-profile-map {
+// Regional Trails Profile Map - prevent scrolling
+.regional-trails-profile-map {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -84,7 +84,7 @@
   width: 240px;
 }
 
-// Geocoder styling to fit control panel width for project trails profile
+// Geocoder styling to fit control panel width for regional trails profile
 .mapboxgl-ctrl-geocoder {
   width: 100% !important;
   max-width: 520px;
@@ -106,8 +106,8 @@
   }
 }
 
-// Geocoder for project trails profile - same positioning as community profile
-.project-trails-profile-map .mapboxgl-ctrl-top-left .mapboxgl-ctrl.mapboxgl-ctrl-geocoder {
+// Geocoder for regional trails profile - same positioning as community profile
+.regional-trails-profile-map .mapboxgl-ctrl-top-left .mapboxgl-ctrl.mapboxgl-ctrl-geocoder {
   width: 240px !important;
   
   @media only screen and (max-height: 920px) and (min-width: 1000px) {

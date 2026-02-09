@@ -4,14 +4,16 @@ import Button from "react-bootstrap/Button";
 import TypeButton from "./TypeButton";
 import Legend from "./Legend";
 import MunicipalityProfile from "./MunicipalityProfile";
-import ProjectTrailsProfile from "./ProjectTrailsProfile";
+import RegionalTrailsProfile from "./RegionalTrailsProfile";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const ControlPanel = ({ 
   selectedRegNames = null,
-  onToggleRegName = null
+  onToggleRegName = null,
+  selectedMajorTrails = [],
+  onToggleMajorTrail = null
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,10 +40,10 @@ const ControlPanel = ({
     setShowMunicipalityView,
     showMunicipalityProfileMap,
     setShowMunicipalityProfileMap,
-    showProjectTrailsView,
-    setShowProjectTrailsView,
-    showProjectTrailsProfileMap,
-    setShowProjectTrailsProfileMap,
+    showRegionalTrailsView,
+    setShowRegionalTrailsView,
+    showRegionalTrailsProfileMap,
+    setShowRegionalTrailsProfileMap,
     projectRegNames,
     setProjectRegNames,
     selectedProjectRegName,
@@ -95,37 +97,70 @@ const ControlPanel = ({
     
     if ((sharedView === 'municipality' || currentPath === '/communityTrailsProfile') && !showMunicipalityView) {
       // Automatically switch to municipality view
-      setSavedTrailLayers([...trailLayers]);
-      setSavedProposedLayers([...proposedLayers]);
-      setTrailLayers([]);
-      setProposedLayers([]);
+      // Only save trail layers if we're coming from the original map view (not from another profile)
+      if (!showRegionalTrailsView) {
+        setSavedTrailLayers([...trailLayers]);
+        setSavedProposedLayers([...proposedLayers]);
+        setTrailLayers([]);
+        setProposedLayers([]);
+      }
       if (showMaHouseDistricts) toggleMaHouseDistricts(false);
       if (showMaSenateDistricts) toggleMaSenateDistricts(false);
       if (showMunicipalities) toggleMunicipalities(false);
+      // Hide all map layers by default when switching profiles
+      setShowCommuterRail(false);
+      setShowStationLabels(false);
+      setShowBlueBikeStations(false);
+      setShowSubwayStations(false);
+      setShowEnvironmentalJustice(false);
+      setShowOpenSpace(false);
+      setShowLandlinesFeatureService(false);
+      setShowTrailsRegNameSync(false);
+      setShowTransitLandStops(false);
       setShowMunicipalityProfileMap(true);
       setSelectedMunicipality(null);
       setShowMunicipalityView(true);
-    } else if (currentPath === '/projectTrailsProfile' && !showProjectTrailsView) {
-      // Automatically switch to project trails view
-      setSavedTrailLayers([...trailLayers]);
-      setSavedProposedLayers([...proposedLayers]);
-      setTrailLayers([]);
-      setProposedLayers([]);
+      // Disable regional trails profile when switching to community profile
+      setShowRegionalTrailsProfileMap(false);
+      setShowRegionalTrailsView(false);
+    } else if (currentPath === '/regionalTrailsProfile' && !showRegionalTrailsView) {
+      // Automatically switch to regional trails view
+      // Only save trail layers if we're coming from the original map view (not from another profile)
+      if (!showMunicipalityView) {
+        setSavedTrailLayers([...trailLayers]);
+        setSavedProposedLayers([...proposedLayers]);
+        setTrailLayers([]);
+        setProposedLayers([]);
+      }
       if (showMaHouseDistricts) toggleMaHouseDistricts(false);
       if (showMaSenateDistricts) toggleMaSenateDistricts(false);
-      // Always turn off municipalities in project trails profile
+      // Always turn off municipalities in regional trails profile
       toggleMunicipalities(false);
-      setShowProjectTrailsProfileMap(true);
-      setShowProjectTrailsView(true);
-    } else if (currentPath !== '/communityTrailsProfile' && currentPath !== '/projectTrailsProfile' && (showMunicipalityView || showProjectTrailsView)) {
+      // Hide all map layers by default when switching profiles
+      setShowCommuterRail(false);
+      setShowStationLabels(false);
+      setShowBlueBikeStations(false);
+      setShowSubwayStations(false);
+      setShowEnvironmentalJustice(false);
+      setShowOpenSpace(false);
+      setShowLandlinesFeatureService(false);
+      setShowTrailsRegNameSync(false);
+      setShowTransitLandStops(false);
+      setShowRegionalTrailsProfileMap(true);
+      setShowRegionalTrailsView(true);
+      // Disable community profile when switching to regional profile
+      setShowMunicipalityProfileMap(false);
+      setShowMunicipalityView(false);
+      setSelectedMunicipality(null);
+    } else if (currentPath !== '/communityTrailsProfile' && currentPath !== '/regionalTrailsProfile' && (showMunicipalityView || showRegionalTrailsView)) {
       // If we're not on a profile path but a view is active, switch back
       setTrailLayers(savedTrailLayers);
       setProposedLayers(savedProposedLayers);
       setShowMunicipalityProfileMap(false);
-      setShowProjectTrailsProfileMap(false);
+      setShowRegionalTrailsProfileMap(false);
       setSelectedMunicipality(null);
       setShowMunicipalityView(false);
-      setShowProjectTrailsView(false);
+      setShowRegionalTrailsView(false);
       setShowCommuterRail(false);
       setShowStationLabels(false);
       setShowBlueBikeStations(false);
@@ -239,10 +274,10 @@ const ControlPanel = ({
     }
   }, [selectedMunicipality, municipalityTrails, showMunicipalityView]);
 
-  // Handle project trails view toggle
-  const handleProjectTrailsToggle = () => {
-    if (!showProjectTrailsView) {
-      // Switching TO project trails view
+  // Handle regional trails view toggle
+  const handleRegionalTrailsToggle = () => {
+    if (!showRegionalTrailsView) {
+      // Switching TO regional trails view
       isNavigatingRef.current = true;
       
       // Save current trail layers
@@ -256,15 +291,15 @@ const ControlPanel = ({
       // Turn off other district layers
       if (showMaHouseDistricts) toggleMaHouseDistricts(false);
       if (showMaSenateDistricts) toggleMaSenateDistricts(false);
-      // Always turn off municipalities in project trails profile
+      // Always turn off municipalities in regional trails profile
       toggleMunicipalities(false);
       
-      // Enable the project trails profile map
-      setShowProjectTrailsProfileMap(true);
-      setShowProjectTrailsView(true);
+      // Enable the regional trails profile map
+      setShowRegionalTrailsProfileMap(true);
+      setShowRegionalTrailsView(true);
       
-      // Navigate to /projectTrailsProfile
-      navigate('/projectTrailsProfile');
+      // Navigate to /regionalTrailsProfile
+      navigate('/regionalTrailsProfile');
     } else {
       // Switching BACK to trail filters
       isNavigatingRef.current = true;
@@ -273,9 +308,9 @@ const ControlPanel = ({
       setTrailLayers(savedTrailLayers);
       setProposedLayers(savedProposedLayers);
       
-      // Disable the project trails profile map
-      setShowProjectTrailsProfileMap(false);
-      setShowProjectTrailsView(false);
+      // Disable the regional trails profile map
+      setShowRegionalTrailsProfileMap(false);
+      setShowRegionalTrailsView(false);
       
       // Navigate back to root path
       navigate('/');
@@ -283,17 +318,17 @@ const ControlPanel = ({
   };
 
   return (
-    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto ${showProjectTrailsView ? 'project-trails-profile' : ''}`}>
+    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto ${showRegionalTrailsView ? 'regional-trails-profile' : ''}`}>
       <div className="ControlPanel_opacity position-fixed"></div>
       <div>
-        {showProjectTrailsView ? (
+        {showRegionalTrailsView ? (
           <>
-            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Project Trails Profile</span>
+            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Regional Trails Profile</span>
             <Button 
               variant="outline-secondary"
               size="sm"
               className="w-100 mb-3 ControlPanel__toggle-btn"
-              onClick={handleProjectTrailsToggle}
+              onClick={handleRegionalTrailsToggle}
             >
               ← Back to Trail Filters
             </Button>
@@ -352,7 +387,7 @@ const ControlPanel = ({
           <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Find the trails that work for you!</span>
         )}
        
-        {!showProjectTrailsView && !showMunicipalityView && (
+        {!showRegionalTrailsView && !showMunicipalityView && (
           <div className="mb-3">
             <Button 
               variant="primary"
@@ -376,20 +411,61 @@ const ControlPanel = ({
                 borderColor: 'rgba(59, 131, 199, 0.85)',
                 color: 'white'
               }}
-              onClick={handleProjectTrailsToggle}
+              onClick={handleRegionalTrailsToggle}
             >
-              View Project Trails Profile
+              View Regional Trails Profile
             </Button>
           </div>
         )}
 
-        {showProjectTrailsView ? (
+        {showRegionalTrailsView ? (
           <div className="mt-2">
-            <ProjectTrailsProfile
+            <RegionalTrailsProfile
               regNames={projectRegNames || []}
               selectedRegNames={selectedRegNames instanceof Set ? selectedRegNames : (selectedRegNames ? new Set(selectedRegNames) : new Set())}
               onToggleRegName={onToggleRegName || (() => {})}
+              selectedMajorTrails={selectedMajorTrails || []}
+              onToggleMajorTrail={onToggleMajorTrail || (() => {})}
             />
+            
+            {/* Layer controls for Regional Trails Profile */}
+            <div className="mt-3">
+              <span className="ControlPanel__subtitle mt-2 mb-2 d-block fw-bold">Additional Layers:</span>
+              
+              <Button
+                variant={showEnvironmentalJustice ? "primary" : "outline-secondary"}
+                size="sm"
+                className="w-100 mb-2"
+                onClick={() => {
+                  const newState = !showEnvironmentalJustice;
+                  setShowEnvironmentalJustice(newState);
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('toggleEnvironmentalJustice', { 
+                      detail: { show: newState } 
+                    }));
+                  }, 10);
+                }}
+              >
+                {showEnvironmentalJustice ? "Hide" : "Show"} Environmental Justice
+              </Button>
+
+              <Button
+                variant={showOpenSpace ? "primary" : "outline-secondary"}
+                size="sm"
+                className="w-100 mb-2"
+                onClick={() => {
+                  const newState = !showOpenSpace;
+                  setShowOpenSpace(newState);
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('toggleOpenSpace', { 
+                      detail: { show: newState } 
+                    }));
+                  }, 10);
+                }}
+              >
+                {showOpenSpace ? "Hide" : "Show"} OpenSpace
+              </Button>
+            </div>
           </div>
         ) : !showMunicipalityView ? (
           <>

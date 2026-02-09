@@ -2,24 +2,27 @@
   position: absolute;
   left: 280px; // Position after the control panel
   top: 60px; // Below header
-  width: 350px;
+  width: 380px;
   height: calc(100vh - 60px);
   background-color: $lighter-blue;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 4px 12px 2px;
   z-index: 5; // Below control panel
   display: flex;
   flex-direction: column;
+  border-radius: 0 8px 8px 0;
 
   &__header {
-    padding: 20px;
+    padding: 18px 20px;
     border-bottom: 2px solid #dee2e6;
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: #ffffff;
+    flex-shrink: 0;
 
     h5 {
       font-family: $title-font;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 600;
       color: #2774bd;
+      margin: 0;
     }
   }
 
@@ -27,20 +30,22 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 20px;
+    padding: 16px;
+    background-color: #f5f7fa;
     
     // Custom scrollbar styling
     &::-webkit-scrollbar {
-      width: 8px;
+      width: 10px;
     }
     
     &::-webkit-scrollbar-track {
       background: rgba(0, 0, 0, 0.05);
+      border-radius: 5px;
     }
     
     &::-webkit-scrollbar-thumb {
       background: rgba(39, 116, 189, 0.3);
-      border-radius: 4px;
+      border-radius: 5px;
       
       &:hover {
         background: rgba(39, 116, 189, 0.5);
@@ -48,9 +53,21 @@
     }
   }
 
+  // Regional trails metrics card styles
+  .project-metrics-card {
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+
   // Responsive width for larger screens
   @media only screen and (min-width: 1200px) {
-    width: 400px;
+    width: 420px;
+  }
+
+  @media only screen and (max-width: 1024px) {
+    width: 320px;
+    left: 260px;
   }
 }
 

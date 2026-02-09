@@ -52,6 +52,7 @@ const CommunityTrailsProfile = ({
     municipalityTrails,
     setMunicipalityTrails,
     showMunicipalityView,
+    showMunicipalityProfileMap,
     showCommuterRail,
     setShowCommuterRail,
     showStationLabels,
@@ -62,8 +63,8 @@ const CommunityTrailsProfile = ({
     setShowSubwayStations,
     showEnvironmentalJustice,
     setShowEnvironmentalJustice,
-    showOpenSpace,
-    setShowOpenSpace,
+    showOpenSpace: showOpenSpaceCommunity,
+    setShowOpenSpace: setShowOpenSpaceCommunity,
     showLandlinesFeatureService,
     setShowLandlinesFeatureService,
     showTrailsRegNameSync,
@@ -88,20 +89,41 @@ const CommunityTrailsProfile = ({
   const [hoveredCommuterRailStation, setHoveredCommuterRailStation] = useState(null);
   const [hoveredSubwayStation, setHoveredSubwayStation] = useState(null);
   const [hoveredTransitStop, setHoveredTransitStop] = useState(null);
+  const [transitStopClickInfo, setTransitStopClickInfo] = useState(null); // Store Transit Stop click info for popup
   const [ejHoverPoint, setEjHoverPoint] = useState(null);
   const [ejHoverInfo, setEjHoverInfo] = useState(null);
   const ejIdentifyTimeoutRef = useRef(null);
+  const [isHoveringGeometry, setIsHoveringGeometry] = useState(false);
   
-  // OpenSpace hover state
-  const [openSpaceHoverInfo, setOpenSpaceHoverInfo] = useState(null);
+  // Use global OpenSpace state instead of local state to persist across profile switches
+  const showOpenSpace = showOpenSpaceCommunity;
   
   // OpenSpace click state
   const [openSpaceClickInfo, setOpenSpaceClickInfo] = useState(null);
   
-  // Handle OpenSpace hover
-  const handleOpenSpaceHover = (hoverInfo) => {
-    setOpenSpaceHoverInfo(hoverInfo);
-  };
+  // Listen for OpenSpace toggle events (only for Community Trails Profile)
+  useEffect(() => {
+    const handleToggleOpenSpace = (event) => {
+      if (showMunicipalityProfileMap) {
+        setShowOpenSpaceCommunity(event.detail.show);
+        // Zoom to level 11 when OpenSpace is opened
+        if (event.detail.show && mapRef?.current) {
+          const map = mapRef.current.getMap();
+          if (map) {
+            map.easeTo({
+              zoom: 11,
+              duration: 1000
+            });
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
+    return () => {
+      window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
+    };
+  }, [showMunicipalityProfileMap, setShowOpenSpaceCommunity, mapRef]);
   
   // Trail type visibility state - default all visible
   const [visibleTrailTypes, setVisibleTrailTypes] = useState(() => {
@@ -112,6 +134,16 @@ const CommunityTrailsProfile = ({
     });
     return initialVisibility;
   });
+
+  // Update cursor when EJ hover info changes (since EJ is a raster layer)
+  useEffect(() => {
+    if (showEnvironmentalJustice && ejHoverInfo) {
+      setIsHoveringGeometry(true);
+    } else if (showEnvironmentalJustice && !ejHoverInfo && !hoveredTrail && !hoveredBlueBikeStation && !hoveredSubwayStation && !hoveredTransitStop) {
+      // Only clear if no other features are being hovered
+      setIsHoveringGeometry(false);
+    }
+  }, [ejHoverInfo, showEnvironmentalJustice, hoveredTrail, hoveredBlueBikeStation, hoveredSubwayStation, hoveredTransitStop]);
   
   // Fetched data states
   const [commuterRailData, setCommuterRailData] = useState(null);
@@ -201,7 +233,7 @@ const CommunityTrailsProfile = ({
     const handleToggleBlueBikeStations = (event) => setShowBlueBikeStations(event.detail.show);
     const handleToggleSubwayStations = (event) => setShowSubwayStations(event.detail.show);
     const handleToggleEnvironmentalJustice = (event) => setShowEnvironmentalJustice(event.detail.show);
-    const handleToggleOpenSpace = (event) => setShowOpenSpace(event.detail.show);
+    const handleToggleOpenSpace = (event) => setShowOpenSpaceCommunity(event.detail.show);
     const handleToggleLandlinesFeatureService = (event) => setShowLandlinesFeatureService(event.detail.show);
     const handleToggleTrailsRegNameSync = (event) => setShowTrailsRegNameSync(event.detail.show);
     const handleToggleTransitLandStops = (event) => setShowTransitLandStops(event.detail.show);
@@ -214,7 +246,7 @@ const CommunityTrailsProfile = ({
       setShowBlueBikeStations(false);
       setShowSubwayStations(false);
       setShowEnvironmentalJustice(false);
-      setShowOpenSpace(false);
+      setShowOpenSpaceCommunity(false);
       setShowLandlinesFeatureService(false);
       setShowTrailsRegNameSync(false);
       setShowTransitLandStops(false);
@@ -347,7 +379,7 @@ const CommunityTrailsProfile = ({
         {...viewport}
         width="100%"
         height="100%"
-        cursor={isBufferActive ? "crosshair" : "default"}
+        cursor={isBufferActive ? "crosshair" : (isHoveringGeometry ? "pointer" : "default")}
         transformRequest={(url, resourceType) => {
           // Use transformRequest to add API key header for Transit.land tiles
           // This is recommended by Transit.land documentation
@@ -364,7 +396,7 @@ const CommunityTrailsProfile = ({
           return { url };
         }}
         interactiveLayerIds={[
-          ...(showOpenSpace ? ['openspace-layer', 'openspace-outline'] : []),
+          ...(showOpenSpace ? ['openspace-layer-community', 'openspace-outline-community'] : []),
           ...(showTransitLandStops ? ['transit-land-stops'] : []),
           "municipality-profile-base",
           ...geojsonTrailLayers.map(layer => `geojson-trail-${layer.id}`)
@@ -385,6 +417,105 @@ const CommunityTrailsProfile = ({
           }
 
           if (event.features) {
+            // Check for Transit.land stops clicks FIRST (before clearing other tooltips)
+            if (showTransitLandStops && event.lngLat) {
+              let transitStopFeature = event.features.find((f) => 
+                f.layer && f.layer.id === "transit-land-stops"
+              );
+              console.log('transitStopFeature from event.features:', transitStopFeature);
+              
+              // If not found in event.features, query the map directly with tolerance for point features
+              if (!transitStopFeature) {
+                const map = mapRef.current?.getMap();
+                if (map) {
+                  const point = [event.lngLat.lng, event.lngLat.lat];
+                  
+                  // Try querying with a small box around the point for better point detection
+                  const tolerance = 10; // pixels
+                  const box = [
+                    [event.lngLat.lng - 0.001, event.lngLat.lat - 0.001],
+                    [event.lngLat.lng + 0.001, event.lngLat.lat + 0.001]
+                  ];
+                  
+                  // First try point query
+                  let queriedFeatures = map.queryRenderedFeatures(point, {
+                    layers: ['transit-land-stops']
+                  });
+                  
+                  // If no results, try box query
+                  if (queriedFeatures.length === 0) {
+                    queriedFeatures = map.queryRenderedFeatures(box, {
+                      layers: ['transit-land-stops']
+                    });
+                  }
+                  
+                  // If still no results, try with a larger tolerance using multiple points
+                  if (queriedFeatures.length === 0) {
+                    const points = [
+                      point,
+                      [event.lngLat.lng - 0.0005, event.lngLat.lat],
+                      [event.lngLat.lng + 0.0005, event.lngLat.lat],
+                      [event.lngLat.lng, event.lngLat.lat - 0.0005],
+                      [event.lngLat.lng, event.lngLat.lat + 0.0005]
+                    ];
+                    
+                    for (const pt of points) {
+                      queriedFeatures = map.queryRenderedFeatures(pt, {
+                        layers: ['transit-land-stops']
+                      });
+                      if (queriedFeatures.length > 0) {
+                        break;
+                      }
+                    }
+                  }
+                  
+                  if (queriedFeatures.length > 0) {
+                    transitStopFeature = queriedFeatures[0];
+                    console.log('transitStopFeature from query:', transitStopFeature);
+                  }
+                }
+              }
+              
+              if (transitStopFeature && event.lngLat) {
+                console.log('Setting transit stop click info:', transitStopFeature);
+                
+                // Clear other tooltips first
+                toggleIdentifyPopup(false);
+                setOpenSpaceClickInfo(null);
+                
+                // Use onestop_id for comparison (more reliable than stop_id)
+                const stopId = transitStopFeature.properties?.onestop_id || 
+                              transitStopFeature.properties?.stop_id ||
+                              transitStopFeature.id;
+                
+                // If clicking on the same transit stop, close the popup
+                if (transitStopClickInfo) {
+                  const currentStopId = transitStopClickInfo.feature.properties?.onestop_id ||
+                                       transitStopClickInfo.feature.properties?.stop_id ||
+                                       transitStopClickInfo.feature.id;
+                  if (currentStopId === stopId) {
+                    console.log('Closing transit stop popup (same stop)');
+                    setTransitStopClickInfo(null);
+                    return;
+                  }
+                }
+                
+                // Set transit stop click info for popup
+                const clickInfo = {
+                  point: { lng: event.lngLat.lng, lat: event.lngLat.lat },
+                  feature: transitStopFeature
+                };
+                console.log('Setting transitStopClickInfo:', clickInfo);
+                console.log('Feature properties:', transitStopFeature.properties);
+                console.log('showTransitLandStops:', showTransitLandStops);
+                setTransitStopClickInfo(clickInfo);
+                return;
+              }
+            }
+            
+            // Clear transit stop tooltip when clicking on other features (only if not a transit stop)
+            setTransitStopClickInfo(null);
+            
             // Check for GeoJSON trail clicks
             const trailFeatures = event.features.filter((f) => 
               f.layer && f.layer.id.startsWith("geojson-trail-")
@@ -495,7 +626,7 @@ const CommunityTrailsProfile = ({
               
               const mockResult = {
                 layerId: 'subway-station',
-                layerName: 'MBTA Subway Station',
+                layerName: 'T-stop',
                 attributes: stationInfo
               };
               
@@ -511,57 +642,10 @@ const CommunityTrailsProfile = ({
               return;
             }
 
-            // Check for Transit.land stops clicks
-            if (showTransitLandStops) {
-              let transitStopFeature = event.features?.find((f) => 
-                f.layer && f.layer.id === "transit-land-stops"
-              );
-              
-              // If not found in event.features, query the map directly
-              if (!transitStopFeature && event.lngLat) {
-                const map = mapRef.current?.getMap();
-                if (map) {
-                  const point = [event.lngLat.lng, event.lngLat.lat];
-                  const queriedFeatures = map.queryRenderedFeatures(point, {
-                    layers: ['transit-land-stops']
-                  });
-                  if (queriedFeatures.length > 0) {
-                    transitStopFeature = queriedFeatures[0];
-                  }
-                }
-              }
-              
-              if (transitStopFeature && event.lngLat) {
-                const stopProps = transitStopFeature.properties || {};
-                const stopName = stopProps?.stop_name || stopProps?.name || 'Unknown Stop';
-                // Only show stop name in tooltip
-                const stopInfo = {
-                  'Stop Name': stopName
-                };
-                
-                const mockResult = {
-                  layerId: 'transit-land-stop',
-                  layerName: 'Transit Stop',
-                  attributes: stopInfo
-                };
-                
-                if (event.lngLat && !isNaN(event.lngLat.lng) && !isNaN(event.lngLat.lat)) {
-                  toggleIdentifyPopup(false);
-                  setTimeout(() => {
-                    setIdentifyPoint({ lng: event.lngLat.lng, lat: event.lngLat.lat });
-                    setIdentifyInfo([mockResult]);
-                    setPointIndex(0);
-                    toggleIdentifyPopup(true);
-                  }, 10);
-                }
-                return;
-              }
-            }
-            
             // Check for OpenSpace clicks
             if (showOpenSpace) {
               const openSpaceFeature = event.features.find((f) => 
-                f.layer && (f.layer.id === 'openspace-layer' || f.layer.id === 'openspace-outline')
+                f.layer && (f.layer.id === 'openspace-layer-community' || f.layer.id === 'openspace-outline-community')
               );
               
               if (openSpaceFeature && event.lngLat) {
@@ -603,11 +687,25 @@ const CommunityTrailsProfile = ({
             const map = mapRef.current?.getMap();
             if (map && event.lngLat) {
               const point = [event.lngLat.lng, event.lngLat.lat];
-              const queriedFeatures = map.queryRenderedFeatures(point, {
-                layers: ['openspace-layer', 'openspace-outline']
-              });
+                const queriedFeatures = map.queryRenderedFeatures(point, {
+                  layers: ['openspace-layer-community', 'openspace-outline-community']
+                });
               if (queriedFeatures.length === 0) {
                 setOpenSpaceClickInfo(null);
+              }
+            }
+          }
+          
+          // Clear transit stop tooltip when clicking on empty space
+          if (showTransitLandStops && transitStopClickInfo && event.lngLat) {
+            const map = mapRef.current?.getMap();
+            if (map) {
+              const point = [event.lngLat.lng, event.lngLat.lat];
+              const queriedFeatures = map.queryRenderedFeatures(point, {
+                layers: ['transit-land-stops']
+              });
+              if (queriedFeatures.length === 0) {
+                setTransitStopClickInfo(null);
               }
             }
           }
@@ -627,39 +725,32 @@ const CommunityTrailsProfile = ({
             setBufferPreviewCenter(null);
           }
 
-          // Handle OpenSpace layer hover FIRST (before other features)
-          if (showOpenSpace && event.lngLat) {
-            const map = mapRef.current?.getMap();
-            if (map) {
-              // First check event.features
-              const openSpaceFeature = features.find(f => 
-                f.layer && (f.layer.id === 'openspace-layer' || f.layer.id === 'openspace-outline')
-              );
-              
-              if (openSpaceFeature) {
-                setOpenSpaceHoverInfo({
-                  point: event.lngLat,
-                  feature: openSpaceFeature
-                });
-              } else {
-                // If not in event.features, query the map directly
-                const queriedFeatures = map.queryRenderedFeatures(event.point, {
-                  layers: ['openspace-layer', 'openspace-outline']
-                });
-                if (queriedFeatures.length > 0) {
-                  const feature = queriedFeatures.find(f => f.layer.id === 'openspace-layer') || queriedFeatures[0];
-                  setOpenSpaceHoverInfo({
-                    point: event.lngLat,
-                    feature: feature
-                  });
-                } else {
-                  setOpenSpaceHoverInfo(null);
-                }
-              }
-            }
-          } else {
-            setOpenSpaceHoverInfo(null);
+          // Check if hovering over any interactive geometry
+          let hasInteractiveFeature = false;
+          
+          if (features.length > 0) {
+            hasInteractiveFeature = features.some((f) => {
+              if (!f.layer) return false;
+              const layerId = f.layer.id;
+              // Check for trails
+              if (layerId.startsWith("geojson-trail-") && !layerId.includes("hover")) return true;
+              // Check for OpenSpace
+              if (showOpenSpace && (layerId === "openspace-layer-community" || layerId === "openspace-outline-community")) return true;
+              // Check for TransitLand stops
+              if (showTransitLandStops && layerId === "transit-land-stops") return true;
+              // Check for municipality
+              if (layerId === "municipality-profile-base") return true;
+              // Check for Blue Bike Stations
+              if (showBlueBikeStations && layerId === "blue-bike-stations") return true;
+              // Check for Subway Stations
+              if (showSubwayStations && layerId === "subway-stations") return true;
+              // Check for Commuter Rail Stations
+              if (showCommuterRail && (layerId === "commuter-rail-stations" || layerId === "commuter-rail-station-labels")) return true;
+              return false;
+            });
           }
+          
+          setIsHoveringGeometry(hasInteractiveFeature);
 
           // Handle trail hover
           if (features.length > 0) {
@@ -719,6 +810,7 @@ const CommunityTrailsProfile = ({
             setHoveredBlueBikeStation(null);
             setHoveredSubwayStation(null);
             setHoveredTransitStop(null);
+            setIsHoveringGeometry(false);
           }
 
           // Handle Environmental Justice layer hover
@@ -757,6 +849,7 @@ const CommunityTrailsProfile = ({
                   .then((res) => {
                     if (res.data.results && res.data.results.length > 0) {
                       setEjHoverInfo(res.data.results[0]);
+                      setIsHoveringGeometry(true);
                     } else {
                       setEjHoverInfo(null);
                     }
@@ -782,9 +875,9 @@ const CommunityTrailsProfile = ({
           setHoveredBlueBikeStation(null);
           setHoveredSubwayStation(null);
           setHoveredTransitStop(null);
-          setOpenSpaceHoverInfo(null);
           setEjHoverPoint(null);
           setEjHoverInfo(null);
+          setIsHoveringGeometry(false);
           if (ejIdentifyTimeoutRef.current) {
             clearTimeout(ejIdentifyTimeoutRef.current);
           }
@@ -847,49 +940,6 @@ const CommunityTrailsProfile = ({
           </Popup>
         )}
 
-        {/* OpenSpace Hover Tooltip */}
-        {showOpenSpace && openSpaceHoverInfo && openSpaceHoverInfo.point && openSpaceHoverInfo.feature && !openSpaceClickInfo && (
-          <Popup
-            longitude={openSpaceHoverInfo.point.lng}
-            latitude={openSpaceHoverInfo.point.lat}
-            closeButton={false}
-            closeOnMove={true}
-            anchor="top"
-            offset={12}
-          >
-            {(() => {
-              const properties = openSpaceHoverInfo.feature.properties || {};
-              
-              return (
-                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                  <div style={{fontWeight: 600, marginBottom: '6px'}}>OpenSpace</div>
-                  {properties.SITE_NAME && (
-                    <div style={{marginBottom: '4px', fontWeight: 500}}>{properties.SITE_NAME}</div>
-                  )}
-                  {properties.FEE_OWNER && (
-                    <div style={{marginBottom: '2px'}}>Owner: {properties.FEE_OWNER}</div>
-                  )}
-                  {properties.OWNER_TYPE && (
-                    <div style={{marginBottom: '2px'}}>Owner Type: {properties.OWNER_TYPE}</div>
-                  )}
-                  {properties.PRIM_PURP && (
-                    <div style={{marginBottom: '2px'}}>Primary Purpose: {properties.PRIM_PURP}</div>
-                  )}
-                  {properties.PUB_ACCESS && (
-                    <div style={{marginBottom: '2px'}}>Public Access: {properties.PUB_ACCESS}</div>
-                  )}
-                  {properties.GIS_ACRES !== null && properties.GIS_ACRES !== undefined && (
-                    <div style={{marginBottom: '2px'}}>Acres: {parseFloat(properties.GIS_ACRES).toFixed(2)}</div>
-                  )}
-                  {!properties.SITE_NAME && !properties.FEE_OWNER && (
-                    <div>No data available</div>
-                  )}
-                </div>
-              );
-            })()}
-          </Popup>
-        )}
-        
         {/* OpenSpace Click Popup */}
         {showOpenSpace && openSpaceClickInfo && openSpaceClickInfo.point && openSpaceClickInfo.feature && (
           <Popup
@@ -932,6 +982,59 @@ const CommunityTrailsProfile = ({
             })()}
           </Popup>
         )}
+
+        {/* Transit Stop Click Popup */}
+        {(() => {
+          const shouldShowPopup = showTransitLandStops && transitStopClickInfo && transitStopClickInfo.point && transitStopClickInfo.feature;
+          console.log('Popup render check:', {
+            showTransitLandStops,
+            hasTransitStopClickInfo: !!transitStopClickInfo,
+            hasPoint: !!(transitStopClickInfo && transitStopClickInfo.point),
+            hasFeature: !!(transitStopClickInfo && transitStopClickInfo.feature),
+            shouldShowPopup
+          });
+          
+          return shouldShowPopup ? (
+            <Popup
+              longitude={transitStopClickInfo.point.lng}
+              latitude={transitStopClickInfo.point.lat}
+              closeButton={true}
+              onClose={() => {
+                console.log('Closing transit stop popup');
+                setTransitStopClickInfo(null);
+              }}
+              anchor="top"
+              offset={12}
+            >
+              {(() => {
+                const properties = transitStopClickInfo.feature.properties || {};
+                console.log('Popup properties:', properties);
+                // Try multiple possible property names for stop name
+                // For vector tiles, properties might be in _vectorTileFeature
+                const vectorTileProps = transitStopClickInfo.feature._vectorTileFeature?.properties || {};
+                const allProps = { ...properties, ...vectorTileProps };
+                
+                const stopName = allProps.stop_name || 
+                                allProps.name || 
+                                allProps.name_en ||
+                                allProps.stop_name_en ||
+                                allProps.title ||
+                                allProps.stop_title ||
+                                allProps.onestop_id ||
+                                'Unknown Stop';
+                
+                console.log('Stop name:', stopName);
+                
+                return (
+                  <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
+                    <div style={{fontWeight: 600, marginBottom: '6px'}}>Transit Stop</div>
+                    <div style={{marginBottom: '4px', fontWeight: 500, wordWrap: 'break-word', overflowWrap: 'break-word'}}>{stopName}</div>
+                  </div>
+                );
+              })()}
+            </Popup>
+          ) : null;
+        })()}
         
         {showControlPanel && (
           <div>
@@ -988,6 +1091,7 @@ const CommunityTrailsProfile = ({
           <OpenSpaceLayer
             showOpenSpace={showOpenSpace}
             showMunicipalityProfileMap={true}
+            showRegionalTrailsProfile={false}
             mapRef={mapRef}
           />
         )}
@@ -1006,7 +1110,7 @@ const CommunityTrailsProfile = ({
           <TrailsRegNameSyncLayer
             showTrailsRegNameSync={showTrailsRegNameSync}
             showMunicipalityProfileMap={true}
-            showProjectTrailsProfile={false}
+            showRegionalTrailsProfile={false}
             mapRef={mapRef}
           />
         )}

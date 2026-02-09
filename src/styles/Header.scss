@@ -10,6 +10,9 @@
   }
 
   &__title {
+    color: $white;
+    margin: unset;
+
     @media only screen and (max-width: 790px) {
       font-size: 1.25rem;
     }
@@ -41,9 +44,6 @@
         padding: 0 20px 0 0;
       }
     }
-
-    color: $white;
-    margin: unset;
   }
 
   &__about {
