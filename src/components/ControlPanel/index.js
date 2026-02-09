@@ -427,45 +427,6 @@ const ControlPanel = ({
               selectedMajorTrails={selectedMajorTrails || []}
               onToggleMajorTrail={onToggleMajorTrail || (() => {})}
             />
-            
-            {/* Layer controls for Regional Trails Profile */}
-            <div className="mt-3">
-              <span className="ControlPanel__subtitle mt-2 mb-2 d-block fw-bold">Additional Layers:</span>
-              
-              <Button
-                variant={showEnvironmentalJustice ? "primary" : "outline-secondary"}
-                size="sm"
-                className="w-100 mb-2"
-                onClick={() => {
-                  const newState = !showEnvironmentalJustice;
-                  setShowEnvironmentalJustice(newState);
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('toggleEnvironmentalJustice', { 
-                      detail: { show: newState } 
-                    }));
-                  }, 10);
-                }}
-              >
-                {showEnvironmentalJustice ? "Hide" : "Show"} Environmental Justice
-              </Button>
-
-              <Button
-                variant={showOpenSpace ? "primary" : "outline-secondary"}
-                size="sm"
-                className="w-100 mb-2"
-                onClick={() => {
-                  const newState = !showOpenSpace;
-                  setShowOpenSpace(newState);
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('toggleOpenSpace', { 
-                      detail: { show: newState } 
-                    }));
-                  }, 10);
-                }}
-              >
-                {showOpenSpace ? "Hide" : "Show"} OpenSpace
-              </Button>
-            </div>
           </div>
         ) : !showMunicipalityView ? (
           <>

@@ -4,7 +4,9 @@ const ProjectMetricsPanel = ({
   selectedRegNames = new Set(),
   selectedMajorTrails = [],
   projectMetrics = {},
-  onZoomToProject = null
+  onZoomToProject = null,
+  allTrailsData = null,
+  majorTrailsData = null
 }) => {
   const [expandedProjects, setExpandedProjects] = useState(new Set());
   const [isPanelVisible, setIsPanelVisible] = useState(true);
@@ -41,6 +43,57 @@ const ProjectMetricsPanel = ({
     projectState[section] = !projectState[section];
     newExpanded.set(regName, projectState);
     setExpandedLengthByType(newExpanded);
+  };
+
+  // Download GeoJSON for a specific trail
+  const downloadTrailGeoJSON = (regName, e) => {
+    e.stopPropagation();
+    
+    let trailFeatures = [];
+    
+    // Check if it's a major trail
+    const isMajorTrail = selectedMajorTrails.includes(regName);
+    
+    if (isMajorTrail && majorTrailsData && majorTrailsData.features) {
+      // Filter major trails by grouped_reg_name
+      trailFeatures = majorTrailsData.features.filter(
+        feature => {
+          const groupedRegName = (feature.properties?.grouped_reg_name || "").trim();
+          return groupedRegName === regName.trim();
+        }
+      );
+    } else if (allTrailsData && allTrailsData.features) {
+      // Filter regular trails by reg_name
+      trailFeatures = allTrailsData.features.filter(
+        feature => (feature.properties?.reg_name || "").trim() === regName.trim()
+      );
+    }
+    
+    if (trailFeatures.length === 0) {
+      alert(`No trail data available for ${regName}`);
+      return;
+    }
+    
+    // Create GeoJSON FeatureCollection
+    const geoJSON = {
+      type: "FeatureCollection",
+      features: trailFeatures
+    };
+    
+    // Create filename from regName (sanitize for filesystem)
+    const sanitizedName = regName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const filename = `${sanitizedName}_trails.geojson`;
+    
+    // Create blob and download
+    const blob = new Blob([JSON.stringify(geoJSON, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Render metrics for a single project
@@ -155,6 +208,33 @@ const ProjectMetricsPanel = ({
                 Zoom
               </button>
             )}
+            <button
+              onClick={(e) => downloadTrailGeoJSON(regName, e)}
+              className="btn btn-sm"
+              style={{
+                backgroundColor: '#28a745',
+                border: 'none',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#218838';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#28a745';
+              }}
+              title={`Download ${regName} trails as GeoJSON`}
+            >
+              <i className="fas fa-download"></i>
+              Download
+            </button>
             <i 
               className="fas fa-chevron-down"
               style={{ 
@@ -590,8 +670,8 @@ const ProjectMetricsPanel = ({
     <div 
       className="ProjectMetricsPanel"
       style={{
-        width: isPanelVisible ? undefined : '50px',
-        transition: 'width 0.3s ease'
+        height: isPanelVisible ? undefined : '50px',
+        transition: 'height 0.3s ease'
       }}
     >
       {isPanelVisible ? (
@@ -623,7 +703,7 @@ const ProjectMetricsPanel = ({
                 ({selectedProjectsMetrics.length})
               </span>
               <i 
-                className="fas fa-chevron-left"
+                className="fas fa-chevron-down"
                 style={{ 
                   fontSize: '14px', 
                   color: '#2774bd',
@@ -650,8 +730,8 @@ const ProjectMetricsPanel = ({
             height: '100%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px 8px'
+            justifyContent: 'flex-start',
+            padding: '18px 20px'
           }}
           onClick={() => setIsPanelVisible(true)}
           onMouseEnter={(e) => {
@@ -661,14 +741,28 @@ const ProjectMetricsPanel = ({
             e.currentTarget.style.backgroundColor = '';
           }}
         >
-          <i 
-            className="fas fa-chevron-right"
-            style={{ 
-              fontSize: '16px', 
-              color: '#2774bd'
-            }}
-            title="Expand panel"
-          ></i>
+          <h5 className="mb-0" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+            <i className="fas fa-chart-bar" style={{ fontSize: '18px' }}></i>
+            <span>Regional Trails Metrics</span>
+            <span style={{ 
+              fontSize: '12px', 
+              fontWeight: 400, 
+              color: '#666',
+              marginLeft: 'auto'
+            }}>
+              ({selectedProjectsMetrics.length})
+            </span>
+            <i 
+              className="fas fa-chevron-up"
+              style={{ 
+                fontSize: '14px', 
+                color: '#2774bd',
+                transition: 'transform 0.3s ease',
+                marginLeft: '8px'
+              }}
+              title="Expand panel"
+            ></i>
+          </h5>
         </div>
       )}
     </div>

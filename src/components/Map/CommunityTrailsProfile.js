@@ -27,7 +27,7 @@ import BlueBikeStationsLayers from "./layers/BlueBikeStationsLayers";
 import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
 import OpenSpaceLayer from "./layers/OpenSpaceLayer";
 import LandlinesLayer from "./layers/LandlinesLayer";
-import TrailsRegNameSyncLayer from "./layers/TrailsRegNameSyncLayer";
+import OtherRegionalTrailsLayer from "./layers/OtherRegionalTrailsLayer";
 import TransitLandStopsLayer from "./layers/TransitLandStopsLayer";
 import TransitLandRoutesLayer from "./layers/TransitLandRoutesLayer";
 import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
@@ -1107,7 +1107,7 @@ const CommunityTrailsProfile = ({
 
         {/* Trails Reg Name Sync Layer */}
         {showTrailsRegNameSync && (
-          <TrailsRegNameSyncLayer
+          <OtherRegionalTrailsLayer
             showTrailsRegNameSync={showTrailsRegNameSync}
             showMunicipalityProfileMap={true}
             showRegionalTrailsProfile={false}

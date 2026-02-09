@@ -9,7 +9,7 @@ import CommunityIdentify from "./CommunityIdentify";
 import ProjectMetricsPanel from "./ProjectMetricsPanel";
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import { LayerContext } from "../../App";
-import TrailsRegNameSyncLayer from "./layers/TrailsRegNameSyncLayer";
+import OtherRegionalTrailsLayer from "./layers/OtherRegionalTrailsLayer";
 import MajorTrailsLayer from "./layers/MajorTrailsLayer";
 import OpenSpaceLayer from "./layers/OpenSpaceLayer";
 import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
@@ -67,7 +67,7 @@ const RegionalTrailsProfile = ({
   const [hoveredTrail, setHoveredTrail] = useState(null);
   const [colorPalette, setColorPalette] = useState({});
   const allRegNamesRef = useRef(new Set()); // Track all unique reg_names seen using ref
-  const [allTrailsData, setAllTrailsData] = useState(null); // Store all trail data from TrailsRegNameSyncLayer
+  const [allTrailsData, setAllTrailsData] = useState(null); // Store all trail data from OtherRegionalTrailsLayer
   const [majorTrailsData, setMajorTrailsData] = useState(null); // Store all major trail data from MajorTrailsLayer
   
   // Use global OpenSpace state instead of local state to persist across profile switches
@@ -557,32 +557,12 @@ const RegionalTrailsProfile = ({
       }
     }
 
-    // Check for Environmental Justice clicks (since it's a raster layer, we need to query)
-    if (showEnvironmentalJustice) {
-      const ejFeature = await queryEnvironmentalJusticeAtPoint(event.lngLat.lng, event.lngLat.lat);
-      if (ejFeature) {
-        // If clicking on the same EJ feature, close the popup
-        if (environmentalJusticeClickInfo && 
-            environmentalJusticeClickInfo.feature.properties?.OBJECTID === ejFeature.properties?.OBJECTID) {
-          setEnvironmentalJusticeClickInfo(null);
-        } else {
-          setEnvironmentalJusticeClickInfo({
-            point: { lng: event.lngLat.lng, lat: event.lngLat.lat },
-            feature: ejFeature
-          });
-        }
-        toggleIdentifyPopup(false);
-        setOpenSpaceClickInfo(null);
-        return;
-      }
-    }
-
     let trailFeatures = [];
 
     // First, try to get features from event.features
     if (event.features && event.features.length > 0) {
       trailFeatures = event.features.filter((f) => 
-        f.layer && (f.layer.id === "trails-reg-name-sync-layer" || f.layer.id === "gaps-reg-name-sync-layer")
+        f.layer && (f.layer.id === "other-regional-trails-layer" || f.layer.id === "gaps-other-regional-trails-layer")
       );
     }
 
@@ -593,20 +573,20 @@ const RegionalTrailsProfile = ({
       // Check if layers exist before querying
       const style = map.getStyle();
       const layersExist = style && style.layers && (
-        style.layers.some(layer => layer.id === 'trails-reg-name-sync-layer') ||
-        style.layers.some(layer => layer.id === 'gaps-reg-name-sync-layer')
+        style.layers.some(layer => layer.id === 'other-regional-trails-layer') ||
+        style.layers.some(layer => layer.id === 'gaps-other-regional-trails-layer')
       );
       
       if (layersExist) {
         const layerFilter = {
-          layers: ['trails-reg-name-sync-layer', 'gaps-reg-name-sync-layer']
+          layers: ['other-regional-trails-layer', 'gaps-other-regional-trails-layer']
         };
         
         try {
           // First try exact point query
           let allFeatures = map.queryRenderedFeatures(centerPoint, layerFilter);
           trailFeatures = allFeatures.filter((f) => 
-            f.layer && (f.layer.id === "trails-reg-name-sync-layer" || f.layer.id === "gaps-reg-name-sync-layer")
+            f.layer && (f.layer.id === "other-regional-trails-layer" || f.layer.id === "gaps-other-regional-trails-layer")
           );
           
           // If still no features, try querying multiple points in a small radius around the click
@@ -633,7 +613,7 @@ const RegionalTrailsProfile = ({
               try {
                 allFeatures = map.queryRenderedFeatures(queryPoint, layerFilter);
                 const foundFeatures = allFeatures.filter((f) => 
-                  f.layer && (f.layer.id === "trails-reg-name-sync-layer" || f.layer.id === "gaps-reg-name-sync-layer")
+                  f.layer && (f.layer.id === "other-regional-trails-layer" || f.layer.id === "gaps-other-regional-trails-layer")
                 );
                 if (foundFeatures.length > 0) {
                   trailFeatures = foundFeatures;
@@ -658,7 +638,7 @@ const RegionalTrailsProfile = ({
         const centerPoint = [event.lngLat.lng, event.lngLat.lat];
         const allFeatures = map.queryRenderedFeatures(centerPoint);
         trailFeatures = allFeatures.filter((f) => 
-          f.layer && (f.layer.id === "trails-reg-name-sync-layer" || f.layer.id === "gaps-reg-name-sync-layer")
+          f.layer && (f.layer.id === "other-regional-trails-layer" || f.layer.id === "gaps-other-regional-trails-layer")
         );
       } catch (err) {
         // Silently fail if query doesn't work
@@ -685,6 +665,35 @@ const RegionalTrailsProfile = ({
         });
       }, 10);
       return; // Exit early after setting trail click info
+    }
+    
+    // Check for Environmental Justice clicks (only if no trail was clicked)
+    // Since EJ is a raster layer, we need to query it, but only if no trail features were found
+    if (showEnvironmentalJustice && trailFeatures.length === 0) {
+      const ejFeature = await queryEnvironmentalJusticeAtPoint(event.lngLat.lng, event.lngLat.lat);
+      if (ejFeature) {
+        // If clicking on the same EJ feature, close the popup
+        if (environmentalJusticeClickInfo && 
+            environmentalJusticeClickInfo.feature.properties?.OBJECTID === ejFeature.properties?.OBJECTID) {
+          setEnvironmentalJusticeClickInfo(null);
+        } else {
+          // Always clear existing tooltips first, then reopen
+          setEnvironmentalJusticeClickInfo(null);
+          toggleIdentifyPopup(false);
+          setOpenSpaceClickInfo(null);
+          setMajorTrailClickInfo(null);
+          setRegularTrailClickInfo(null);
+          
+          // Use setTimeout to ensure the tooltip reopens after clearing
+          setTimeout(() => {
+            setEnvironmentalJusticeClickInfo({
+              point: { lng: event.lngLat.lng, lat: event.lngLat.lat },
+              feature: ejFeature
+            });
+          }, 10);
+        }
+        return;
+      }
     }
     
     // If clicking on empty space, check if we should close OpenSpace popup
@@ -758,7 +767,7 @@ const RegionalTrailsProfile = ({
 
     // Handle regular trail hover (for cursor only, no popup)
     const trailFeature = features.find((f) => 
-      f.layer && (f.layer.id === "trails-reg-name-sync-layer" || f.layer.id === "gaps-reg-name-sync-layer")
+      f.layer && (f.layer.id === "other-regional-trails-layer" || f.layer.id === "gaps-other-regional-trails-layer")
     );
 
     if (trailFeature) {
@@ -995,8 +1004,8 @@ const RegionalTrailsProfile = ({
   const getTrailLayerIds = () => {
     const layerIds = [];
     // Always add regular trail layers for click detection (even if no projects selected)
-    layerIds.push("trails-reg-name-sync-layer");
-    layerIds.push("gaps-reg-name-sync-layer");
+    layerIds.push("other-regional-trails-layer");
+    layerIds.push("gaps-other-regional-trails-layer");
     // Add Major Trail layer if major trails are selected (now includes gaps)
     if (selectedMajorTrails && selectedMajorTrails.length > 0) {
       layerIds.push("major-trails-layer");
@@ -1049,10 +1058,10 @@ const RegionalTrailsProfile = ({
       try {
         // Complete list of all trail layer IDs that should be on top
         const trailLayerIds = [
-          'trails-reg-name-sync-layer',
-          'trails-reg-name-sync-layer-hover',
-          'trails-reg-name-sync-layer-click',
-          'gaps-reg-name-sync-layer',
+          'other-regional-trails-layer',
+          'other-regional-trails-layer-hover',
+          'other-regional-trails-layer-click',
+          'gaps-other-regional-trails-layer',
           'major-trails-layer',
           'major-trails-layer-hover',
           'major-trails-layer-click'
@@ -1213,7 +1222,7 @@ const RegionalTrailsProfile = ({
         />
 
         {/* Trails Reg Name Sync Layer - rendered last to appear on top of all other layers */}
-        <TrailsRegNameSyncLayer
+        <OtherRegionalTrailsLayer
           showTrailsRegNameSync={true}
           showMunicipalityProfileMap={false}
           showRegionalTrailsProfile={true}
@@ -1659,6 +1668,8 @@ const RegionalTrailsProfile = ({
         selectedMajorTrails={selectedMajorTrails}
         projectMetrics={projectMetrics}
         onZoomToProject={handleZoomToProject}
+        allTrailsData={allTrailsData}
+        majorTrailsData={majorTrailsData}
       />
     </div>
   );

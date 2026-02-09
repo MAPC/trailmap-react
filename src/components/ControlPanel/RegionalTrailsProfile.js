@@ -4,14 +4,15 @@ import Button from "react-bootstrap/Button";
 import { LayerContext } from "../../App";
 
 // Major trails list - these names should match grouped_reg_name values in export_major_trails FeatureServer
+// Sorted alphabetically A to Z
 const MAJOR_TRAILS = [
   "Bay Circuit",
-  "Northern Strand",
+  "Bruce Freeman",
+  "Charles River Greenway",
   "Minuteman",
   "Neponset River",
-  "Charles River Greenway",
-  "Bruce Freeman"
-];
+  "Northern Strand"
+].sort();
 
 const RegionalTrailsProfile = ({ 
   regNames = [],
@@ -90,7 +91,7 @@ const RegionalTrailsProfile = ({
           {regNames.length > 0 && (
             <div className="mb-3">
               <Form.Label className="small fw-semibold d-block mb-2">Other regional trails</Form.Label>
-              <div className="project-list" style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '5px' }}>
+              <div className="project-list" style={{ maxHeight: '250px', overflowY: 'auto', paddingRight: '5px' }}>
                 {regNames.map((regName, index) => {
                   const isSelected = selectedRegNames.has(regName);
                   

@@ -26,14 +26,14 @@ const generateColorPalette = (regNames) => {
 };
 
 /**
- * Renders Trails Reg Name Sync layer using ArcGIS FeatureServer for data
+ * Renders Other Regional Trails layer using ArcGIS FeatureServer for data
  * Data source: https://services.arcgis.com/c5WwApDsDjRhIVkH/arcgis/rest/services/export_other_trails/FeatureServer
  * 
  * Uses FeatureServer queries to fetch GeoJSON data for rendering and data extraction (reg_names, metrics).
  * Renders trails as GeoJSON to support filtering by selectedRegNames and color coding.
  * Supports color coding by reg_name attribute when useColorCoding is true.
  */
-const TrailsRegNameSyncLayer = ({ 
+const OtherRegionalTrailsLayer = ({ 
   showTrailsRegNameSync, 
   showMunicipalityProfileMap, 
   showRegionalTrailsProfile,
@@ -457,12 +457,12 @@ const TrailsRegNameSyncLayer = ({
         {/* Render gaps in red */}
         {filteredGapsData.features.length > 0 && (
           <Source
-            id="gaps-reg-name-sync-source"
+            id="gaps-other-regional-trails-source"
             type="geojson"
             data={filteredGapsData}
           >
             <Layer
-              id="gaps-reg-name-sync-layer"
+              id="gaps-other-regional-trails-layer"
               type="line"
               paint={{
                 "line-color": "#FF0000",
@@ -583,12 +583,12 @@ const TrailsRegNameSyncLayer = ({
     <>
       {/* Regular trails */}
       <Source
-        id="trails-reg-name-sync-source"
+        id="other-regional-trails-source"
         type="geojson"
         data={filteredTrailsData}
       >
         <Layer
-          id="trails-reg-name-sync-layer"
+          id="other-regional-trails-layer"
           type="line"
           paint={{
             "line-color": [
@@ -612,7 +612,7 @@ const TrailsRegNameSyncLayer = ({
         />
         {/* Hover layer for regular trails - wider */}
         <Layer
-          id="trails-reg-name-sync-layer-hover"
+          id="other-regional-trails-layer-hover"
           type="line"
           paint={{
             "line-color": [
@@ -632,7 +632,7 @@ const TrailsRegNameSyncLayer = ({
         />
         {/* Click highlight layer for regular trails - thicker when clicked */}
         <Layer
-          id="trails-reg-name-sync-layer-click"
+          id="other-regional-trails-layer-click"
           type="line"
           paint={{
             "line-color": [
@@ -655,12 +655,12 @@ const TrailsRegNameSyncLayer = ({
       {/* Gaps in red */}
       {filteredGapsData && filteredGapsData.features.length > 0 && (
         <Source
-          id="gaps-reg-name-sync-source"
+          id="gaps-other-regional-trails-source"
           type="geojson"
           data={filteredGapsData}
         >
           <Layer
-            id="gaps-reg-name-sync-layer"
+            id="gaps-other-regional-trails-layer"
             type="line"
             paint={{
               "line-color": "#FF0000",
@@ -674,7 +674,7 @@ const TrailsRegNameSyncLayer = ({
           />
           {/* Hover layer for gaps - wider */}
           <Layer
-            id="gaps-reg-name-sync-layer-hover"
+            id="gaps-other-regional-trails-layer-hover"
             type="line"
             paint={{
               "line-color": "#FF0000",
@@ -689,7 +689,7 @@ const TrailsRegNameSyncLayer = ({
           />
           {/* Click highlight layer for gaps - thicker when clicked */}
           <Layer
-            id="gaps-reg-name-sync-layer-click"
+            id="gaps-other-regional-trails-layer-click"
             type="line"
             paint={{
               "line-color": "#FF0000",
@@ -708,4 +708,4 @@ const TrailsRegNameSyncLayer = ({
   );
 };
 
-export default TrailsRegNameSyncLayer;
+export default OtherRegionalTrailsLayer;
