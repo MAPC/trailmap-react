@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
-import axios from "axios";
 import bbox from "@turf/bbox";
 import * as turf from "@turf/turf";
 import LoadingBar from "../LoadingBar";
@@ -79,7 +78,6 @@ const CommunityTrailsProfile = ({
   const [pointIndex, setPointIndex] = useState(0);
   const [isQueryingTrails, setIsQueryingTrails] = useState(false);
   const lastQueriedMunicipality = useRef(null);
-  const [selectedTrailFromList, setSelectedTrailFromList] = useState(null);
   const [highlightedTrail, setHighlightedTrail] = useState(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -90,17 +88,64 @@ const CommunityTrailsProfile = ({
   const [hoveredSubwayStation, setHoveredSubwayStation] = useState(null);
   const [hoveredTransitStop, setHoveredTransitStop] = useState(null);
   const [transitStopClickInfo, setTransitStopClickInfo] = useState(null); // Store Transit Stop click info for popup
-  const [ejHoverPoint, setEjHoverPoint] = useState(null);
-  const [ejHoverInfo, setEjHoverInfo] = useState(null);
-  const ejIdentifyTimeoutRef = useRef(null);
+  const [blueBikeClickInfo, setBlueBikeClickInfo] = useState(null); // Store Blue Bike Station click info for popup
   const [isHoveringGeometry, setIsHoveringGeometry] = useState(false);
   
   // Use global OpenSpace state instead of local state to persist across profile switches
   const showOpenSpace = showOpenSpaceCommunity;
   
+  // When Community profile mounts (e.g. switching from Regional), close EJ and OpenSpace by default
+  const hasMountedRef = useRef(false);
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      setShowEnvironmentalJustice(false);
+      setShowOpenSpaceCommunity(false);
+    }
+  }, []);
+
   // OpenSpace click state
   const [openSpaceClickInfo, setOpenSpaceClickInfo] = useState(null);
+  const [environmentalJusticeClickInfo, setEnvironmentalJusticeClickInfo] = useState(null);
   
+  // Query Environmental Justice feature at a point (EJ layer is raster, so we query FeatureServer)
+  const queryEnvironmentalJusticeAtPoint = async (lng, lat) => {
+    try {
+      const toWebMercator = (lon, latVal) => {
+        const x = lon * 20037508.34 / 180;
+        let y = Math.log(Math.tan((90 + latVal) * Math.PI / 360)) / (Math.PI / 180);
+        y = y * 20037508.34 / 180;
+        return { x, y };
+      };
+      const pointMerc = toWebMercator(lng, lat);
+      const pointGeometry = {
+        x: pointMerc.x,
+        y: pointMerc.y,
+        spatialReference: { wkid: 3857 }
+      };
+      const EJ2020_SERVICE_URL = "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/EJ2020/MapServer/0";
+      const params = new URLSearchParams();
+      params.set("where", "1=1");
+      params.set("geometry", JSON.stringify(pointGeometry));
+      params.set("geometryType", "esriGeometryPoint");
+      params.set("inSR", "3857");
+      params.set("spatialRel", "esriSpatialRelIntersects");
+      params.set("outFields", "*");
+      params.set("outSR", "4326");
+      params.set("f", "geojson");
+      params.set("returnGeometry", "true");
+      const url = `${EJ2020_SERVICE_URL}/query?${params.toString()}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        return data.features[0];
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  };
+
   // Listen for OpenSpace toggle events (only for Community Trails Profile)
   useEffect(() => {
     const handleToggleOpenSpace = (event) => {
@@ -135,15 +180,6 @@ const CommunityTrailsProfile = ({
     return initialVisibility;
   });
 
-  // Update cursor when EJ hover info changes (since EJ is a raster layer)
-  useEffect(() => {
-    if (showEnvironmentalJustice && ejHoverInfo) {
-      setIsHoveringGeometry(true);
-    } else if (showEnvironmentalJustice && !ejHoverInfo && !hoveredTrail && !hoveredBlueBikeStation && !hoveredSubwayStation && !hoveredTransitStop) {
-      // Only clear if no other features are being hovered
-      setIsHoveringGeometry(false);
-    }
-  }, [ejHoverInfo, showEnvironmentalJustice, hoveredTrail, hoveredBlueBikeStation, hoveredSubwayStation, hoveredTransitStop]);
   
   // Fetched data states
   const [commuterRailData, setCommuterRailData] = useState(null);
@@ -162,7 +198,6 @@ const CommunityTrailsProfile = ({
   // Wrapper for queryMunicipalityTrails
   const handleQueryMunicipalityTrails = async (municipality) => {
     if (isQueryingTrails) {
-      console.log("Query already in progress, skipping...");
       return;
     }
 
@@ -398,6 +433,9 @@ const CommunityTrailsProfile = ({
         interactiveLayerIds={[
           ...(showOpenSpace ? ['openspace-layer-community', 'openspace-outline-community'] : []),
           ...(showTransitLandStops ? ['transit-land-stops'] : []),
+          ...(showBlueBikeStations ? ['blue-bike-stations'] : []),
+          ...(showSubwayStations ? ['subway-stations'] : []),
+          ...(showCommuterRail ? ['commuter-rail-stations', 'commuter-rail-station-labels'] : []),
           "municipality-profile-base",
           ...geojsonTrailLayers.map(layer => `geojson-trail-${layer.id}`)
         ]}
@@ -405,6 +443,13 @@ const CommunityTrailsProfile = ({
           setViewport(event.viewState);
         }}
         onClick={(event) => {
+          const map = mapRef.current?.getMap();
+          const queryPointFeatures = (layerIds) => {
+            if (!map || !event.lngLat) return [];
+            const point = [event.lngLat.lng, event.lngLat.lat];
+            return map.queryRenderedFeatures(point, { layers: layerIds });
+          };
+
           // Handle buffer creation
           if (isBufferActive && event.lngLat) {
             const center = { lng: event.lngLat.lng, lat: event.lngLat.lat };
@@ -416,255 +461,126 @@ const CommunityTrailsProfile = ({
             return;
           }
 
-          if (event.features) {
-            // Check for Transit.land stops clicks FIRST (before clearing other tooltips)
-            if (showTransitLandStops && event.lngLat) {
-              let transitStopFeature = event.features.find((f) => 
-                f.layer && f.layer.id === "transit-land-stops"
-              );
-              console.log('transitStopFeature from event.features:', transitStopFeature);
-              
-              // If not found in event.features, query the map directly with tolerance for point features
-              if (!transitStopFeature) {
-                const map = mapRef.current?.getMap();
-                if (map) {
-                  const point = [event.lngLat.lng, event.lngLat.lat];
-                  
-                  // Try querying with a small box around the point for better point detection
-                  const tolerance = 10; // pixels
-                  const box = [
-                    [event.lngLat.lng - 0.001, event.lngLat.lat - 0.001],
-                    [event.lngLat.lng + 0.001, event.lngLat.lat + 0.001]
-                  ];
-                  
-                  // First try point query
-                  let queriedFeatures = map.queryRenderedFeatures(point, {
-                    layers: ['transit-land-stops']
-                  });
-                  
-                  // If no results, try box query
-                  if (queriedFeatures.length === 0) {
-                    queriedFeatures = map.queryRenderedFeatures(box, {
-                      layers: ['transit-land-stops']
-                    });
-                  }
-                  
-                  // If still no results, try with a larger tolerance using multiple points
-                  if (queriedFeatures.length === 0) {
-                    const points = [
-                      point,
-                      [event.lngLat.lng - 0.0005, event.lngLat.lat],
-                      [event.lngLat.lng + 0.0005, event.lngLat.lat],
-                      [event.lngLat.lng, event.lngLat.lat - 0.0005],
-                      [event.lngLat.lng, event.lngLat.lat + 0.0005]
-                    ];
-                    
-                    for (const pt of points) {
-                      queriedFeatures = map.queryRenderedFeatures(pt, {
-                        layers: ['transit-land-stops']
-                      });
-                      if (queriedFeatures.length > 0) {
-                        break;
-                      }
-                    }
-                  }
-                  
-                  if (queriedFeatures.length > 0) {
-                    transitStopFeature = queriedFeatures[0];
-                    console.log('transitStopFeature from query:', transitStopFeature);
-                  }
-                }
-              }
-              
-              if (transitStopFeature && event.lngLat) {
-                console.log('Setting transit stop click info:', transitStopFeature);
-                
-                // Clear other tooltips first
-                toggleIdentifyPopup(false);
-                setOpenSpaceClickInfo(null);
-                
-                // Use onestop_id for comparison (more reliable than stop_id)
-                const stopId = transitStopFeature.properties?.onestop_id || 
-                              transitStopFeature.properties?.stop_id ||
-                              transitStopFeature.id;
-                
-                // If clicking on the same transit stop, close the popup
-                if (transitStopClickInfo) {
-                  const currentStopId = transitStopClickInfo.feature.properties?.onestop_id ||
-                                       transitStopClickInfo.feature.properties?.stop_id ||
-                                       transitStopClickInfo.feature.id;
-                  if (currentStopId === stopId) {
-                    console.log('Closing transit stop popup (same stop)');
-                    setTransitStopClickInfo(null);
-                    return;
-                  }
-                }
-                
-                // Set transit stop click info for popup
-                const clickInfo = {
-                  point: { lng: event.lngLat.lng, lat: event.lngLat.lat },
-                  feature: transitStopFeature
-                };
-                console.log('Setting transitStopClickInfo:', clickInfo);
-                console.log('Feature properties:', transitStopFeature.properties);
-                console.log('showTransitLandStops:', showTransitLandStops);
-                setTransitStopClickInfo(clickInfo);
-                return;
-              }
-            }
+          let allResults = [];
+          if (event.features && event.lngLat) {
             
-            // Clear transit stop tooltip when clicking on other features (only if not a transit stop)
-            setTransitStopClickInfo(null);
+            // Collect all features from event.features
+            const eventFeatures = event.features || [];
             
-            // Check for GeoJSON trail clicks
-            const trailFeatures = event.features.filter((f) => 
+            // Collect GeoJSON trail features
+            const trailFeatures = eventFeatures.filter((f) => 
               f.layer && f.layer.id.startsWith("geojson-trail-")
             );
             
-            if (trailFeatures.length > 0) {
-              const trailResults = [];
+            trailFeatures.forEach(trailFeature => {
+              const layerId = trailFeature.layer.id.replace("geojson-trail-", "");
+              const clickedObjectId = trailFeature.properties?.objectid || trailFeature.properties?.OBJECTID;
               
-              trailFeatures.forEach(trailFeature => {
-                const layerId = trailFeature.layer.id.replace("geojson-trail-", "");
-                const clickedObjectId = trailFeature.properties?.objectid || trailFeature.properties?.OBJECTID;
-                
-                const trailData = intersectedTrails.find(trail => {
-                  const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
-                  return trail.layerId === parseInt(layerId) && trailObjectId === clickedObjectId;
-                });
-                
-                if (trailData) {
-                  trailResults.push({
-                    layerId: trailData.layerId,
-                    layerName: trailData.layerName,
-                    attributes: trailData.attributes
-                  });
-                }
+              const trailData = intersectedTrails.find(trail => {
+                const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
+                return trail.layerId === parseInt(layerId) && trailObjectId === clickedObjectId;
               });
               
-              if (trailResults.length > 0) {
-                const firstTrail = trailResults[0];
-                const firstTrailData = intersectedTrails.find(trail => {
-                  const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
-                  return trail.layerId === firstTrail.layerId && 
-                         trailObjectId === (firstTrail.attributes?.objectid || firstTrail.attributes?.OBJECTID);
+              if (trailData) {
+                allResults.push({
+                  layerId: trailData.layerId,
+                  layerName: trailData.layerName,
+                  attributes: trailData.attributes
                 });
-                
-                if (firstTrailData) {
-                  setHighlightedTrail(firstTrailData);
-                }
-                
-                let popupCoords = null;
-                if (event.lngLat && !isNaN(event.lngLat.lng) && !isNaN(event.lngLat.lat)) {
-                  popupCoords = { lng: event.lngLat.lng, lat: event.lngLat.lat };
-                } else if (firstTrailData && firstTrailData.geometry && firstTrailData.geometry.coordinates) {
-                  const coords = firstTrailData.geometry.coordinates;
-                  const coordsArray = firstTrailData.geometry.type === 'MultiLineString' ? coords[0] : coords;
-                  if (coordsArray && coordsArray.length > 0) {
-                    const midPoint = coordsArray[Math.floor(coordsArray.length / 2)];
-                    if (midPoint && midPoint.length >= 2) {
-                      popupCoords = { lng: midPoint[0], lat: midPoint[1] };
-                    }
-                  }
-                }
-                
-                if (popupCoords) {
-                  toggleIdentifyPopup(false);
-                  setTimeout(() => {
-                    setIdentifyPoint(popupCoords);
-                    setIdentifyInfo(trailResults);
-                    setPointIndex(0);
-                    toggleIdentifyPopup(true);
-                  }, 10);
-                }
-                return;
               }
+            });
+            
+  
+            // Collect ALL Transit Stop features 
+            if (showTransitLandStops) {
+              let transitStopFeatures = eventFeatures.filter((f) => 
+                f.layer && f.layer.id === "transit-land-stops"
+              );
+              // Add all transit stops to results
+              transitStopFeatures && transitStopFeatures.forEach(feature => {
+                const props = feature.properties || {};
+                
+                const stopName = props.stop_name
+                
+                allResults.push({
+                  layerId: 'transit-land-stop',
+                  layerName: 'Transit Stop',
+                  attributes: {
+                    'Stop Name': stopName
+                  }
+                });
+              });
             }
             
-            // Check for Blue Bike Station clicks
-            const bikeStationFeature = event.features.find((f) => 
-              f.layer && f.layer.id === "blue-bike-stations"
-            );
-            if (bikeStationFeature) {
-              const stationProps = bikeStationFeature.properties;
-              const stationInfo = {
-                name: stationProps?.Name || 'Unknown Station',
-                district: stationProps?.District || 'Unknown District',
-                totalDocks: stationProps?.Total_docks || 0,
-                number: stationProps?.Number || 'N/A',
-                public: stationProps?.Public_ === 'Yes' ? 'Yes' : 'No'
-              };
-              
-              const mockResult = {
-                layerId: 'blue-bike-station',
-                layerName: 'Blue Bike Station',
-                attributes: stationInfo
-              };
-              
-              if (event.lngLat && !isNaN(event.lngLat.lng) && !isNaN(event.lngLat.lat)) {
-                toggleIdentifyPopup(false);
-                setTimeout(() => {
-                  setIdentifyPoint({ lng: event.lngLat.lng, lat: event.lngLat.lat });
-                  setIdentifyInfo([mockResult]);
-                  setPointIndex(0);
-                  toggleIdentifyPopup(true);
-                }, 10);
-              }
-              return;
-            }
-
-            // Check for Subway Station clicks
-            const subwayStationFeature = event.features.find((f) => 
-              f.layer && f.layer.id === "subway-stations"
-            );
-            if (subwayStationFeature) {
-              const stationProps = subwayStationFeature.properties;
-              const stationInfo = {
-                name: stationProps?.STATION || 'Unknown Station',
-                line: stationProps?.LINE || 'Unknown Line'
-              };
-              
-              const mockResult = {
-                layerId: 'subway-station',
-                layerName: 'T-stop',
-                attributes: stationInfo
-              };
-              
-              if (event.lngLat && !isNaN(event.lngLat.lng) && !isNaN(event.lngLat.lat)) {
-                toggleIdentifyPopup(false);
-                setTimeout(() => {
-                  setIdentifyPoint({ lng: event.lngLat.lng, lat: event.lngLat.lat });
-                  setIdentifyInfo([mockResult]);
-                  setPointIndex(0);
-                  toggleIdentifyPopup(true);
-                }, 10);
-              }
-              return;
-            }
-
-            // Check for OpenSpace clicks
-            if (showOpenSpace) {
-              const openSpaceFeature = event.features.find((f) => 
-                f.layer && (f.layer.id === 'openspace-layer-community' || f.layer.id === 'openspace-outline-community')
+            // Collect ALL Blue Bike Station features
+            if (showBlueBikeStations) {
+              let blueBikeFeatures = eventFeatures.filter((f) => 
+                f.layer && f.layer.id === "blue-bike-stations"
               );
               
-              if (openSpaceFeature && event.lngLat) {
-                // If clicking on the same OpenSpace feature, close the popup
-                if (openSpaceClickInfo && 
-                    openSpaceClickInfo.feature.properties?.OBJECTID === openSpaceFeature.properties?.OBJECTID) {
-                  setOpenSpaceClickInfo(null);
-                } else {
-                  setOpenSpaceClickInfo({
-                    point: { lng: event.lngLat.lng, lat: event.lngLat.lat },
-                    feature: openSpaceFeature
-                  });
+              const queriedBlueBikes = queryPointFeatures(['blue-bike-stations']);
+              
+              queriedBlueBikes.forEach(queriedFeature => {
+                const exists = blueBikeFeatures.some(existing => {
+                  const existingId = existing.id || existing.properties?.Name || existing.properties?.Number;
+                  const newId = queriedFeature.id || queriedFeature.properties?.Name || queriedFeature.properties?.Number;
+                  return existingId && newId && existingId === newId;
+                });
+                if (!exists) {
+                  blueBikeFeatures.push(queriedFeature);
                 }
-                return;
-              }
+              });
+      
+              blueBikeFeatures.forEach(feature => {
+                const props = feature.properties || {};
+                allResults.push({
+                  layerId: 'blue-bike-station',
+                  layerName: 'Blue Bike Station',
+                  attributes: {
+                    name: props.Name,
+                    District: props.District, 
+                    'Total Docks': props.Total_docks 
+                  }
+                });
+              });
             }
             
-            // Check for municipality clicks
-            const muniFeature = event.features.find((f) => f.layer && f.layer.id === "municipality-profile-base");
+            // Collect ALL Subway Station features
+            const subwayStationFeatures = eventFeatures.filter((f) => 
+              f.layer && f.layer.id === "subway-stations"
+            );
+            subwayStationFeatures.forEach(feature => {
+              const props = feature.properties || {};
+              allResults.push({
+                layerId: 'subway-station',
+                layerName: 'T-stop',
+                attributes: {
+                  name: props.STATION, 
+                  line: props.LINE 
+                }
+              });
+            });
+            
+
+            // Collect OpenSpace features
+            if (showOpenSpace) {
+              const openSpaceFeatures = eventFeatures.filter((f) => 
+                f.layer && (f.layer.id === 'openspace-layer-community' || f.layer.id === 'openspace-outline-community')
+              );
+              openSpaceFeatures.forEach(feature => {
+                const props = feature.properties || {};
+                allResults.push({
+                  layerId: 'openspace',
+                  layerName: 'OpenSpace',
+                  attributes: {
+                    'name': props.SITE_NAME
+                  }
+                });
+              });
+            }
+            
+            // Collect Municipality features (but handle separately for navigation)
+            const muniFeature = eventFeatures.find((f) => f.layer && f.layer.id === "municipality-profile-base");
             if (muniFeature) {
               const townName = muniFeature.properties.town || muniFeature.properties.NAME;
               if (townName) {
@@ -677,9 +593,66 @@ const CommunityTrailsProfile = ({
                 if (showMunicipalityView && location.pathname === '/communityTrailsProfile') {
                   navigate(`/communityTrailsProfile?muni=${encodeURIComponent(muniName)}`, { replace: true });
                 }
-                return;
               }
             }
+            
+            // If we have any results, show them all in the identify popup
+            if (allResults.length > 0) {
+              // Clear other tooltips
+              toggleIdentifyPopup(false);
+              setOpenSpaceClickInfo(null);
+              setTransitStopClickInfo(null);
+              setBlueBikeClickInfo(null);
+              setEnvironmentalJusticeClickInfo(null);
+              
+              // Highlight first trail if available
+              const firstTrailResult = allResults.find(r => r.layerId && typeof r.layerId === 'number');
+              if (firstTrailResult) {
+                const firstTrailData = intersectedTrails.find(trail => {
+                  const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
+                  return trail.layerId === firstTrailResult.layerId && 
+                         trailObjectId === (firstTrailResult.attributes?.objectid || firstTrailResult.attributes?.OBJECTID);
+                });
+                if (firstTrailData) {
+                  setHighlightedTrail(firstTrailData);
+                }
+              }
+              
+              let popupCoords = null;
+              if (event.lngLat && !isNaN(event.lngLat.lng) && !isNaN(event.lngLat.lat)) {
+                popupCoords = { lng: event.lngLat.lng, lat: event.lngLat.lat };
+              }
+              
+              if (popupCoords) {
+                setTimeout(() => {
+                  setIdentifyPoint(popupCoords);
+                  setIdentifyInfo(allResults);
+                  setPointIndex(0);
+                  toggleIdentifyPopup(true);
+                }, 10);
+              }
+              return;
+            }
+          }
+          
+          // Check for Environmental Justice click when no vector features were clicked (EJ is raster)
+          if (showEnvironmentalJustice && allResults.length === 0 && event.lngLat) {
+            queryEnvironmentalJusticeAtPoint(event.lngLat.lng, event.lngLat.lat).then((ejFeature) => {
+              if (ejFeature) {
+                setEnvironmentalJusticeClickInfo((prev) => {
+                  if (prev && prev.feature?.properties?.OBJECTID === ejFeature.properties?.OBJECTID) {
+                    return null;
+                  }
+                  return { point: { lng: event.lngLat.lng, lat: event.lngLat.lat }, feature: ejFeature };
+                });
+                toggleIdentifyPopup(false);
+                setOpenSpaceClickInfo(null);
+                setTransitStopClickInfo(null);
+                setBlueBikeClickInfo(null);
+              } else {
+                setEnvironmentalJusticeClickInfo(null);
+              }
+            });
           }
           
           // If clicking on empty space (not on any feature), close popups
@@ -710,9 +683,25 @@ const CommunityTrailsProfile = ({
             }
           }
           
-          // If clicking on empty space and no features found, close identify popup
+          // Clear blue bike station tooltip when clicking on empty space
+          if (showBlueBikeStations && event.features > 0) {
+            const map = mapRef.current?.getMap();
+            if (map) {
+              const point = [event.lngLat.lng, event.lngLat.lat];
+              const queriedFeatures = map.queryRenderedFeatures(point, {
+                layers: ['blue-bike-stations']
+              });
+              if (queriedFeatures.length === 0) {
+                setBlueBikeClickInfo(null);
+              }
+            }
+          }
+          
+          
+          // If clicking on empty space and no features found, close identify popup and EJ popup
           if (!event.features || event.features.length === 0) {
             toggleIdentifyPopup(false);
+            setEnvironmentalJusticeClickInfo(null);
           }
         }}
         onMouseMove={(event) => {
@@ -736,6 +725,8 @@ const CommunityTrailsProfile = ({
               if (layerId.startsWith("geojson-trail-") && !layerId.includes("hover")) return true;
               // Check for OpenSpace
               if (showOpenSpace && (layerId === "openspace-layer-community" || layerId === "openspace-outline-community")) return true;
+              // Check for TransitLand routes
+              if (showTransitLandStops && layerId === "transit-land-routes") return true;
               // Check for TransitLand stops
               if (showTransitLandStops && layerId === "transit-land-stops") return true;
               // Check for municipality
@@ -754,19 +745,14 @@ const CommunityTrailsProfile = ({
 
           // Handle trail hover
           if (features.length > 0) {
-            const trailFeature = features.find((f) => 
-              f.layer && f.layer.id.startsWith("geojson-trail-") && !f.layer.id.includes("hover")
-            );
-            
+            const trailFeature = features.find((f) => f.layer && f.layer.id.startsWith("geojson-trail-") && !f.layer.id.includes("hover"));
             if (trailFeature) {
               const layerId = trailFeature.layer.id.replace("geojson-trail-", "");
               const clickedObjectId = trailFeature.properties?.objectid || trailFeature.properties?.OBJECTID;
-              
-              const trailData = intersectedTrails.find(trail => {
+              const trailData = intersectedTrails.find((trail) => {
                 const trailObjectId = trail.attributes?.objectid || trail.attributes?.OBJECTID;
                 return trail.layerId === parseInt(layerId) && trailObjectId === clickedObjectId;
               });
-              
               if (trailData) {
                 setHoveredTrail(trailData);
               } else {
@@ -813,61 +799,6 @@ const CommunityTrailsProfile = ({
             setIsHoveringGeometry(false);
           }
 
-          // Handle Environmental Justice layer hover
-          // Note: Raster layers don't appear in features, so we query identify endpoint when layer is visible
-          if (showEnvironmentalJustice && event.lngLat) {
-            setEjHoverPoint(event.lngLat);
-            
-            // Debounce identify requests to avoid too many API calls
-            if (ejIdentifyTimeoutRef.current) {
-              clearTimeout(ejIdentifyTimeoutRef.current);
-            }
-            
-            ejIdentifyTimeoutRef.current = setTimeout(() => {
-              const EJ2020_IDENTIFY_URL = "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/EJ2020/MapServer/identify";
-              const map = mapRef.current?.getMap();
-              
-              if (map) {
-                const mapBounds = map.getBounds();
-                const sw = mapBounds.getSouthWest();
-                const ne = mapBounds.getNorthEast();
-                
-                axios
-                  .get(EJ2020_IDENTIFY_URL, {
-                    params: {
-                      geometry: `${event.lngLat.lng},${event.lngLat.lat}`,
-                      geometryType: "esriGeometryPoint",
-                      sr: 4326,
-                      layers: "all:0",
-                      tolerance: 5,
-                      mapExtent: `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`,
-                      imageDisplay: `${map.getContainer().clientWidth || 1024},${map.getContainer().clientHeight || 768},96`,
-                      returnGeometry: false,
-                      f: "pjson",
-                    },
-                  })
-                  .then((res) => {
-                    if (res.data.results && res.data.results.length > 0) {
-                      setEjHoverInfo(res.data.results[0]);
-                      setIsHoveringGeometry(true);
-                    } else {
-                      setEjHoverInfo(null);
-                    }
-                  })
-                  .catch((error) => {
-                    console.error("Error identifying EJ feature:", error);
-                    setEjHoverInfo(null);
-                  });
-              }
-            }, 200);
-          } else {
-            // Clear EJ hover when layer is not visible
-            setEjHoverPoint(null);
-            setEjHoverInfo(null);
-            if (ejIdentifyTimeoutRef.current) {
-              clearTimeout(ejIdentifyTimeoutRef.current);
-            }
-          }
         }}
         onMouseLeave={() => {
           // Clear all hover states when mouse leaves the map
@@ -875,12 +806,7 @@ const CommunityTrailsProfile = ({
           setHoveredBlueBikeStation(null);
           setHoveredSubwayStation(null);
           setHoveredTransitStop(null);
-          setEjHoverPoint(null);
-          setEjHoverInfo(null);
           setIsHoveringGeometry(false);
-          if (ejIdentifyTimeoutRef.current) {
-            clearTimeout(ejIdentifyTimeoutRef.current);
-          }
         }}
         mapboxAccessToken={MAPBOX_TOKEN}
         mapStyle={baseLayer.url}
@@ -894,45 +820,86 @@ const CommunityTrailsProfile = ({
             handleShowPopup={() => {
               toggleIdentifyPopup(false);
               setHighlightedTrail(null);
-              setSelectedTrailFromList(null);
             }}
             handleCarousel={setPointIndex}
           />
         )}
 
-        {/* Environmental Justice Tooltip */}
-        {showEnvironmentalJustice && ejHoverPoint && ejHoverInfo && (
+        {/* Environmental Justice Click Popup */}
+        {showEnvironmentalJustice && environmentalJusticeClickInfo && environmentalJusticeClickInfo.point && environmentalJusticeClickInfo.feature && (
           <Popup
-            longitude={ejHoverPoint.lng}
-            latitude={ejHoverPoint.lat}
-            closeButton={false}
-            closeOnMove={true}
+            longitude={environmentalJusticeClickInfo.point.lng}
+            latitude={environmentalJusticeClickInfo.point.lat}
+            closeButton={true}
+            onClose={() => setEnvironmentalJusticeClickInfo(null)}
             anchor="top"
             offset={12}
           >
             {(() => {
-              const attributes = ejHoverInfo.attributes || {};
-              const layerName = ejHoverInfo.layerName || "Environmental Justice";
-              
-              // Extract relevant EJ attributes
-              const geographicAreaName = attributes["Geographic Area Name"] || attributes.Geographic_Area_Name || null;
-              const totalHouseholds = attributes["Total Number of Households"] || attributes.Total_Number_of_Households || null;
-              const totalPopulation = attributes["Total Poputation"] || attributes.Total_Poputation || attributes["Total Population"] || attributes.Total_Population || null;
-              
+              const properties = environmentalJusticeClickInfo.feature.properties || {};
               return (
-                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                  <div style={{fontWeight: 600, marginBottom: '6px'}}>{layerName}</div>
-                  {geographicAreaName && (
-                    <div style={{marginBottom: '4px', fontWeight: 500}}>{geographicAreaName}</div>
+                <div style={{
+                  minWidth: 200,
+                  maxWidth: 300,
+                  color: '#2774bd',
+                  fontSize: '12px',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word'
+                }}>
+                  <div style={{
+                    fontWeight: 600,
+                    marginBottom: '8px',
+                    fontSize: '14px',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word'
+                  }}>Environmental Justice</div>
+                  {(properties.GEOGRAPHICAREANAME || properties.Geographic_Area_Name) && (
+                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                      <strong>Area:</strong> {properties.GEOGRAPHICAREANAME || properties.Geographic_Area_Name}
+                    </div>
                   )}
-                  {totalHouseholds !== null && (
-                    <div style={{marginBottom: '2px'}}>Total Number of Households: {totalHouseholds}</div>
+                  {(properties.MUNICIPALITY || properties.Municipality) && (
+                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                      <strong>Municipality:</strong> {properties.MUNICIPALITY || properties.Municipality}
+                    </div>
                   )}
-                  {totalPopulation !== null && (
-                    <div style={{marginBottom: '2px'}}>Total Population: {totalPopulation}</div>
+                  {(properties.EJ_CRIT_DESC || properties.EJ_Crit_Desc) && (
+                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                      <strong>EJ Criteria:</strong> {properties.EJ_CRIT_DESC || properties.EJ_Crit_Desc}
+                    </div>
                   )}
-                  {!geographicAreaName && !totalHouseholds && totalPopulation === null && (
-                    <div>No data available</div>
+                  {(properties.EJ || properties.Ej) && (
+                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                      <strong>EJ Designated:</strong> {properties.EJ || properties.Ej}
+                    </div>
+                  )}
+                  {(properties.TOTAL_POP !== undefined && properties.TOTAL_POP !== null) && (
+                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                      <strong>Total Population:</strong> {parseFloat(properties.TOTAL_POP).toLocaleString()}
+                    </div>
+                  )}
+                  {(properties.PCT_MINORITY !== undefined && properties.PCT_MINORITY !== null) && (
+                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                      <strong>Percent Minority:</strong> {parseFloat(properties.PCT_MINORITY).toFixed(1)}%
+                    </div>
+                  )}
+                  {(properties.LIMENGHHPCT !== undefined && properties.LIMENGHHPCT !== null) && (
+                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                      <strong>Limited English Households:</strong> {parseFloat(properties.LIMENGHHPCT).toFixed(1)}%
+                    </div>
+                  )}
+                  {(properties.BG_MHHI !== undefined && properties.BG_MHHI !== null) && (
+                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                      <strong>Median Household Income:</strong> ${parseFloat(properties.BG_MHHI).toLocaleString()}
+                    </div>
+                  )}
+                  {properties.GEOID && (
+                    <div style={{ marginBottom: '4px', fontSize: '11px', color: '#666', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                      <strong>GEOID:</strong> {properties.GEOID}
+                    </div>
+                  )}
+                  {!properties.GEOGRAPHICAREANAME && !properties.Geographic_Area_Name && !properties.MUNICIPALITY && !properties.Municipality && !properties.EJ_CRIT_DESC && !properties.EJ_Crit_Desc && (
+                    <div style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>No data available</div>
                   )}
                 </div>
               );
@@ -986,13 +953,6 @@ const CommunityTrailsProfile = ({
         {/* Transit Stop Click Popup */}
         {(() => {
           const shouldShowPopup = showTransitLandStops && transitStopClickInfo && transitStopClickInfo.point && transitStopClickInfo.feature;
-          console.log('Popup render check:', {
-            showTransitLandStops,
-            hasTransitStopClickInfo: !!transitStopClickInfo,
-            hasPoint: !!(transitStopClickInfo && transitStopClickInfo.point),
-            hasFeature: !!(transitStopClickInfo && transitStopClickInfo.feature),
-            shouldShowPopup
-          });
           
           return shouldShowPopup ? (
             <Popup
@@ -1000,7 +960,6 @@ const CommunityTrailsProfile = ({
               latitude={transitStopClickInfo.point.lat}
               closeButton={true}
               onClose={() => {
-                console.log('Closing transit stop popup');
                 setTransitStopClickInfo(null);
               }}
               anchor="top"
@@ -1008,27 +967,60 @@ const CommunityTrailsProfile = ({
             >
               {(() => {
                 const properties = transitStopClickInfo.feature.properties || {};
-                console.log('Popup properties:', properties);
-                // Try multiple possible property names for stop name
-                // For vector tiles, properties might be in _vectorTileFeature
-                const vectorTileProps = transitStopClickInfo.feature._vectorTileFeature?.properties || {};
-                const allProps = { ...properties, ...vectorTileProps };
+                const allProps = { ...properties };
                 
-                const stopName = allProps.stop_name || 
-                                allProps.name || 
-                                allProps.name_en ||
-                                allProps.stop_name_en ||
-                                allProps.title ||
-                                allProps.stop_title ||
-                                allProps.onestop_id ||
-                                'Unknown Stop';
-                
-                console.log('Stop name:', stopName);
+                const stopName = allProps.stop_name;
                 
                 return (
                   <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
                     <div style={{fontWeight: 600, marginBottom: '6px'}}>Transit Stop</div>
                     <div style={{marginBottom: '4px', fontWeight: 500, wordWrap: 'break-word', overflowWrap: 'break-word'}}>{stopName}</div>
+                  </div>
+                );
+              })()}
+            </Popup>
+          ) : null;
+        })()}
+
+        {/* Blue Bike Station Click Popup */}
+        {(() => {
+          const shouldShowPopup = showBlueBikeStations && blueBikeClickInfo && blueBikeClickInfo.point && blueBikeClickInfo.feature;
+          
+          return shouldShowPopup ? (
+            <Popup
+              longitude={blueBikeClickInfo.point.lng}
+              latitude={blueBikeClickInfo.point.lat}
+              closeButton={true}
+              onClose={() => {
+                setBlueBikeClickInfo(null);
+              }}
+              anchor="top"
+              offset={12}
+            >
+              {(() => {
+                const properties = blueBikeClickInfo.feature.properties || {};
+                const stationName = properties.Name || properties.name || 'Unknown Station';
+                const district = properties.District || properties.district || null;
+                const totalDocks = properties.Total_docks || properties.total_docks || null;
+                const number = properties.Number || properties.number || null;
+                const isPublic = properties.Public_ === 'Yes' || properties.public === 'Yes' ? 'Yes' : (properties.Public_ === 'No' || properties.public === 'No' ? 'No' : null);
+                
+                return (
+                  <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
+                    <div style={{fontWeight: 600, marginBottom: '6px'}}>Blue Bike Station</div>
+                    <div style={{marginBottom: '4px', fontWeight: 500, wordWrap: 'break-word', overflowWrap: 'break-word'}}>{stationName}</div>
+                    {district && (
+                      <div style={{marginBottom: '2px', fontSize: '11px', color: '#666'}}>District: {district}</div>
+                    )}
+                    {totalDocks !== null && (
+                      <div style={{marginBottom: '2px', fontSize: '11px', color: '#666'}}>Total Docks: {totalDocks}</div>
+                    )}
+                    {number && (
+                      <div style={{marginBottom: '2px', fontSize: '11px', color: '#666'}}>Station #: {number}</div>
+                    )}
+                    {isPublic !== null && (
+                      <div style={{marginBottom: '2px', fontSize: '11px', color: '#666'}}>Public: {isPublic}</div>
+                    )}
                   </div>
                 );
               })()}

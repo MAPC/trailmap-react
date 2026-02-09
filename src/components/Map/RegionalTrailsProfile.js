@@ -101,6 +101,8 @@ const RegionalTrailsProfile = ({
   const [environmentalJusticeClickInfo, setEnvironmentalJusticeClickInfo] = useState(null); // Store Environmental Justice click info for popup
   const [majorTrailClickInfo, setMajorTrailClickInfo] = useState(null); // Store Major Trail click info for popup
   const [regularTrailClickInfo, setRegularTrailClickInfo] = useState(null); // Store Regular Trail click info for popup
+  const ejHoverTimeoutRef = useRef(null);
+  const ejHoverQueryIdRef = useRef(0);
 
   // Helper function to get municipality name from muni_id
   const getMunicipalityName = (muniId) => {
@@ -785,10 +787,40 @@ const RegionalTrailsProfile = ({
     }
 
 
-    // Environmental Justice is a raster layer, so hover detection is not possible
-    // Cursor will be set to pointer when clicking on it
+    // Handle OpenSpace hover (for pointer cursor)
+    if (showOpenSpace) {
+      const openSpaceFeature = features.find((f) =>
+        f.layer && (f.layer.id === "openspace-layer-regional" || f.layer.id === "openspace-outline-regional")
+      );
+      if (openSpaceFeature) {
+        setHoveredTrail({ isOpenSpace: true });
+        return;
+      }
+    }
 
-    // No municipality hover handling - municipalities are always visible but not interactive
+    // Environmental Justice is a raster layer - query FeatureServer for hover cursor
+    if (showEnvironmentalJustice) {
+      if (ejHoverTimeoutRef.current) {
+        clearTimeout(ejHoverTimeoutRef.current);
+      }
+      const queryId = ++ejHoverQueryIdRef.current;
+      ejHoverTimeoutRef.current = setTimeout(() => {
+        queryEnvironmentalJusticeAtPoint(event.lngLat.lng, event.lngLat.lat).then((ejFeature) => {
+          if (queryId !== ejHoverQueryIdRef.current) return;
+          if (ejFeature) {
+            setHoveredTrail({ isEnvironmentalJustice: true });
+          } else {
+            setHoveredTrail(null);
+          }
+        });
+      }, 150);
+      return;
+    }
+
+    if (ejHoverTimeoutRef.current) {
+      clearTimeout(ejHoverTimeoutRef.current);
+      ejHoverTimeoutRef.current = null;
+    }
     setHoveredTrail(null);
   };
 
@@ -1142,7 +1174,8 @@ const RegionalTrailsProfile = ({
             hoveredTrail.properties?.reg_name ||
             hoveredTrail.isMajorTrail ||
             hoveredTrail.isRegularTrail ||
-            hoveredTrail.isEnvironmentalJustice
+            hoveredTrail.isEnvironmentalJustice ||
+            hoveredTrail.isOpenSpace
           ) ? "pointer" : "default"
         }
         interactiveLayerIds={getTrailLayerIds()}
@@ -1152,6 +1185,10 @@ const RegionalTrailsProfile = ({
         onClick={handleTrailClick}
         onMouseMove={handleTrailHover}
         onMouseLeave={() => {
+          if (ejHoverTimeoutRef.current) {
+            clearTimeout(ejHoverTimeoutRef.current);
+            ejHoverTimeoutRef.current = null;
+          }
           setHoveredTrail(null);
         }}
         mapboxAccessToken={MAPBOX_TOKEN}

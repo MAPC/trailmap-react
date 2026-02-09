@@ -274,6 +274,47 @@ const ControlPanel = ({
     }
   }, [selectedMunicipality, municipalityTrails, showMunicipalityView]);
 
+  // Handle switch from Regional to Community Trails Profile (close EJ and OpenSpace by default)
+  const handleSwitchToCommunityProfile = () => {
+    isNavigatingRef.current = true;
+    setShowEnvironmentalJustice(false);
+    setShowOpenSpace(false);
+    setShowCommuterRail(false);
+    setShowStationLabels(false);
+    setShowBlueBikeStations(false);
+    setShowSubwayStations(false);
+    setShowLandlinesFeatureService(false);
+    setShowTrailsRegNameSync(false);
+    setShowTransitLandStops(false);
+    setShowRegionalTrailsProfileMap(false);
+    setShowRegionalTrailsView(false);
+    setShowMunicipalityProfileMap(true);
+    setShowMunicipalityView(true);
+    setSelectedMunicipality(null);
+    navigate('/communityTrailsProfile');
+  };
+
+  // Handle switch from Community to Regional Trails Profile (close EJ and OpenSpace by default)
+  const handleSwitchToRegionalProfile = () => {
+    isNavigatingRef.current = true;
+    setShowEnvironmentalJustice(false);
+    setShowOpenSpace(false);
+    setShowCommuterRail(false);
+    setShowStationLabels(false);
+    setShowBlueBikeStations(false);
+    setShowSubwayStations(false);
+    setShowLandlinesFeatureService(false);
+    setShowTrailsRegNameSync(false);
+    setShowTransitLandStops(false);
+    toggleMunicipalities(false);
+    setShowMunicipalityProfileMap(false);
+    setShowMunicipalityView(false);
+    setSelectedMunicipality(null);
+    setShowRegionalTrailsProfileMap(true);
+    setShowRegionalTrailsView(true);
+    navigate('/regionalTrailsProfile');
+  };
+
   // Handle regional trails view toggle
   const handleRegionalTrailsToggle = () => {
     if (!showRegionalTrailsView) {
@@ -327,10 +368,23 @@ const ControlPanel = ({
             <Button 
               variant="outline-secondary"
               size="sm"
-              className="w-100 mb-3 ControlPanel__toggle-btn"
+              className="w-100 mb-2 ControlPanel__toggle-btn"
               onClick={handleRegionalTrailsToggle}
             >
               ← Back to Trail Filters
+            </Button>
+            <Button 
+              variant="primary"
+              size="sm"
+              className="w-100 mb-3 ControlPanel__toggle-btn"
+              style={{
+                backgroundColor: 'rgba(59, 131, 199, 0.85)',
+                borderColor: 'rgba(59, 131, 199, 0.85)',
+                color: 'white'
+              }}
+              onClick={handleSwitchToCommunityProfile}
+            >
+              View Community Trails Profile
             </Button>
 
             {/* Map Layers Section */}
@@ -377,10 +431,23 @@ const ControlPanel = ({
             <Button 
               variant="outline-secondary"
               size="sm"
-              className="w-100 mb-3 ControlPanel__toggle-btn"
+              className="w-100 mb-2 ControlPanel__toggle-btn"
               onClick={handleViewToggle}
             >
               ← Back to Trail Filters
+            </Button>
+            <Button 
+              variant="primary"
+              size="sm"
+              className="w-100 mb-3 ControlPanel__toggle-btn"
+              style={{
+                backgroundColor: 'rgba(59, 131, 199, 0.85)',
+                borderColor: 'rgba(59, 131, 199, 0.85)',
+                color: 'white'
+              }}
+              onClick={handleSwitchToRegionalProfile}
+            >
+              View Regional Trails Profile
             </Button>
           </>
         ) : (
