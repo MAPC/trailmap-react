@@ -69,7 +69,6 @@ const App = () => {
   // Regional trails profile state
   const [projectRegNames, setProjectRegNames] = useState([]);
   const [selectedProjectRegName, setSelectedProjectRegName] = useState(null);
-  const [projectColorPalette, setProjectColorPalette] = useState({});
 
   return (
     <div className="App">
@@ -150,8 +149,6 @@ const App = () => {
               setProjectRegNames,
               selectedProjectRegName,
               setSelectedProjectRegName,
-              projectColorPalette,
-              setProjectColorPalette,
               basemaps,
               existingTrails,
               proposedTrails,

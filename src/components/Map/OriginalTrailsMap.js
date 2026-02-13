@@ -10,7 +10,7 @@ import MAhouseDistrictsButton from '../MAhouseDistrictsButton';
 import MASenateDistrictsButton from '../MASenateDistrictsButton';
 import MunicipalitiesButton from '../MunicipalitiesButton';
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
-import Identify from "./Identify";
+import Identify from "./tooltip/Identify";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
 import OriginalTrailsFilterLayers from "./layers/OriginalTrailsFilterLayers";

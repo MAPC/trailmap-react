@@ -9,14 +9,17 @@ import Control from "./Control";
 import ControlPanel from "../ControlPanel";
 import FilterIcon from "../../assets/icons/filter-icon.svg";
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
-import CommunityIdentify from "./CommunityIdentify";
+import CommunityIdentify from "./tooltip/CommunityIdentify";
+import EnvironmentalJusticePopupContent from "./tooltip/EnvironmentalJusticePopupContent";
+import OpenSpacePopupContent from "./tooltip/OpenSpacePopupContent";
+import BlueBikeStationPopupContent from "./tooltip/BlueBikeStationPopupContent";
 import TrailLegend from "./TrailLegend";
 import BufferAnalysisWindow from "../BufferAnalysisWindow";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
-import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
-import { DEFAULT_BUFFER_RADIUS } from "./constants/mapConstants";
+import { trailsProfileLayers, EJ2020_MAP_SERVER_URL } from "./constants/mapConstants";
 import { queryMunicipalityTrails } from "./utils/trailQueries";
+import { queryFeatureAtPoint } from "./utils/arcgisPointQuery";
 import { calculateBufferAnalysis } from "./utils/bufferAnalysis";
 import CommunityTrailsProfileLayers from "./layers/CommunityTrailsProfileLayers";
 import MunicipalityMapLayer from "./layers/MunicipalityMapLayer";
@@ -32,6 +35,7 @@ import TransitLandRoutesLayer from "./layers/TransitLandRoutesLayer";
 import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
+const DEFAULT_BUFFER_RADIUS = 1609; // 1 mile in meters
 
 const CommunityTrailsProfile = ({ 
   viewport, 
@@ -108,53 +112,18 @@ const CommunityTrailsProfile = ({
   const [openSpaceClickInfo, setOpenSpaceClickInfo] = useState(null);
   const [environmentalJusticeClickInfo, setEnvironmentalJusticeClickInfo] = useState(null);
   
-  // Query Environmental Justice feature at a point (EJ layer is raster, so we query FeatureServer)
-  const queryEnvironmentalJusticeAtPoint = async (lng, lat) => {
-    try {
-      const toWebMercator = (lon, latVal) => {
-        const x = lon * 20037508.34 / 180;
-        let y = Math.log(Math.tan((90 + latVal) * Math.PI / 360)) / (Math.PI / 180);
-        y = y * 20037508.34 / 180;
-        return { x, y };
-      };
-      const pointMerc = toWebMercator(lng, lat);
-      const pointGeometry = {
-        x: pointMerc.x,
-        y: pointMerc.y,
-        spatialReference: { wkid: 3857 }
-      };
-      const EJ2020_SERVICE_URL = "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/EJ2020/MapServer/0";
-      const params = new URLSearchParams();
-      params.set("where", "1=1");
-      params.set("geometry", JSON.stringify(pointGeometry));
-      params.set("geometryType", "esriGeometryPoint");
-      params.set("inSR", "3857");
-      params.set("spatialRel", "esriSpatialRelIntersects");
-      params.set("outFields", "*");
-      params.set("outSR", "4326");
-      params.set("f", "geojson");
-      params.set("returnGeometry", "true");
-      const url = `${EJ2020_SERVICE_URL}/query?${params.toString()}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.features && data.features.length > 0) {
-        return data.features[0];
-      }
-      return null;
-    } catch (error) {
-      return null;
-    }
-  };
+  const queryEnvironmentalJusticeAtPoint = (lng, lat) =>
+    queryFeatureAtPoint(`${EJ2020_MAP_SERVER_URL}/0`, lng, lat);
 
   // Listen for OpenSpace toggle events (only for Community Trails Profile)
   useEffect(() => {
     const handleToggleOpenSpace = (event) => {
       if (showMunicipalityProfileMap) {
         setShowOpenSpaceCommunity(event.detail.show);
-        // Zoom to level 11 when OpenSpace is opened
+        // Zoom to level 11 when OpenSpace is opened, only if current zoom is smaller than 11
         if (event.detail.show && mapRef?.current) {
           const map = mapRef.current.getMap();
-          if (map) {
+          if (map && map.getZoom() < 11) {
             map.easeTo({
               zoom: 11,
               duration: 1000
@@ -174,7 +143,7 @@ const CommunityTrailsProfile = ({
   const [visibleTrailTypes, setVisibleTrailTypes] = useState(() => {
     // Initialize all trail types as visible by default
     const initialVisibility = {};
-    geojsonTrailLayers.forEach(layer => {
+    trailsProfileLayers.forEach(layer => {
       initialVisibility[layer.id] = true;
     });
     return initialVisibility;
@@ -292,7 +261,7 @@ const CommunityTrailsProfile = ({
       setBufferPreviewCenter(null);
       // Reset trail type visibility to all visible
       const resetVisibility = {};
-      geojsonTrailLayers.forEach(layer => {
+      trailsProfileLayers.forEach(layer => {
         resetVisibility[layer.id] = true;
       });
       setVisibleTrailTypes(resetVisibility);
@@ -437,7 +406,7 @@ const CommunityTrailsProfile = ({
           ...(showSubwayStations ? ['subway-stations'] : []),
           ...(showCommuterRail ? ['commuter-rail-stations', 'commuter-rail-station-labels'] : []),
           "municipality-profile-base",
-          ...geojsonTrailLayers.map(layer => `geojson-trail-${layer.id}`)
+          ...trailsProfileLayers.map(layer => `geojson-trail-${layer.id}`)
         ]}
         onMove={(event) => {
           setViewport(event.viewState);
@@ -826,7 +795,7 @@ const CommunityTrailsProfile = ({
         )}
 
         {/* Environmental Justice Click Popup */}
-        {showEnvironmentalJustice && environmentalJusticeClickInfo && environmentalJusticeClickInfo.point && environmentalJusticeClickInfo.feature && (
+        {showEnvironmentalJustice && environmentalJusticeClickInfo?.point && environmentalJusticeClickInfo?.feature && (
           <Popup
             longitude={environmentalJusticeClickInfo.point.lng}
             latitude={environmentalJusticeClickInfo.point.lat}
@@ -835,80 +804,12 @@ const CommunityTrailsProfile = ({
             anchor="top"
             offset={12}
           >
-            {(() => {
-              const properties = environmentalJusticeClickInfo.feature.properties || {};
-              return (
-                <div style={{
-                  minWidth: 200,
-                  maxWidth: 300,
-                  color: '#2774bd',
-                  fontSize: '12px',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word'
-                }}>
-                  <div style={{
-                    fontWeight: 600,
-                    marginBottom: '8px',
-                    fontSize: '14px',
-                    wordWrap: 'break-word',
-                    overflowWrap: 'break-word'
-                  }}>Environmental Justice</div>
-                  {(properties.GEOGRAPHICAREANAME || properties.Geographic_Area_Name) && (
-                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                      <strong>Area:</strong> {properties.GEOGRAPHICAREANAME || properties.Geographic_Area_Name}
-                    </div>
-                  )}
-                  {(properties.MUNICIPALITY || properties.Municipality) && (
-                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                      <strong>Municipality:</strong> {properties.MUNICIPALITY || properties.Municipality}
-                    </div>
-                  )}
-                  {(properties.EJ_CRIT_DESC || properties.EJ_Crit_Desc) && (
-                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                      <strong>EJ Criteria:</strong> {properties.EJ_CRIT_DESC || properties.EJ_Crit_Desc}
-                    </div>
-                  )}
-                  {(properties.EJ || properties.Ej) && (
-                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                      <strong>EJ Designated:</strong> {properties.EJ || properties.Ej}
-                    </div>
-                  )}
-                  {(properties.TOTAL_POP !== undefined && properties.TOTAL_POP !== null) && (
-                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                      <strong>Total Population:</strong> {parseFloat(properties.TOTAL_POP).toLocaleString()}
-                    </div>
-                  )}
-                  {(properties.PCT_MINORITY !== undefined && properties.PCT_MINORITY !== null) && (
-                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                      <strong>Percent Minority:</strong> {parseFloat(properties.PCT_MINORITY).toFixed(1)}%
-                    </div>
-                  )}
-                  {(properties.LIMENGHHPCT !== undefined && properties.LIMENGHHPCT !== null) && (
-                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                      <strong>Limited English Households:</strong> {parseFloat(properties.LIMENGHHPCT).toFixed(1)}%
-                    </div>
-                  )}
-                  {(properties.BG_MHHI !== undefined && properties.BG_MHHI !== null) && (
-                    <div style={{ marginBottom: '4px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                      <strong>Median Household Income:</strong> ${parseFloat(properties.BG_MHHI).toLocaleString()}
-                    </div>
-                  )}
-                  {properties.GEOID && (
-                    <div style={{ marginBottom: '4px', fontSize: '11px', color: '#666', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-                      <strong>GEOID:</strong> {properties.GEOID}
-                    </div>
-                  )}
-                  {!properties.GEOGRAPHICAREANAME && !properties.Geographic_Area_Name && !properties.MUNICIPALITY && !properties.Municipality && !properties.EJ_CRIT_DESC && !properties.EJ_Crit_Desc && (
-                    <div style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>No data available</div>
-                  )}
-                </div>
-              );
-            })()}
+            <EnvironmentalJusticePopupContent properties={environmentalJusticeClickInfo.feature.properties} />
           </Popup>
         )}
 
         {/* OpenSpace Click Popup */}
-        {showOpenSpace && openSpaceClickInfo && openSpaceClickInfo.point && openSpaceClickInfo.feature && (
+        {showOpenSpace && openSpaceClickInfo?.point && openSpaceClickInfo?.feature && (
           <Popup
             longitude={openSpaceClickInfo.point.lng}
             latitude={openSpaceClickInfo.point.lat}
@@ -917,36 +818,7 @@ const CommunityTrailsProfile = ({
             anchor="top"
             offset={12}
           >
-            {(() => {
-              const properties = openSpaceClickInfo.feature.properties || {};
-              
-              return (
-                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                  <div style={{fontWeight: 600, marginBottom: '6px'}}>OpenSpace</div>
-                  {properties.SITE_NAME && (
-                    <div style={{marginBottom: '4px', fontWeight: 500}}>{properties.SITE_NAME}</div>
-                  )}
-                  {properties.FEE_OWNER && (
-                    <div style={{marginBottom: '2px'}}>Owner: {properties.FEE_OWNER}</div>
-                  )}
-                  {properties.OWNER_TYPE && (
-                    <div style={{marginBottom: '2px'}}>Owner Type: {properties.OWNER_TYPE}</div>
-                  )}
-                  {properties.PRIM_PURP && (
-                    <div style={{marginBottom: '2px'}}>Primary Purpose: {properties.PRIM_PURP}</div>
-                  )}
-                  {properties.PUB_ACCESS && (
-                    <div style={{marginBottom: '2px'}}>Public Access: {properties.PUB_ACCESS}</div>
-                  )}
-                  {properties.GIS_ACRES !== null && properties.GIS_ACRES !== undefined && (
-                    <div style={{marginBottom: '2px'}}>Acres: {parseFloat(properties.GIS_ACRES).toFixed(2)}</div>
-                  )}
-                  {!properties.SITE_NAME && !properties.FEE_OWNER && (
-                    <div>No data available</div>
-                  )}
-                </div>
-              );
-            })()}
+            <OpenSpacePopupContent properties={openSpaceClickInfo.feature.properties} />
           </Popup>
         )}
 
@@ -983,50 +855,18 @@ const CommunityTrailsProfile = ({
         })()}
 
         {/* Blue Bike Station Click Popup */}
-        {(() => {
-          const shouldShowPopup = showBlueBikeStations && blueBikeClickInfo && blueBikeClickInfo.point && blueBikeClickInfo.feature;
-          
-          return shouldShowPopup ? (
-            <Popup
-              longitude={blueBikeClickInfo.point.lng}
-              latitude={blueBikeClickInfo.point.lat}
-              closeButton={true}
-              onClose={() => {
-                setBlueBikeClickInfo(null);
-              }}
-              anchor="top"
-              offset={12}
-            >
-              {(() => {
-                const properties = blueBikeClickInfo.feature.properties || {};
-                const stationName = properties.Name || properties.name || 'Unknown Station';
-                const district = properties.District || properties.district || null;
-                const totalDocks = properties.Total_docks || properties.total_docks || null;
-                const number = properties.Number || properties.number || null;
-                const isPublic = properties.Public_ === 'Yes' || properties.public === 'Yes' ? 'Yes' : (properties.Public_ === 'No' || properties.public === 'No' ? 'No' : null);
-                
-                return (
-                  <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                    <div style={{fontWeight: 600, marginBottom: '6px'}}>Blue Bike Station</div>
-                    <div style={{marginBottom: '4px', fontWeight: 500, wordWrap: 'break-word', overflowWrap: 'break-word'}}>{stationName}</div>
-                    {district && (
-                      <div style={{marginBottom: '2px', fontSize: '11px', color: '#666'}}>District: {district}</div>
-                    )}
-                    {totalDocks !== null && (
-                      <div style={{marginBottom: '2px', fontSize: '11px', color: '#666'}}>Total Docks: {totalDocks}</div>
-                    )}
-                    {number && (
-                      <div style={{marginBottom: '2px', fontSize: '11px', color: '#666'}}>Station #: {number}</div>
-                    )}
-                    {isPublic !== null && (
-                      <div style={{marginBottom: '2px', fontSize: '11px', color: '#666'}}>Public: {isPublic}</div>
-                    )}
-                  </div>
-                );
-              })()}
-            </Popup>
-          ) : null;
-        })()}
+        {showBlueBikeStations && blueBikeClickInfo?.point && blueBikeClickInfo?.feature && (
+          <Popup
+            longitude={blueBikeClickInfo.point.lng}
+            latitude={blueBikeClickInfo.point.lat}
+            closeButton={true}
+            onClose={() => setBlueBikeClickInfo(null)}
+            anchor="top"
+            offset={12}
+          >
+            <BlueBikeStationPopupContent properties={blueBikeClickInfo.feature.properties} />
+          </Popup>
+        )}
         
         {showControlPanel && (
           <div>

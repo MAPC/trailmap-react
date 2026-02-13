@@ -153,6 +153,9 @@ const MajorTrailsLayer = ({
   const hoveredFeatureId = hoveredTrail?.featureId;
   const clickedFeatureId = clickedTrail?.featureId;
 
+  // fac_stat can be number 1 or string "1" from ArcGIS - check both for existing (blue)
+  const isExistingTrail = ["any", ["==", ["get", "fac_stat"], 1], ["==", ["get", "fac_stat"], "1"]];
+
   return (
     <Source
       id="major-trails-source"
@@ -170,8 +173,8 @@ const MajorTrailsLayer = ({
             "#FF0000",  // Red for gaps
               [
                 "case",
-                ["==", ["get", "fac_stat"], 1],  // Existing
-                "#2774bd",  // Blue for existing trails
+                isExistingTrail,
+                "#2774bd",  // Blue for existing trails (fac_stat 1 or "1")
                 "#6a1b9a"   // Dark purple for planned trails (fac_stat = 2 or 3)
               ]
           ],
@@ -187,7 +190,7 @@ const MajorTrailsLayer = ({
             1.0,  // Full opacity for gaps
             [
               "case",
-              ["==", ["get", "fac_stat"], 1],  // Existing
+              isExistingTrail,
               0.9,  // Slightly transparent for existing
               0.85  // Slightly more transparent for planned
             ]
@@ -209,7 +212,7 @@ const MajorTrailsLayer = ({
             "#FF0000",  // Red for gaps
             [
               "case",
-              ["==", ["get", "fac_stat"], 1],  // Existing
+              isExistingTrail,
               "#2774bd",  // Blue for existing trails
               "#6a1b9a"   // Dark purple for planned trails
             ]
@@ -247,7 +250,7 @@ const MajorTrailsLayer = ({
             "#FF0000",  // Red for gaps
             [
               "case",
-              ["==", ["get", "fac_stat"], 1],  // Existing
+              isExistingTrail,
               "#2774bd",  // Blue for existing trails
               "#6a1b9a"   // Dark purple for planned trails
             ]

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Source, Layer } from "react-map-gl";
+import { EJ2020_MAP_SERVER_URL } from "../constants/mapConstants";
 
 /**
  * Renders Environmental Justice 2020 layer
@@ -40,7 +41,6 @@ const EnvironmentalJusticeLayer = ({ showEnvironmentalJustice, showMunicipalityP
       const swMerc = toWebMercator(sw.lng, sw.lat);
       const neMerc = toWebMercator(ne.lng, ne.lat);
 
-      const EJ2020_SERVICE_URL = "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/EJ2020/MapServer";
       const bbox = `${swMerc.x},${swMerc.y},${neMerc.x},${neMerc.y}`;
       
       // Get map size for export
@@ -48,7 +48,7 @@ const EnvironmentalJusticeLayer = ({ showEnvironmentalJustice, showMunicipalityP
       const width = mapSize.clientWidth || 1024;
       const height = mapSize.clientHeight || 768;
 
-      const url = `${EJ2020_SERVICE_URL}/export?bbox=${bbox}&bboxSR=3857&imageSR=3857&size=${width},${height}&f=image&format=png&transparent=true&layers=show:0`;
+      const url = `${EJ2020_MAP_SERVER_URL}/export?bbox=${bbox}&bboxSR=3857&imageSR=3857&size=${width},${height}&f=image&format=png&transparent=true&layers=show:0`;
       
       setImageUrl(url);
       setBounds([

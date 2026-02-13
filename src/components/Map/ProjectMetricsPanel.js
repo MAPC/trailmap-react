@@ -152,11 +152,11 @@ const ProjectMetricsPanel = ({
             <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
               {metrics && metrics.totalLengthMiles ? (
                 <>
-                  <span style={{ marginRight: '12px' }}>
+                  <span style={{ marginRight: '12px' }} title="Existing + Planned + Envisioned + Design + gaps">
                     <strong>{metrics.totalLengthMiles}</strong> miles total
                   </span>
                   {metrics.percentageComplete && (
-                    <span style={{ color: metrics.percentageComplete >= 50 ? '#28a745' : '#ffc107' }}>
+                    <span style={{ color: metrics.percentageComplete >= 50 ? '#28a745' : '#ffc107' }} title="(existing trails ÷ total) × 100">
                       <strong>{metrics.percentageComplete}%</strong> complete
                     </span>
                   )}
@@ -269,7 +269,7 @@ const ProjectMetricsPanel = ({
                 <div style={{ 
                   display: 'flex', 
                   justifyContent: 'space-between', 
-                  marginBottom: '6px',
+                  marginBottom: '2px',
                   fontSize: '12px',
                   fontWeight: 500
                 }}>
@@ -278,6 +278,9 @@ const ProjectMetricsPanel = ({
                     Completion Progress
                   </span>
                   <span style={{ color: '#2774bd' }}>{metrics.percentageComplete}%</span>
+                </div>
+                <div style={{ fontSize: '9px', color: '#999', marginBottom: '6px' }}>
+                  (existing trails ÷ total) × 100
                 </div>
                 <div style={{
                   width: '100%',
@@ -312,9 +315,12 @@ const ProjectMetricsPanel = ({
                 <div style={{ fontSize: '20px', fontWeight: 700, color: '#2774bd' }}>
                   {metrics.totalLengthMiles}
                 </div>
-                <div style={{ fontSize: '11px', color: '#666', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                  <i className="fas fa-route" style={{ fontSize: '10px' }}></i>
-                  Total Miles
+                <div style={{ fontSize: '11px', color: '#666', marginTop: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <i className="fas fa-route" style={{ fontSize: '10px' }}></i>
+                    Total Miles
+                  </span>
+                  <span style={{ fontSize: '9px', color: '#999' }}>Existing + Planned + Envisioned + Design + gaps</span>
                 </div>
               </div>
               {metrics.completedLengthMiles && (
@@ -327,9 +333,12 @@ const ProjectMetricsPanel = ({
                   <div style={{ fontSize: '20px', fontWeight: 700, color: '#28a745' }}>
                     {metrics.completedLengthMiles}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#666', marginTop: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                    <i className="fas fa-check-circle" style={{ fontSize: '10px' }}></i>
-                    Completed Miles
+                  <div style={{ fontSize: '11px', color: '#666', marginTop: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <i className="fas fa-check-circle" style={{ fontSize: '10px' }}></i>
+                      Completed Miles
+                    </span>
+                    <span style={{ fontSize: '9px', color: '#999' }}>Existing trails</span>
                   </div>
                 </div>
               )}

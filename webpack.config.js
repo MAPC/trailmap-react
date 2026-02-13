@@ -21,12 +21,6 @@ module.exports = {
         use: ['babel-loader']
       },
       {
-        test: /\.(js|css)$/,
-        enforce: 'pre',
-        use: ['source-map-loader'],
-        exclude: /node_modules\/style-loader/,
-      },
-      {
         test: /\.svg$/,
         use: [
           {

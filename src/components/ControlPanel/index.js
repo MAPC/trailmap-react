@@ -48,8 +48,6 @@ const ControlPanel = ({
     setProjectRegNames,
     selectedProjectRegName,
     setSelectedProjectRegName,
-    projectColorPalette,
-    setProjectColorPalette,
     // Layer toggle states from context
     showCommuterRail,
     setShowCommuterRail,
@@ -169,6 +167,11 @@ const ControlPanel = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
+
+  // Close OpenSpace layer when switching between profiles (Community ↔ Regional ↔ Trail filters)
+  useEffect(() => {
+    setShowOpenSpace(false);
+  }, [showMunicipalityProfileMap, showRegionalTrailsProfileMap, setShowOpenSpace]);
 
   // Handle view toggle - show municipality profile map, hide trails
   const handleViewToggle = () => {

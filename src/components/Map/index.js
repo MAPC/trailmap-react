@@ -18,8 +18,8 @@ import MASenateDistrictsButton from '../MASenateDistrictsButton';
 import MunicipalitiesButton from '../MunicipalitiesButton';
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import GlossaryModal from "../Modals/GlossaryModal";
-import Identify from "./Identify";
-import CommunityIdentify from "./CommunityIdentify";
+import Identify from "./tooltip/Identify";
+import CommunityIdentify from "./tooltip/CommunityIdentify";
 import ShareModal from "../Modals/ShareModal";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
@@ -36,7 +36,7 @@ import CommunityTrailsProfile from "./CommunityTrailsProfile";
 import OriginalTrailsMap from "./OriginalTrailsMap";
 import RegionalTrailsProfile from "./RegionalTrailsProfile";
 // Extracted constants
-import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
+import { trailsProfileLayers } from "./constants/mapConstants";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;

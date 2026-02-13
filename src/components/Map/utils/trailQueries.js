@@ -1,5 +1,4 @@
-import { FEATURE_SERVER_BASE } from "../constants/mapConstants";
-import { geojsonTrailLayers } from "../constants/geojsonTrailLayers";
+import { trailsProfileLayers } from "../constants/mapConstants";
 
 /**
  * Convert GeoJSON Polygon/MultiPolygon to ESRI Polygon JSON
@@ -72,7 +71,7 @@ export const fetchAllFeaturesForLayer = async ({ layerId, esriPolygon }) => {
     params.set("resultRecordCount", String(pageSize));
 
     // Use POST to avoid "request too long" for large polygons (e.g., Boston)
-    const url = `${FEATURE_SERVER_BASE}/${layerId}/query`;
+    const url = `${process.env.REACT_APP_FEATURE_SERVER_BASE}/${layerId}/query`;
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -127,7 +126,7 @@ export const queryMunicipalityTrails = async ({
 
   try {
     const allTrailResults = [];
-    const totalLayers = geojsonTrailLayers.length;
+    const totalLayers = trailsProfileLayers.length;
     const isCommunityTrailsProfile = location?.pathname === "/communityTrailsProfile";
     const esriPolygon = geojsonPolygonToEsriPolygon(municipality.geometry);
 
@@ -138,8 +137,8 @@ export const queryMunicipalityTrails = async ({
       return;
     }
 
-    for (let i = 0; i < geojsonTrailLayers.length; i++) {
-      const layer = geojsonTrailLayers[i];
+    for (let i = 0; i < trailsProfileLayers.length; i++) {
+      const layer = trailsProfileLayers[i];
       setLoadingMessage(`Querying ${layer.name}...`);
       setLoadingProgress((i / totalLayers) * 80);
 

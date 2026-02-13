@@ -1,6 +1,6 @@
 import React from 'react';
 import '../../styles/TrailLegend.scss';
-import { geojsonTrailLayers } from './constants/geojsonTrailLayers';
+import { trailsProfileLayers } from './constants/mapConstants';
 
 const TrailLegend = ({ visibleTrailTypes, onToggleTrailType }) => {
   // If no visibility state provided, show all by default
@@ -16,8 +16,8 @@ const TrailLegend = ({ visibleTrailTypes, onToggleTrailType }) => {
   };
 
   // Separate trails into existing and planned
-  const existingTrails = geojsonTrailLayers.filter(layer => !layer.name.includes('Planned'));
-  const plannedTrails = geojsonTrailLayers.filter(layer => layer.name.includes('Planned'));
+  const existingTrails = trailsProfileLayers.filter(layer => !layer.name.includes('Planned'));
+  const plannedTrails = trailsProfileLayers.filter(layer => layer.name.includes('Planned'));
 
   const renderTrailItem = (layer) => {
     const visible = isVisible(layer.id);

@@ -40,7 +40,6 @@ const OtherRegionalTrailsLayer = ({
   mapRef,
   useColorCoding = false,
   onRegNamesChange = null,
-  colorPalette = null, // External color palette for stable colors
   selectedRegNames = [], // Array of selected reg_names to display
   onTrailsDataChange = null, // Callback to pass trail data to parent
   hoveredTrail = null, // Hovered trail object with featureId
@@ -115,18 +114,13 @@ const OtherRegionalTrailsLayer = ({
   // Note: reg_names list is populated by the initial query above
   // trailsData is only used for rendering and metrics, not for populating the project list
 
-  // Use external color palette if provided, otherwise generate one
+  // Generate color palette from current data when useColorCoding is enabled
   const effectiveColorPalette = useMemo(() => {
     if (!useColorCoding) {
       return {};
     }
     
-    // If external palette is provided, use it
-    if (colorPalette && Object.keys(colorPalette).length > 0) {
-      return colorPalette;
-    }
-    
-    // Otherwise, generate from current data (fallback)
+    // Generate from current data
     if (!trailsData || !trailsData.features) {
       return {};
     }
@@ -141,7 +135,7 @@ const OtherRegionalTrailsLayer = ({
     
     const uniqueRegNames = Array.from(regNames).sort();
     return generateColorPalette(uniqueRegNames);
-  }, [useColorCoding, colorPalette, trailsData]);
+  }, [useColorCoding, trailsData]);
 
   useEffect(() => {
     if (!shouldShow || !mapRef?.current) {
@@ -563,6 +557,9 @@ const OtherRegionalTrailsLayer = ({
       ]
     : ["==", ["get", "OBJECTID"], -1];
 
+  // fac_stat can be number 1 or string "1" from ArcGIS - check both for existing (blue)
+  const isExistingTrail = ["any", ["==", ["get", "fac_stat"], 1], ["==", ["get", "fac_stat"], "1"]];
+
   const regularTrailsClickFilter = clickedFeatureId !== null && clickedFeatureId !== undefined
     ? [
         "==",
@@ -593,14 +590,14 @@ const OtherRegionalTrailsLayer = ({
           paint={{
             "line-color": [
               "case",
-              ["==", ["get", "fac_stat"], 1],  // Existing
-              "#2774bd",  // Blue for existing trails
+              isExistingTrail,
+              "#2774bd",  // Blue for existing trails (fac_stat 1 or "1")
               "#6a1b9a"   // Dark purple for planned trails (fac_stat = 2 or 3)
             ],
             "line-width": 3,
             "line-opacity": [
               "case",
-              ["==", ["get", "fac_stat"], 1],  // Existing
+              isExistingTrail,
               0.8,   // Slightly transparent for existing
               0.75   // Slightly more transparent for planned
             ]
@@ -617,7 +614,7 @@ const OtherRegionalTrailsLayer = ({
           paint={{
             "line-color": [
               "case",
-              ["==", ["get", "fac_stat"], 1],  // Existing
+              isExistingTrail,
               "#2774bd",  // Blue for existing trails
               "#6a1b9a"   // Dark purple for planned trails
             ],
@@ -637,7 +634,7 @@ const OtherRegionalTrailsLayer = ({
           paint={{
             "line-color": [
               "case",
-              ["==", ["get", "fac_stat"], 1],  // Existing
+              isExistingTrail,
               "#2774bd",  // Blue for existing trails
               "#6a1b9a"   // Dark purple for planned trails
             ],

@@ -2,9 +2,9 @@ import React, { useContext, useState } from "react";
 import { Popup } from "react-map-gl";
 import Button from "react-bootstrap/Button";
 import Carousel from "react-bootstrap/Carousel";
-import editIcon from "../../assets/icons/edit-icon.svg";
-import { ModalContext } from "../../App";
-import muniKeys from "../../data/ma_muni_keys.json";
+import editIcon from "../../../assets/icons/edit-icon.svg";
+import { ModalContext } from "../../../App";
+import { getMunicipalityName } from "../utils/municipalityUtils";
 
 // Identify popup variant for Community Trails Profile:
 // trail name logic matches TrailListWindow: local_name -> reg_name -> prop_name,
@@ -12,17 +12,6 @@ import muniKeys from "../../data/ma_muni_keys.json";
 const CommunityIdentify = ({ point, identifyResult, handleShowPopup, handleCarousel }) => {
   const { toggleEditModal } = useContext(ModalContext);
   const [carouselIndex, setCarouselIndex] = useState(0);
-
-  const getMunicipalityName = (muniId) => {
-    if (!muniId || muniId === "Null" || muniId === "") return "";
-    const municipality = muniKeys.find(
-      (muni) =>
-        muni.muni_id === parseInt(muniId) ||
-        muni.muni_id === muniId ||
-        muni.muni_id.toString() === muniId.toString()
-    );
-    return municipality ? municipality.muni_name : "";
-  };
 
   const normalizeCandidate = (value) => {
     const v = (value ?? "").toString().trim();
@@ -85,7 +74,7 @@ const CommunityIdentify = ({ point, identifyResult, handleShowPopup, handleCarou
     
     identifyTrailName.push(name);
 
-    identifyMunicipality.push(getMunicipalityName(attrs["muni_id"] || attrs["Municipal ID"]));
+    identifyMunicipality.push(getMunicipalityName(attrs["muni_id"] || attrs["Municipal ID"]) ?? "");
     identifyDate.push(
       (attrs["Facility Opening Date"] !== undefined && attrs["Facility Opening Date"] !== "Null")
         ? attrs["Facility Opening Date"]
@@ -239,5 +228,3 @@ const CommunityIdentify = ({ point, identifyResult, handleShowPopup, handleCarou
 };
 
 export default CommunityIdentify;
-
-
