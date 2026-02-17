@@ -63,6 +63,7 @@ const OriginalTrailsMap = ({
   const [clickMuniFilterValue, setClickMuniFilterValue] = useState(null);
   const [showOneLayerNotice, setShowOneLayerNotice] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
+  const hoveredTrailRef = React.useRef(null);
 
   // Show notice when any one of the exclusive layers turns on
   React.useEffect(() => {
@@ -281,8 +282,58 @@ const OriginalTrailsMap = ({
       interactiveLayerIds={[
         "ma-house-districts-fill", 
         "ma-senate-districts-fill", 
-        "municipalities-fill"
+        "municipalities-fill",
+        ...trailLayers,
+        ...proposedLayers
       ]}
+      onMouseMove={(event) => {
+        const map = mapRef.current?.getMap?.();
+        if (!map) return;
+        let features = event.features;
+        if (!features?.length && event.point) {
+          features = map.queryRenderedFeatures([event.point.x, event.point.y], {
+            layers: [...trailLayers, ...proposedLayers]
+          });
+        }
+        const trailFeature = features?.find((f) => {
+          const lid = f.layer?.id;
+          return lid && (trailLayers.includes(lid) || proposedLayers.includes(lid));
+        });
+        const prev = hoveredTrailRef.current;
+        if (trailFeature) {
+          const sourceLayer = trailFeature.layer?.sourceLayer ?? trailFeature.sourceLayer;
+          const id = trailFeature.id ?? trailFeature.properties?.OBJECTID ?? trailFeature.properties?.objectid;
+          if (sourceLayer && id != null) {
+            if (prev && (prev.sourceLayer !== sourceLayer || prev.id !== id)) {
+              try {
+                map.removeFeatureState({ source: "MAPC trail vector tiles", sourceLayer: prev.sourceLayer, id: prev.id });
+              } catch (_) {}
+            }
+            try {
+              map.setFeatureState(
+                { source: "MAPC trail vector tiles", sourceLayer, id },
+                { hover: true }
+              );
+              hoveredTrailRef.current = { sourceLayer, id };
+            } catch (_) {}
+          }
+        } else if (prev) {
+          try {
+            map.removeFeatureState({ source: "MAPC trail vector tiles", sourceLayer: prev.sourceLayer, id: prev.id });
+          } catch (_) {}
+          hoveredTrailRef.current = null;
+        }
+      }}
+      onMouseLeave={() => {
+        const map = mapRef.current?.getMap?.();
+        const prev = hoveredTrailRef.current;
+        if (map && prev) {
+          try {
+            map.removeFeatureState({ source: "MAPC trail vector tiles", sourceLayer: prev.sourceLayer, id: prev.id });
+          } catch (_) {}
+          hoveredTrailRef.current = null;
+        }
+      }}
       onMove={(event) => {
         const newViewport = event.viewState;
         if (Math.abs(newViewport.zoom - viewport.zoom) > 0.01) {
@@ -376,17 +427,24 @@ const OriginalTrailsMap = ({
         }
 
         // Check if clicking on a municipality when municipalities layer is visible
+        let muniFeature = null;
         if (!handled && showMunicipalities) {
-          let muniFeature = event.features?.find((f) => f.layer && f.layer.id === "municipalities-fill");
+          muniFeature = event.features?.find((f) => f.layer && f.layer.id === "municipalities-fill");
           
           if (!muniFeature && map) {
             const x = event.point.x;
             const y = event.point.y;
-            const queried = map.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {
-              layers: ["municipalities-fill"],
-            });
-            if (queried && queried.length > 0) {
-              muniFeature = queried[0];
+            // Try point query first (most reliable), then larger bbox for edge cases
+            const pointQuery = map.queryRenderedFeatures([x, y], { layers: ["municipalities-fill"] });
+            if (pointQuery && pointQuery.length > 0) {
+              muniFeature = pointQuery[0];
+            } else {
+              const queried = map.queryRenderedFeatures([[x - 16, y - 16], [x + 16, y + 16]], {
+                layers: ["municipalities-fill"],
+              });
+              if (queried && queried.length > 0) {
+                muniFeature = queried[0];
+              }
             }
           }
           
@@ -443,39 +501,41 @@ const OriginalTrailsMap = ({
           setClickMuniFilterValue(null);
         }
         
-        // Handle identify popup for trails
-        const allLayers = [
-          ...existingTrails.filter((et) => trailLayers.includes(et.id)).map((et) => et["esri-id"]),
-          ...proposedTrails.filter((et) => proposedLayers.includes(et.id)).map((et) => et["esri-id"]),
-        ].join(",");
-        if (trailLayers.length > 0 || proposedLayers.length > 0) {
-          const currentMap = mapRef.current.getMap();
-          const currentMapBounds = currentMap.getBounds();
-          axios
-            .get(TRAILMAP_IDENTIFY_SOURCE, {
-              params: {
-                geometry: `${event.lngLat.lng},${event.lngLat.lat}`,
-                geometryType: "esriGeometryPoint",
-                sr: 4326,
-                layers: "visible:" + allLayers,
-                tolerance: 3,
-                mapExtent: `${currentMapBounds._sw.lng},${currentMapBounds._sw.lat},${currentMapBounds._ne.lng},${currentMapBounds._ne.lat}`,
-                imageDisplay: `600,550,96`,
-                returnGeometry: false,
-                f: "pjson",
-              },
-            })
-            .then((res) => {
-              if (res.data.results.length > 0) {
-                const identifyResult = [];
-                for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
-                  identifyResult.push(res.data.results[i]);
+        // Handle identify popup for trails (only when NOT clicking on municipality)
+        if (!muniFeature) {
+          const allLayers = [
+            ...existingTrails.filter((et) => trailLayers.includes(et.id)).map((et) => et["esri-id"]),
+            ...proposedTrails.filter((et) => proposedLayers.includes(et.id)).map((et) => et["esri-id"]),
+          ].join(",");
+          if ((trailLayers.length > 0 || proposedLayers.length > 0) && allLayers) {
+            const currentMap = mapRef.current.getMap();
+            const currentMapBounds = currentMap.getBounds();
+            axios
+              .get(TRAILMAP_IDENTIFY_SOURCE, {
+                params: {
+                  geometry: `${event.lngLat.lng},${event.lngLat.lat}`,
+                  geometryType: "esriGeometryPoint",
+                  sr: 4326,
+                  layers: "visible:" + allLayers,
+                  tolerance: 5,
+                  mapExtent: `${currentMapBounds._sw.lng},${currentMapBounds._sw.lat},${currentMapBounds._ne.lng},${currentMapBounds._ne.lat}`,
+                  imageDisplay: `600,550,96`,
+                  returnGeometry: false,
+                  f: "pjson",
+                },
+              })
+              .then((res) => {
+                if (res.data.results && res.data.results.length > 0) {
+                  const identifyResult = [];
+                  for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
+                    identifyResult.push(res.data.results[i]);
+                  }
+                  setIdentifyInfo(identifyResult);
+                  toggleIdentifyPopup(true);
+                  setIdentifyPoint(event.lngLat);
                 }
-                setIdentifyInfo(identifyResult);
-                toggleIdentifyPopup(true);
-                setIdentifyPoint(event.lngLat);
-              }
-            });
+              });
+          }
         }
       }}
       mapboxAccessToken={MAPBOX_TOKEN}
@@ -513,16 +573,6 @@ const OriginalTrailsMap = ({
       )}
 
       {showBasemapPanel && <BasemapPanel />}
-      
-      {/* Render vector tile source for original trails filters */}
-      <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
-        <OriginalTrailsFilterLayers
-          trailLayers={trailLayers}
-          proposedLayers={proposedLayers}
-          existingTrails={existingTrails}
-          proposedTrails={proposedTrails}
-        />
-      </Source>
       
       <Source id="MAPC landline vector tiles" type="vector" tiles={[LANDLINE_SOURCE]}>
         {landlineLayers()}
@@ -566,6 +616,16 @@ const OriginalTrailsMap = ({
         data={massachusettsData}
       >
         {municipalitiesLayers()}
+      </Source>
+      
+      {/* Trail segments rendered last so they stay on top */}
+      <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
+        <OriginalTrailsFilterLayers
+          trailLayers={trailLayers}
+          proposedLayers={proposedLayers}
+          existingTrails={existingTrails}
+          proposedTrails={proposedTrails}
+        />
       </Source>
       
       <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
@@ -634,22 +694,28 @@ const OriginalTrailsMap = ({
       
       {showMunicipalities && clickMuniFeature && clickMuniPoint && (
         <Popup
+          key={`muni-${clickMuniFeature.properties?.town || clickMuniFeature.properties?.NAME || ""}-${clickMuniPoint.lng}-${clickMuniPoint.lat}`}
           longitude={clickMuniPoint.lng}
           latitude={clickMuniPoint.lat}
-          closeButton={false}
+          closeButton={true}
+          onClose={() => {
+            setClickMuniFeature(null);
+            setClickMuniPoint(null);
+            setClickMuniFilterKey(null);
+            setClickMuniFilterValue(null);
+          }}
           anchor="top"
           offset={12}
+          closeOnClick={false}
         >
-          {(() => {
-            const p = clickMuniFeature.properties || {};
-            const townName = p.town || "N/A";
-            const capitalizedTownName = townName && townName !== "N/A" ? townName.charAt(0).toUpperCase() + townName.slice(1).toLowerCase() : townName;
-            return (
-              <div style={{minWidth: 160, color: '#2774bd'}}>
-                {capitalizedTownName && <div style={{fontWeight: 400}}>Municipality: {capitalizedTownName}</div>}
-              </div>
-            );
-          })()}
+          <div style={{ minWidth: 120, color: "#2774bd", fontWeight: 500 }}>
+            Municipality:{" "}
+            {(() => {
+              const p = clickMuniFeature.properties || {};
+              const townName = p.town || p.NAME || "";
+              return townName ? townName.charAt(0).toUpperCase() + townName.slice(1).toLowerCase() : "Unknown";
+            })()}
+          </div>
         </Popup>
       )}
       
