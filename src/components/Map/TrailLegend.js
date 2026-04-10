@@ -2,7 +2,12 @@ import React from 'react';
 import '../../styles/TrailLegend.scss';
 import { geojsonTrailLayers } from './constants/geojsonTrailLayers';
 
-const TrailLegend = ({ visibleTrailTypes, onToggleTrailType }) => {
+const TrailLegend = ({
+  visibleTrailTypes,
+  onToggleTrailType,
+  readOnly = false,
+  hideHeader = false,
+}) => {
   // If no visibility state provided, show all by default
   const isVisible = (layerId) => {
     if (!visibleTrailTypes) return true;
@@ -10,9 +15,8 @@ const TrailLegend = ({ visibleTrailTypes, onToggleTrailType }) => {
   };
 
   const handleClick = (layerId) => {
-    if (onToggleTrailType) {
-      onToggleTrailType(layerId);
-    }
+    if (readOnly || !onToggleTrailType) return;
+    onToggleTrailType(layerId);
   };
 
   // Separate trails into existing and planned
@@ -20,46 +24,48 @@ const TrailLegend = ({ visibleTrailTypes, onToggleTrailType }) => {
   const plannedTrails = geojsonTrailLayers.filter(layer => layer.name.includes('Planned'));
 
   const renderTrailItem = (layer) => {
-    const visible = isVisible(layer.id);
+    const visible = readOnly ? true : isVisible(layer.id);
     return (
       <div 
         key={layer.id} 
-        className="TrailLegend__item"
+        className={`TrailLegend__item${readOnly ? " TrailLegend__item--readonly" : ""}`}
         onClick={() => handleClick(layer.id)}
         style={{
-          cursor: 'pointer',
+          cursor: readOnly ? 'default' : 'pointer',
           opacity: visible ? 1 : 0.4,
           backgroundColor: visible ? 'transparent' : 'rgba(0, 0, 0, 0.05)',
           padding: '4px',
           borderRadius: '4px',
-          transition: 'all 0.2s ease'
+          transition: readOnly ? 'none' : 'all 0.2s ease'
         }}
-        onMouseEnter={(e) => {
+        onMouseEnter={readOnly ? undefined : (e) => {
           e.currentTarget.style.backgroundColor = visible ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.1)';
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={readOnly ? undefined : (e) => {
           e.currentTarget.style.backgroundColor = visible ? 'transparent' : 'rgba(0, 0, 0, 0.05)';
         }}
       >
-        <div 
-          className="TrailLegend__icon"
-          style={{
-            width: '20px',
-            height: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            cursor: 'pointer',
-            color: visible ? '#666' : '#999'
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClick(layer.id);
-          }}
-        >
-          <i className={visible ? "fas fa-eye" : "fas fa-eye-slash"}></i>
-        </div>
+        {!readOnly && (
+          <div 
+            className="TrailLegend__icon"
+            style={{
+              width: '20px',
+              height: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              cursor: 'pointer',
+              color: visible ? '#666' : '#999'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClick(layer.id);
+            }}
+          >
+            <i className={visible ? "fas fa-eye" : "fas fa-eye-slash"}></i>
+          </div>
+        )}
         <div className="TrailLegend__line-container">
           <svg width="40" height="3" className="TrailLegend__line">
             <line
@@ -83,10 +89,12 @@ const TrailLegend = ({ visibleTrailTypes, onToggleTrailType }) => {
 
   return (
     <div className="TrailLegend">
-      <div className="TrailLegend__header">
-        <strong>Trail Types</strong>
-      </div>
-      
+      {!hideHeader && (
+        <div className="TrailLegend__header">
+          <strong>Trail Types</strong>
+        </div>
+      )}
+
       {/* Existing Trails Section */}
       <div className="TrailLegend__section">
         <div className="TrailLegend__section-header">

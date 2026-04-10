@@ -11,6 +11,7 @@ import * as turf from '@turf/turf';
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
 import { useNavigate, useLocation } from "react-router-dom";
+import TrailsInventoryModal from "../Modals/TrailsInventoryModal";
 
 const MunicipalityProfile = ({ 
   selectedMunicipality, 
@@ -40,6 +41,7 @@ const MunicipalityProfile = ({
   const [selectedTrailIndex, setSelectedTrailIndex] = useState(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [showTrailsInventoryModal, setShowTrailsInventoryModal] = useState(false);
   const [downloadOption, setDownloadOption] = useState('both'); // 'existing', 'planned', or 'both'
 
   // Reset component states when switching back to trail filters
@@ -49,6 +51,7 @@ const MunicipalityProfile = ({
       setSelectedTrailIndex(null);
       setShowCompletionModal(false);
       setShowShareMenu(false);
+      setShowTrailsInventoryModal(false);
     };
     
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
@@ -135,6 +138,7 @@ const MunicipalityProfile = ({
         setSelectedTrailIndex(null);
         setShowCompletionModal(false);
         setShowShareMenu(false);
+        setShowTrailsInventoryModal(false);
         
         // Reset buffer analysis when selecting a new municipality
         window.dispatchEvent(new CustomEvent('resetBufferAnalysis'));
@@ -308,20 +312,18 @@ const MunicipalityProfile = ({
     ).join(' ');
   };
 
-  const handleDownloadTrailsData = (option = downloadOption) => {
-    if (!selectedMunicipality || !municipalityTrails || municipalityTrails.length === 0) {
+  const runTrailGeoJSONDownloads = (trails, option = 'both', filenameSuffix = '') => {
+    if (!selectedMunicipality || !trails || trails.length === 0) {
       return;
     }
 
-    // Separate trails into existing and planned
-    const existingTrails = municipalityTrails.filter(trail => 
+    const existingTrails = trails.filter(trail =>
       !trail.layerName || !trail.layerName.startsWith('Planned')
     );
-    const plannedTrails = municipalityTrails.filter(trail => 
+    const plannedTrails = trails.filter(trail =>
       trail.layerName && trail.layerName.startsWith('Planned')
     );
 
-    // Convert to GeoJSON FeatureCollection format
     const existingGeoJSON = {
       type: "FeatureCollection",
       features: existingTrails.map(trail => trail.feature || {
@@ -340,20 +342,19 @@ const MunicipalityProfile = ({
       })
     };
 
-    // Create filenames with municipality name
     const muniName = capitalizeWords(selectedMunicipality.name).replace(/\s+/g, '_');
-    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-    
+    const timestamp = new Date().toISOString().split('T')[0];
+    const suffix = filenameSuffix || '';
+
     let downloadedCount = 0;
-    
-    // Download based on selected option
+
     if (option === 'existing' || option === 'both') {
       if (existingGeoJSON.features.length > 0) {
         const existingBlob = new Blob([JSON.stringify(existingGeoJSON, null, 2)], { type: 'application/json' });
         const existingUrl = URL.createObjectURL(existingBlob);
         const existingLink = document.createElement('a');
         existingLink.href = existingUrl;
-        existingLink.download = `${muniName}_existing_trails_${timestamp}.geojson`;
+        existingLink.download = `${muniName}_existing_trails_${timestamp}${suffix}.geojson`;
         document.body.appendChild(existingLink);
         existingLink.click();
         document.body.removeChild(existingLink);
@@ -368,7 +369,7 @@ const MunicipalityProfile = ({
         const plannedUrl = URL.createObjectURL(plannedBlob);
         const plannedLink = document.createElement('a');
         plannedLink.href = plannedUrl;
-        plannedLink.download = `${muniName}_planned_trails_${timestamp}.geojson`;
+        plannedLink.download = `${muniName}_planned_trails_${timestamp}${suffix}.geojson`;
         document.body.appendChild(plannedLink);
         plannedLink.click();
         document.body.removeChild(plannedLink);
@@ -377,15 +378,14 @@ const MunicipalityProfile = ({
       }
     }
 
-    // Show success message
     if (downloadedCount > 0) {
       const toast = document.createElement('div');
-      const message = option === 'both' 
+      const message = option === 'both'
         ? 'Trail data downloaded successfully!'
         : option === 'existing'
         ? 'Existing trails downloaded successfully!'
         : 'Planned trails downloaded successfully!';
-      
+
       toast.innerHTML = `
         <div style="
           position: fixed !important;
@@ -408,7 +408,7 @@ const MunicipalityProfile = ({
           ${message}
         </div>
       `;
-      
+
       document.body.appendChild(toast);
       setTimeout(() => {
         if (document.body.contains(toast)) {
@@ -416,6 +416,10 @@ const MunicipalityProfile = ({
         }
       }, 3000);
     }
+  };
+
+  const handleDownloadTrailsData = (option = downloadOption) => {
+    runTrailGeoJSONDownloads(municipalityTrails, option, '');
   };
 
   const handleShareProfile = async () => {
@@ -769,6 +773,18 @@ const MunicipalityProfile = ({
                 Buffer Analysis Tool
               </Button>
             </div>
+            {location.pathname === '/communityTrailsProfile' && (
+              <div className="mb-2">
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  className="w-100"
+                  onClick={() => setShowTrailsInventoryModal(true)}
+                >
+                  Trails inventory (table & map)
+                </Button>
+              </div>
+            )}
               <div className="mb-2">
                 <Form.Label className="small fw-semibold d-block mb-2">Download Trail Data</Form.Label>
                 <Form.Select 
@@ -1014,6 +1030,18 @@ const MunicipalityProfile = ({
           </div>
         </Modal.Footer>
       </Modal>
+
+      {location.pathname === '/communityTrailsProfile' && (
+        <TrailsInventoryModal
+          show={showTrailsInventoryModal}
+          onHide={() => setShowTrailsInventoryModal(false)}
+          selectedMunicipality={selectedMunicipality}
+          municipalityTrails={municipalityTrails}
+          onDownloadGeoJSON={(trails, filenameSuffix) =>
+            runTrailGeoJSONDownloads(trails, 'both', filenameSuffix)
+          }
+        />
+      )}
 
     </div>
   );
