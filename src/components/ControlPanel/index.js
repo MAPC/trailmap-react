@@ -4,7 +4,7 @@ import Button from "react-bootstrap/Button";
 import TypeButton from "./TypeButton";
 import Legend from "./Legend";
 import MunicipalityProfile from "./MunicipalityProfile";
-import ProjectTrailsProfile from "./ProjectTrailsProfile";
+// import ProjectTrailsProfile from "./ProjectTrailsProfile";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -38,16 +38,16 @@ const ControlPanel = ({
     setShowMunicipalityView,
     showMunicipalityProfileMap,
     setShowMunicipalityProfileMap,
-    showProjectTrailsView,
+    // showProjectTrailsView,
     setShowProjectTrailsView,
-    showProjectTrailsProfileMap,
+    // showProjectTrailsProfileMap,
     setShowProjectTrailsProfileMap,
-    projectRegNames,
-    setProjectRegNames,
-    selectedProjectRegName,
-    setSelectedProjectRegName,
-    projectColorPalette,
-    setProjectColorPalette,
+    // projectRegNames,
+    // setProjectRegNames,
+    // selectedProjectRegName,
+    // setSelectedProjectRegName,
+    // projectColorPalette,
+    // setProjectColorPalette,
     // Layer toggle states from context
     showCommuterRail,
     setShowCommuterRail,
@@ -105,19 +105,8 @@ const ControlPanel = ({
       setShowMunicipalityProfileMap(true);
       setSelectedMunicipality(null);
       setShowMunicipalityView(true);
-    } else if (currentPath === '/projectTrailsProfile' && !showProjectTrailsView) {
-      // Automatically switch to project trails view
-      setSavedTrailLayers([...trailLayers]);
-      setSavedProposedLayers([...proposedLayers]);
-      setTrailLayers([]);
-      setProposedLayers([]);
-      if (showMaHouseDistricts) toggleMaHouseDistricts(false);
-      if (showMaSenateDistricts) toggleMaSenateDistricts(false);
-      // Always turn off municipalities in project trails profile
-      toggleMunicipalities(false);
-      setShowProjectTrailsProfileMap(true);
-      setShowProjectTrailsView(true);
-    } else if (currentPath !== '/communityTrailsProfile' && currentPath !== '/projectTrailsProfile' && (showMunicipalityView || showProjectTrailsView)) {
+    /* Project trails profile: removed branch for currentPath === '/projectTrailsProfile' */
+    } else if (currentPath !== '/communityTrailsProfile' && showMunicipalityView) {
       // If we're not on a profile path but a view is active, switch back
       setTrailLayers(savedTrailLayers);
       setProposedLayers(savedProposedLayers);
@@ -239,104 +228,16 @@ const ControlPanel = ({
     }
   }, [selectedMunicipality, municipalityTrails, showMunicipalityView]);
 
-  // Handle project trails view toggle
-  const handleProjectTrailsToggle = () => {
-    if (!showProjectTrailsView) {
-      // Switching TO project trails view
-      isNavigatingRef.current = true;
-      
-      // Save current trail layers
-      setSavedTrailLayers([...trailLayers]);
-      setSavedProposedLayers([...proposedLayers]);
-      
-      // Clear all trail layers
-      setTrailLayers([]);
-      setProposedLayers([]);
-      
-      // Turn off other district layers
-      if (showMaHouseDistricts) toggleMaHouseDistricts(false);
-      if (showMaSenateDistricts) toggleMaSenateDistricts(false);
-      // Always turn off municipalities in project trails profile
-      toggleMunicipalities(false);
-      
-      // Enable the project trails profile map
-      setShowProjectTrailsProfileMap(true);
-      setShowProjectTrailsView(true);
-      
-      // Navigate to /projectTrailsProfile
-      navigate('/projectTrailsProfile');
-    } else {
-      // Switching BACK to trail filters
-      isNavigatingRef.current = true;
-      
-      // Restore saved trail layers
-      setTrailLayers(savedTrailLayers);
-      setProposedLayers(savedProposedLayers);
-      
-      // Disable the project trails profile map
-      setShowProjectTrailsProfileMap(false);
-      setShowProjectTrailsView(false);
-      
-      // Navigate back to root path
-      navigate('/');
-    }
-  };
+  /* Project trails profile disabled — restore handleProjectTrailsToggle + UI to re-enable
+  const handleProjectTrailsToggle = () => { ... };
+  */
 
   return (
-    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto ${showProjectTrailsView ? 'project-trails-profile' : ''}`}>
+    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto`}>
       <div className="ControlPanel_opacity position-fixed"></div>
       <div>
-        {showProjectTrailsView ? (
-          <>
-            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Project Trails Profile</span>
-            <Button 
-              variant="outline-secondary"
-              size="sm"
-              className="w-100 mb-3 ControlPanel__toggle-btn"
-              onClick={handleProjectTrailsToggle}
-            >
-              ← Back to Trail Filters
-            </Button>
-
-            {/* Map Layers Section */}
-            <div className="mb-3 mt-3">
-              <Form.Label className="small fw-semibold d-block mb-2">Map Layers</Form.Label>
-              <Button
-                variant={showEnvironmentalJustice ? "primary" : "outline-secondary"}
-                size="sm"
-                className="w-100 mb-2"
-                onClick={() => {
-                  const newState = !showEnvironmentalJustice;
-                  setShowEnvironmentalJustice(newState);
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('toggleEnvironmentalJustice', { 
-                      detail: { show: newState } 
-                    }));
-                  }, 10);
-                }}
-              >
-                {showEnvironmentalJustice ? "Hide" : "Show"} Environmental Justice
-              </Button>
-
-              <Button
-                variant={showOpenSpace ? "primary" : "outline-secondary"}
-                size="sm"
-                className="w-100 mb-2"
-                onClick={() => {
-                  const newState = !showOpenSpace;
-                  setShowOpenSpace(newState);
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('toggleOpenSpace', { 
-                      detail: { show: newState } 
-                    }));
-                  }, 10);
-                }}
-              >
-                {showOpenSpace ? "Hide" : "Show"} OpenSpace
-              </Button>
-            </div>
-          </>
-        ) : showMunicipalityView ? (
+        {/* Project trails profile panel removed (was showProjectTrailsView branch) */}
+        {showMunicipalityView ? (
           <>
             <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Community Trails Profile</span>
             <Button 
@@ -352,7 +253,7 @@ const ControlPanel = ({
           <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Find the trails that work for you!</span>
         )}
        
-        {!showProjectTrailsView && !showMunicipalityView && (
+        {!showMunicipalityView && (
           <div className="mb-3">
             <Button 
               variant="primary"
@@ -367,31 +268,15 @@ const ControlPanel = ({
             >
               View Community Trails Profile
             </Button>
-            <Button 
-              variant="primary"
-              size="sm"
-              className="w-100 ControlPanel__toggle-btn"
-              style={{
-                backgroundColor: 'rgba(59, 131, 199, 0.85)',
-                borderColor: 'rgba(59, 131, 199, 0.85)',
-                color: 'white'
-              }}
-              onClick={handleProjectTrailsToggle}
-            >
+            {/* View Project Trails Profile — disabled with project trails profile
+            <Button variant="primary" size="sm" className="w-100 ControlPanel__toggle-btn" ...>
               View Project Trails Profile
             </Button>
+            */}
           </div>
         )}
 
-        {showProjectTrailsView ? (
-          <div className="mt-2">
-            <ProjectTrailsProfile
-              regNames={projectRegNames || []}
-              selectedRegNames={selectedRegNames instanceof Set ? selectedRegNames : (selectedRegNames ? new Set(selectedRegNames) : new Set())}
-              onToggleRegName={onToggleRegName || (() => {})}
-            />
-          </div>
-        ) : !showMunicipalityView ? (
+        {!showMunicipalityView ? (
           <>
             <p>
               Select from various trail types to find trails best suited to your needs. Find a description of each to the

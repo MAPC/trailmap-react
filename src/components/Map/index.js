@@ -28,13 +28,13 @@ import massachusettsData from "../../data/massachusetts.json";
 // Commuter rail and bike station data will be fetched when needed
 import SuccessModal from "../Modals/SuccessModal";
 import FailModal from "../Modals/FailModal";
-import BufferAnalysisWindow from "../BufferAnalysisWindow";
+// import BufferAnalysisWindow from "../BufferAnalysisWindow";
 import TrailLegend from "./TrailLegend";
 import * as turf from "@turf/turf";
 // Extracted components
 import CommunityTrailsProfile from "./CommunityTrailsProfile";
 import OriginalTrailsMap from "./OriginalTrailsMap";
-import ProjectTrailsProfile from "./ProjectTrailsProfile";
+// import ProjectTrailsProfile from "./ProjectTrailsProfile";
 // Extracted constants
 import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
 
@@ -67,8 +67,8 @@ const Map = () => {
     setMunicipalityTrails,
     showMunicipalityProfileMap,
     showMunicipalityView,
-    showProjectTrailsProfileMap,
-    showProjectTrailsView,
+    // showProjectTrailsProfileMap,
+    // showProjectTrailsView,
     // Layer toggle states from context
     showCommuterRail,
     setShowCommuterRail,
@@ -129,13 +129,13 @@ const Map = () => {
 
   // Auto-switch to light basemap when entering municipality or project trails profile
   useEffect(() => {
-    if (showMunicipalityProfileMap || showProjectTrailsProfileMap) {
+    if (showMunicipalityProfileMap) {
       const lightBasemap = basemaps.find((bm) => bm.id === 'mapboxLight');
       if (lightBasemap && baseLayer.id !== 'mapboxLight') {
         setBaseLayer(lightBasemap);
       }
     }
-  }, [showMunicipalityProfileMap, showProjectTrailsProfileMap, basemaps, baseLayer, setBaseLayer]);
+  }, [showMunicipalityProfileMap, basemaps, baseLayer, setBaseLayer]);
 
   const generateShareUrl = () => {
     return `${window.location.href.split("?")[0]}?baseLayer=${baseLayer.id}&trailLayers=${trailLayers.join(
@@ -151,18 +151,8 @@ const Map = () => {
       <FailModal />
 
       <div className="Map position-relative">
-        {showProjectTrailsProfileMap ? (
-          <ProjectTrailsProfile
-            viewport={viewport}
-            setViewport={setViewport}
-            baseLayer={baseLayer}
-            showBasemapPanel={showBasemapPanel}
-            toggleBasemapPanel={toggleBasemapPanel}
-            showControlPanel={showControlPanel}
-            toggleControlPanel={toggleControlPanel}
-            mapRef={mapRef}
-          />
-        ) : showMunicipalityProfileMap ? (
+        {/* Project trails profile map (ProjectTrailsProfile) disabled — was: showProjectTrailsProfileMap ? <ProjectTrailsProfile ... /> : ... */}
+        {showMunicipalityProfileMap ? (
           <CommunityTrailsProfile
             viewport={viewport}
             setViewport={setViewport}

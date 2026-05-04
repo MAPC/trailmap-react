@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
 import axios from "axios";
 import bbox from "@turf/bbox";
-import * as turf from "@turf/turf";
+// import * as turf from "@turf/turf"; // buffer analysis zoom only
 import LoadingBar from "../LoadingBar";
 import BasemapPanel from "../BasemapPanel";
 import Control from "./Control";
@@ -12,13 +12,13 @@ import FilterIcon from "../../assets/icons/filter-icon.svg";
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import CommunityIdentify from "./CommunityIdentify";
 import TrailLegend from "./TrailLegend";
-import BufferAnalysisWindow from "../BufferAnalysisWindow";
+// import BufferAnalysisWindow from "../BufferAnalysisWindow";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
 import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
-import { DEFAULT_BUFFER_RADIUS } from "./constants/mapConstants";
+// import { DEFAULT_BUFFER_RADIUS } from "./constants/mapConstants";
 import { queryMunicipalityTrails } from "./utils/trailQueries";
-import { calculateBufferAnalysis } from "./utils/bufferAnalysis";
+// import { calculateBufferAnalysis } from "./utils/bufferAnalysis";
 import CommunityTrailsProfileLayers from "./layers/CommunityTrailsProfileLayers";
 import MunicipalityMapLayer from "./layers/MunicipalityMapLayer";
 import CommuterRailLayers from "./layers/CommuterRailLayers";
@@ -30,7 +30,7 @@ import LandlinesLayer from "./layers/LandlinesLayer";
 import TrailsRegNameSyncLayer from "./layers/TrailsRegNameSyncLayer";
 import TransitLandStopsLayer from "./layers/TransitLandStopsLayer";
 import TransitLandRoutesLayer from "./layers/TransitLandRoutesLayer";
-import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
+// import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 
@@ -119,13 +119,13 @@ const CommunityTrailsProfile = ({
   const [blueBikeStationsData, setBlueBikeStationsData] = useState(null);
   const [subwayStationsData, setSubwayStationsData] = useState(null);
   
-  // Buffer analysis states
-  const [showBufferAnalysis, setShowBufferAnalysis] = useState(false);
-  const [isBufferActive, setIsBufferActive] = useState(false);
-  const [bufferCenter, setBufferCenter] = useState(null);
-  const [bufferRadius, setBufferRadius] = useState(DEFAULT_BUFFER_RADIUS);
-  const [bufferResults, setBufferResults] = useState(null);
-  const [bufferPreviewCenter, setBufferPreviewCenter] = useState(null);
+  // Buffer analysis (community trails profile) — disabled
+  // const [showBufferAnalysis, setShowBufferAnalysis] = useState(false);
+  // const [isBufferActive, setIsBufferActive] = useState(false);
+  // const [bufferCenter, setBufferCenter] = useState(null);
+  // const [bufferRadius, setBufferRadius] = useState(DEFAULT_BUFFER_RADIUS);
+  // const [bufferResults, setBufferResults] = useState(null);
+  // const [bufferPreviewCenter, setBufferPreviewCenter] = useState(null);
 
   // Wrapper for queryMunicipalityTrails
   const handleQueryMunicipalityTrails = async (municipality) => {
@@ -146,18 +146,16 @@ const CommunityTrailsProfile = ({
     });
   };
 
-  // Wrapper for calculateBufferAnalysis
-  const handleCalculateBufferAnalysis = (center, radius) => {
-    return calculateBufferAnalysis(
-      center,
-      radius,
-      intersectedTrails,
-      commuterRailStationsData,
-      blueBikeStationsData,
-      subwayStationsData
-    );
-  };
-
+  // const handleCalculateBufferAnalysis = (center, radius) => {
+  //   return calculateBufferAnalysis(
+  //     center,
+  //     radius,
+  //     intersectedTrails,
+  //     commuterRailStationsData,
+  //     blueBikeStationsData,
+  //     subwayStationsData
+  //   );
+  // };
 
   // Toggle trail type visibility
   const handleToggleTrailType = (layerId) => {
@@ -197,7 +195,7 @@ const CommunityTrailsProfile = ({
   useEffect(() => {
     const handleToggleCommuterRail = (event) => setShowCommuterRail(event.detail.show);
     const handleToggleStationLabels = (event) => setShowStationLabels(event.detail.show);
-    const handleOpenBufferAnalysis = () => setShowBufferAnalysis(true);
+    // const handleOpenBufferAnalysis = () => setShowBufferAnalysis(true);
     const handleToggleBlueBikeStations = (event) => setShowBlueBikeStations(event.detail.show);
     const handleToggleSubwayStations = (event) => setShowSubwayStations(event.detail.show);
     const handleToggleEnvironmentalJustice = (event) => setShowEnvironmentalJustice(event.detail.show);
@@ -218,11 +216,11 @@ const CommunityTrailsProfile = ({
       setShowLandlinesFeatureService(false);
       setShowTrailsRegNameSync(false);
       setShowTransitLandStops(false);
-      setShowBufferAnalysis(false);
-      setIsBufferActive(false);
-      setBufferCenter(null);
-      setBufferResults(null);
-      setBufferPreviewCenter(null);
+      // setShowBufferAnalysis(false);
+      // setIsBufferActive(false);
+      // setBufferCenter(null);
+      // setBufferResults(null);
+      // setBufferPreviewCenter(null);
       // Reset trail type visibility to all visible
       const resetVisibility = {};
       geojsonTrailLayers.forEach(layer => {
@@ -231,13 +229,13 @@ const CommunityTrailsProfile = ({
       setVisibleTrailTypes(resetVisibility);
     };
     
-    const handleResetBufferAnalysis = () => {
-      setShowBufferAnalysis(false);
-      setIsBufferActive(false);
-      setBufferCenter(null);
-      setBufferResults(null);
-      setBufferPreviewCenter(null);
-    };
+    // const handleResetBufferAnalysis = () => {
+    //   setShowBufferAnalysis(false);
+    //   setIsBufferActive(false);
+    //   setBufferCenter(null);
+    //   setBufferResults(null);
+    //   setBufferPreviewCenter(null);
+    // };
     
     window.addEventListener('toggleCommuterRail', handleToggleCommuterRail);
     window.addEventListener('toggleStationLabels', handleToggleStationLabels);
@@ -248,9 +246,9 @@ const CommunityTrailsProfile = ({
     window.addEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
     window.addEventListener('toggleTrailsRegNameSync', handleToggleTrailsRegNameSync);
     window.addEventListener('toggleTransitLandStops', handleToggleTransitLandStops);
-    window.addEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
+    // window.addEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
-    window.addEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
+    // window.addEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
     
     return () => {
       window.removeEventListener('toggleCommuterRail', handleToggleCommuterRail);
@@ -262,9 +260,9 @@ const CommunityTrailsProfile = ({
       window.removeEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
       window.removeEventListener('toggleTrailsRegNameSync', handleToggleTrailsRegNameSync);
       window.removeEventListener('toggleTransitLandStops', handleToggleTransitLandStops);
-      window.removeEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
+      // window.removeEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
       window.removeEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
-      window.removeEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
+      // window.removeEventListener('resetBufferAnalysis', handleResetBufferAnalysis);
     };
   }, []);
 
@@ -347,7 +345,7 @@ const CommunityTrailsProfile = ({
         {...viewport}
         width="100%"
         height="100%"
-        cursor={isBufferActive ? "crosshair" : "default"}
+        cursor="default"
         transformRequest={(url, resourceType) => {
           // Use transformRequest to add API key header for Transit.land tiles
           // This is recommended by Transit.land documentation
@@ -373,16 +371,8 @@ const CommunityTrailsProfile = ({
           setViewport(event.viewState);
         }}
         onClick={(event) => {
-          // Handle buffer creation
-          if (isBufferActive && event.lngLat) {
-            const center = { lng: event.lngLat.lng, lat: event.lngLat.lat };
-            setBufferCenter(center);
-            setIsBufferActive(false);
-            setBufferPreviewCenter(null);
-            const results = handleCalculateBufferAnalysis(center, bufferRadius);
-            setBufferResults(results);
-            return;
-          }
+          // Buffer analysis disabled
+          // if (isBufferActive && event.lngLat) { ... return; }
 
           if (event.features) {
             // Check for GeoJSON trail clicks
@@ -620,12 +610,8 @@ const CommunityTrailsProfile = ({
         onMouseMove={(event) => {
           const features = event.features || [];
 
-          // Handle buffer preview circle
-          if (isBufferActive && event.lngLat) {
-            setBufferPreviewCenter({ lng: event.lngLat.lng, lat: event.lngLat.lat });
-          } else {
-            setBufferPreviewCenter(null);
-          }
+          // Buffer preview disabled
+          // if (isBufferActive && event.lngLat) { setBufferPreviewCenter(...); } else { setBufferPreviewCenter(null); }
 
           // Handle OpenSpace layer hover FIRST (before other features)
           if (showOpenSpace && event.lngLat) {
@@ -1035,10 +1021,11 @@ const CommunityTrailsProfile = ({
           />
         </Source>
         
-        {/* Buffer Analysis Layers */}
+        {/* Buffer analysis layers disabled
         {renderBufferPreview(bufferPreviewCenter, isBufferActive, bufferRadius)}
         {renderBufferCircle(bufferCenter, bufferRadius)}
         {renderBufferCenter(bufferCenter)}
+        */}
         
         <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
         
@@ -1071,107 +1058,9 @@ const CommunityTrailsProfile = ({
         />
       </ReactMapGL>
       
-      {/* Buffer Analysis Window */}
-      <BufferAnalysisWindow
-        show={showBufferAnalysis}
-        onClose={() => setShowBufferAnalysis(false)}
-        bufferResults={bufferResults}
-        bufferRadius={bufferRadius}
-        onRadiusChange={(newRadius) => {
-          setBufferRadius(newRadius);
-          if (bufferCenter) {
-            const results = handleCalculateBufferAnalysis(bufferCenter, newRadius);
-            setBufferResults(results);
-          }
-        }}
-        onActivateBuffer={(clear = false) => {
-          if (clear) {
-            setIsBufferActive(false);
-            setBufferCenter(null);
-            setBufferResults(null);
-            setBufferPreviewCenter(null);
-          } else if (isBufferActive) {
-            setIsBufferActive(false);
-            setBufferPreviewCenter(null);
-          } else {
-            setIsBufferActive(true);
-            setBufferCenter(null);
-            setBufferResults(null);
-          }
-        }}
-        isBufferActive={isBufferActive}
-        bufferCenter={bufferCenter}
-        selectedMunicipality={selectedMunicipality}
-        onBlueBikeStationHover={(station) => {
-          if (station && blueBikeStationsData && blueBikeStationsData.features) {
-            const feature = blueBikeStationsData.features.find(f => 
-              f.properties?.Name === station.name
-            );
-            if (feature) {
-              setHoveredBlueBikeStation(feature);
-            }
-          } else {
-            setHoveredBlueBikeStation(null);
-          }
-        }}
-        onCommuterRailStationHover={(station) => {
-          if (station && commuterRailStationsData && commuterRailStationsData.features) {
-            const feature = commuterRailStationsData.features.find(f => 
-              f.properties?.station === station.name
-            );
-            if (feature) {
-              setHoveredCommuterRailStation(feature);
-            }
-          } else {
-            setHoveredCommuterRailStation(null);
-          }
-        }}
-        onSubwayStationHover={(station) => {
-          if (station && subwayStationsData && subwayStationsData.stations && subwayStationsData.stations.features) {
-            const feature = subwayStationsData.stations.features.find(f => 
-              f.properties?.STATION === station.name
-            );
-            if (feature) {
-              setHoveredSubwayStation(feature);
-            }
-          } else {
-            setHoveredSubwayStation(null);
-          }
-        }}
-        onClearBuffer={() => {
-          setIsBufferActive(false);
-          setBufferCenter(null);
-          setBufferResults(null);
-          setBufferPreviewCenter(null);
-        }}
-        onZoomToBuffer={() => {
-          if (bufferCenter && bufferRadius) {
-            const centerPoint = turf.point([bufferCenter.lng, bufferCenter.lat]);
-            const bufferCircle = turf.circle(centerPoint, bufferRadius / 1000, { 
-              units: 'kilometers',
-              steps: 64 
-            });
-            const bbox = turf.bbox(bufferCircle);
-            
-            if (mapRef.current && mapRef.current.getMap) {
-              const map = mapRef.current.getMap();
-              map.fitBounds([
-                [bbox[0], bbox[1]],
-                [bbox[2], bbox[3]]
-              ], {
-                padding: 50,
-                maxZoom: 16
-              });
-            }
-          }
-        }}
-        showCommuterRail={showCommuterRail}
-        showBlueBikeStations={showBlueBikeStations}
-        showSubwayStations={showSubwayStations}
-        onToggleCommuterRail={setShowCommuterRail}
-        onToggleBlueBikeStations={setShowBlueBikeStations}
-        onToggleSubwayStations={setShowSubwayStations}
-      />
+      {/* Buffer Analysis Window — disabled for community trails profile
+      <BufferAnalysisWindow ... />
+      */}
     </>
   );
 };

@@ -140,8 +140,8 @@ const MunicipalityProfile = ({
         setShowShareMenu(false);
         setShowTrailsInventoryModal(false);
         
-        // Reset buffer analysis when selecting a new municipality
-        window.dispatchEvent(new CustomEvent('resetBufferAnalysis'));
+        // Buffer analysis disabled in community profile
+        // window.dispatchEvent(new CustomEvent('resetBufferAnalysis'));
         
       }
       
@@ -761,18 +761,13 @@ const MunicipalityProfile = ({
 
           {municipalityTrails && municipalityTrails.length > 0 && (
             <>
+            {/* Buffer analysis disabled in community trails profile
             <div className="mb-2">
-              <Button 
-                variant="outline-info" 
-                size="sm" 
-                className="w-100"
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('openBufferAnalysis'));
-                }}
-              >
+              <Button variant="outline-info" size="sm" className="w-100" onClick={() => { window.dispatchEvent(new CustomEvent('openBufferAnalysis')); }}>
                 Buffer Analysis Tool
               </Button>
             </div>
+            */}
             {location.pathname === '/communityTrailsProfile' && (
               <div className="mb-2">
                 <Button
