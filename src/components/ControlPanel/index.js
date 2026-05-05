@@ -239,7 +239,7 @@ const ControlPanel = ({
         {/* Project trails profile panel removed (was showProjectTrailsView branch) */}
         {showMunicipalityView ? (
           <>
-            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Community Trails Profile</span>
+            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Community Profile</span>
             <Button 
               variant="outline-secondary"
               size="sm"
@@ -266,7 +266,7 @@ const ControlPanel = ({
               }}
               onClick={handleViewToggle}
             >
-              View Community Trails Profile
+              View Community Profile
             </Button>
             {/* View Project Trails Profile — disabled with project trails profile
             <Button variant="primary" size="sm" className="w-100 ControlPanel__toggle-btn" ...>
