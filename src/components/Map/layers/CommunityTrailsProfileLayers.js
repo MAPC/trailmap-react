@@ -1,6 +1,7 @@
 import React from "react";
 import { Source, Layer } from "react-map-gl";
-import { geojsonTrailLayers } from "../constants/geojsonTrailLayers";
+import { trailsProfileLayers } from "../constants/mapConstants";
+
 
 /**
  * Renders GeoJSON trail layers for community trails profile (municipality profile)
@@ -30,7 +31,7 @@ const CommunityTrailsProfileLayers = ({
   // Create a GeoJSON source for each layer
   Object.keys(trailsByLayer).forEach(layerId => {
     const layerTrails = trailsByLayer[layerId];
-    const layerInfo = geojsonTrailLayers.find(l => l.id === parseInt(layerId));
+    const layerInfo = trailsProfileLayers.find(l => l.id === parseInt(layerId));
     
     // Check if this trail type is visible (default to true if not specified)
     const isVisible = visibleTrailTypes[layerId] !== false;
@@ -104,7 +105,7 @@ const CommunityTrailsProfileLayers = ({
     };
 
     // Add dash array if the trail has one
-    const layerInfo = geojsonTrailLayers.find(l => l.id === highlightedTrail.layerId);
+    const layerInfo = trailsProfileLayers.find(l => l.id === highlightedTrail.layerId);
     if (layerInfo && layerInfo.dashArray) {
       highlightPaint["line-dasharray"] = layerInfo.dashArray;
     }

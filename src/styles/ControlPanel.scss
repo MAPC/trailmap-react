@@ -1,4 +1,13 @@
 .ControlPanel {
+  background-color: $lighter-blue;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
+  font-size: $body-font-size;
+  height: 100vh;
+  left: 0;
+  top: 60px;
+  width: 260px;
+  z-index: 6;
+
   &__toggle-btn {
     transition: all 0.3s ease;
     font-weight: 500;
@@ -8,19 +17,10 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
   }
-  background-color: $lighter-blue;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
-  font-size: $body-font-size;
-  height: 100vh;
-  left: 0;
-  top: 60px;
-  z-index: 6;
 
   @media only screen and (max-height: 920px) and (min-width: 1000px) {
     width: 275px;
   }
-
-  width: 260px;
 
   &_opacity {
     background-color: $lighter-blue;

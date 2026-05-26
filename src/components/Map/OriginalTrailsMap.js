@@ -10,7 +10,7 @@ import MAhouseDistrictsButton from '../MAhouseDistrictsButton';
 import MASenateDistrictsButton from '../MASenateDistrictsButton';
 import MunicipalitiesButton from '../MunicipalitiesButton';
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
-import Identify from "./Identify";
+import Identify from "./tooltip/Identify";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
 import OriginalTrailsFilterLayers from "./layers/OriginalTrailsFilterLayers";
@@ -49,20 +49,21 @@ const OriginalTrailsMap = ({
   const [identifyInfo, setIdentifyInfo] = useState(null);
   const [identifyPoint, setIdentifyPoint] = useState(null);
   const [pointIndex, setPointIndex] = useState(0);
-  const [hoverPoint, setHoverPoint] = useState(null);
-  const [hoverFeature, setHoverFeature] = useState(null);
-  const [hoverFilterKey, setHoverFilterKey] = useState(null);
-  const [hoverFilterValue, setHoverFilterValue] = useState(null);
-  const [senateHoverPoint, setSenateHoverPoint] = useState(null);
-  const [senateHoverFeature, setSenateHoverFeature] = useState(null);
-  const [senateHoverFilterKey, setSenateHoverFilterKey] = useState(null);
-  const [senateHoverFilterValue, setSenateHoverFilterValue] = useState(null);
-  const [muniHoverPoint, setMuniHoverPoint] = useState(null);
-  const [muniHoverFeature, setMuniHoverFeature] = useState(null);
-  const [muniHoverFilterKey, setMuniHoverFilterKey] = useState(null);
-  const [muniHoverFilterValue, setMuniHoverFilterValue] = useState(null);
+  const [clickHousePoint, setClickHousePoint] = useState(null);
+  const [clickHouseFeature, setClickHouseFeature] = useState(null);
+  const [clickHouseFilterKey, setClickHouseFilterKey] = useState(null);
+  const [clickHouseFilterValue, setClickHouseFilterValue] = useState(null);
+  const [clickSenatePoint, setClickSenatePoint] = useState(null);
+  const [clickSenateFeature, setClickSenateFeature] = useState(null);
+  const [clickSenateFilterKey, setClickSenateFilterKey] = useState(null);
+  const [clickSenateFilterValue, setClickSenateFilterValue] = useState(null);
+  const [clickMuniPoint, setClickMuniPoint] = useState(null);
+  const [clickMuniFeature, setClickMuniFeature] = useState(null);
+  const [clickMuniFilterKey, setClickMuniFilterKey] = useState(null);
+  const [clickMuniFilterValue, setClickMuniFilterValue] = useState(null);
   const [showOneLayerNotice, setShowOneLayerNotice] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
+  const hoveredTrailRef = React.useRef(null);
 
   // Show notice when any one of the exclusive layers turns on
   React.useEffect(() => {
@@ -82,39 +83,39 @@ const OriginalTrailsMap = ({
   React.useEffect(() => {
     if (isZooming) {
       const timer = setTimeout(() => {
-        setHoverFeature(null);
-        setHoverPoint(null);
-        setHoverFilterKey(null);
-        setHoverFilterValue(null);
-        setSenateHoverFeature(null);
-        setSenateHoverPoint(null);
-        setSenateHoverFilterKey(null);
-        setSenateHoverFilterValue(null);
-        setMuniHoverFeature(null);
-        setMuniHoverPoint(null);
-        setMuniHoverFilterKey(null);
-        setMuniHoverFilterValue(null);
+        setClickHouseFeature(null);
+        setClickHousePoint(null);
+        setClickHouseFilterKey(null);
+        setClickHouseFilterValue(null);
+        setClickSenateFeature(null);
+        setClickSenatePoint(null);
+        setClickSenateFilterKey(null);
+        setClickSenateFilterValue(null);
+        setClickMuniFeature(null);
+        setClickMuniPoint(null);
+        setClickMuniFilterKey(null);
+        setClickMuniFilterValue(null);
         setIsZooming(false);
       }, 1100);
       return () => clearTimeout(timer);
     }
   }, [isZooming]);
 
-  // Clear hover states when identify popup closes
+  // Clear click states when identify popup closes
   React.useEffect(() => {
     if (!showIdentifyPopup) {
-      setHoverFeature(null);
-      setHoverPoint(null);
-      setHoverFilterKey(null);
-      setHoverFilterValue(null);
-      setSenateHoverFeature(null);
-      setSenateHoverPoint(null);
-      setSenateHoverFilterKey(null);
-      setSenateHoverFilterValue(null);
-      setMuniHoverFeature(null);
-      setMuniHoverPoint(null);
-      setMuniHoverFilterKey(null);
-      setMuniHoverFilterValue(null);
+      setClickHouseFeature(null);
+      setClickHousePoint(null);
+      setClickHouseFilterKey(null);
+      setClickHouseFilterValue(null);
+      setClickSenateFeature(null);
+      setClickSenatePoint(null);
+      setClickSenateFilterKey(null);
+      setClickSenateFilterValue(null);
+      setClickMuniFeature(null);
+      setClickMuniPoint(null);
+      setClickMuniFilterKey(null);
+      setClickMuniFilterValue(null);
     }
   }, [showIdentifyPopup]);
 
@@ -156,8 +157,8 @@ const OriginalTrailsMap = ({
       );
       visibleMaHouseDistrictsLayers.push(
         <Layer
-          key="ma-house-districts-hover"
-          id="ma-house-districts-hover"
+          key="ma-house-districts-click"
+          id="ma-house-districts-click"
           type="fill"
           source="ma-house-districts"
           paint={{
@@ -165,8 +166,8 @@ const OriginalTrailsMap = ({
             "fill-outline-color": "black"
           }}
           filter={
-            hoverFilterKey && hoverFilterValue !== null
-              ? ["==", ["get", hoverFilterKey], hoverFilterValue]
+            clickHouseFilterKey && clickHouseFilterValue !== null
+              ? ["==", ["get", clickHouseFilterKey], clickHouseFilterValue]
               : ["==", ["get", "__none__"], "__no_match__"]
           }
         />
@@ -204,8 +205,8 @@ const OriginalTrailsMap = ({
       );
       visibleMaSenateDistrictsLayers.push(
         <Layer
-          key="ma-senate-districts-hover"
-          id="ma-senate-districts-hover"
+          key="ma-senate-districts-click"
+          id="ma-senate-districts-click"
           type="fill"
           source="ma-senate-districts"
           paint={{
@@ -213,8 +214,8 @@ const OriginalTrailsMap = ({
             "fill-outline-color": "black"
           }}
           filter={
-            senateHoverFilterKey && senateHoverFilterValue !== null
-              ? ["==", ["get", senateHoverFilterKey], senateHoverFilterValue]
+            clickSenateFilterKey && clickSenateFilterValue !== null
+              ? ["==", ["get", clickSenateFilterKey], clickSenateFilterValue]
               : ["==", ["get", "__none__"], "__no_match__"]
           }
         />
@@ -253,8 +254,8 @@ const OriginalTrailsMap = ({
       
       visibleMunicipalitiesLayers.push(
         <Layer
-          key="municipalities-hover"
-          id="municipalities-hover"
+          key="municipalities-click"
+          id="municipalities-click"
           type="fill"
           source="municipalities"
           paint={{
@@ -262,8 +263,8 @@ const OriginalTrailsMap = ({
             "fill-outline-color": "black"
           }}
           filter={
-            muniHoverFilterKey && muniHoverFilterValue !== null
-              ? ["==", ["get", muniHoverFilterKey], muniHoverFilterValue]
+            clickMuniFilterKey && clickMuniFilterValue !== null
+              ? ["==", ["get", clickMuniFilterKey], clickMuniFilterValue]
               : ["==", ["get", "__none__"], "__no_match__"]
           }
         />
@@ -281,8 +282,58 @@ const OriginalTrailsMap = ({
       interactiveLayerIds={[
         "ma-house-districts-fill", 
         "ma-senate-districts-fill", 
-        "municipalities-fill"
+        "municipalities-fill",
+        ...trailLayers,
+        ...proposedLayers
       ]}
+      onMouseMove={(event) => {
+        const map = mapRef.current?.getMap?.();
+        if (!map) return;
+        let features = event.features;
+        if (!features?.length && event.point) {
+          features = map.queryRenderedFeatures([event.point.x, event.point.y], {
+            layers: [...trailLayers, ...proposedLayers]
+          });
+        }
+        const trailFeature = features?.find((f) => {
+          const lid = f.layer?.id;
+          return lid && (trailLayers.includes(lid) || proposedLayers.includes(lid));
+        });
+        const prev = hoveredTrailRef.current;
+        if (trailFeature) {
+          const sourceLayer = trailFeature.layer?.sourceLayer ?? trailFeature.sourceLayer;
+          const id = trailFeature.id ?? trailFeature.properties?.OBJECTID ?? trailFeature.properties?.objectid;
+          if (sourceLayer && id != null) {
+            if (prev && (prev.sourceLayer !== sourceLayer || prev.id !== id)) {
+              try {
+                map.removeFeatureState({ source: "MAPC trail vector tiles", sourceLayer: prev.sourceLayer, id: prev.id });
+              } catch (_) {}
+            }
+            try {
+              map.setFeatureState(
+                { source: "MAPC trail vector tiles", sourceLayer, id },
+                { hover: true }
+              );
+              hoveredTrailRef.current = { sourceLayer, id };
+            } catch (_) {}
+          }
+        } else if (prev) {
+          try {
+            map.removeFeatureState({ source: "MAPC trail vector tiles", sourceLayer: prev.sourceLayer, id: prev.id });
+          } catch (_) {}
+          hoveredTrailRef.current = null;
+        }
+      }}
+      onMouseLeave={() => {
+        const map = mapRef.current?.getMap?.();
+        const prev = hoveredTrailRef.current;
+        if (map && prev) {
+          try {
+            map.removeFeatureState({ source: "MAPC trail vector tiles", sourceLayer: prev.sourceLayer, id: prev.id });
+          } catch (_) {}
+          hoveredTrailRef.current = null;
+        }
+      }}
       onMove={(event) => {
         const newViewport = event.viewState;
         if (Math.abs(newViewport.zoom - viewport.zoom) > 0.01) {
@@ -291,65 +342,12 @@ const OriginalTrailsMap = ({
         setViewport(newViewport);
       }}
       onClick={(event) => {
-        // Check if clicking on a municipality when municipalities layer is visible
-        if (showMunicipalities && event.features) {
-          const muniFeature = event.features.find((f) => f.layer && f.layer.id === "municipalities-fill");
-          if (muniFeature) {
-            const townName = muniFeature.properties.town || muniFeature.properties.NAME;
-            if (townName) {
-              const muniName = townName.toLowerCase();
-              setSelectedMunicipality({
-                name: muniName,
-                properties: muniFeature.properties,
-                geometry: muniFeature.geometry
-              });
-              return;
-            }
-          }
-        }
-        
-        // Handle identify popup for trails
-        const allLayers = [
-          ...existingTrails.filter((et) => trailLayers.includes(et.id)).map((et) => et["esri-id"]),
-          ...proposedTrails.filter((et) => proposedLayers.includes(et.id)).map((et) => et["esri-id"]),
-        ].join(",");
-        if (trailLayers.length > 0 || proposedLayers.length > 0) {
-          const currentMap = mapRef.current.getMap();
-          const currentMapBounds = currentMap.getBounds();
-          axios
-            .get(TRAILMAP_IDENTIFY_SOURCE, {
-              params: {
-                geometry: `${event.lngLat.lng},${event.lngLat.lat}`,
-                geometryType: "esriGeometryPoint",
-                sr: 4326,
-                layers: "visible:" + allLayers,
-                tolerance: 3,
-                mapExtent: `${currentMapBounds._sw.lng},${currentMapBounds._sw.lat},${currentMapBounds._ne.lng},${currentMapBounds._ne.lat}`,
-                imageDisplay: `600,550,96`,
-                returnGeometry: false,
-                f: "pjson",
-              },
-            })
-            .then((res) => {
-              if (res.data.results.length > 0) {
-                const identifyResult = [];
-                for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
-                  identifyResult.push(res.data.results[i]);
-                }
-                setIdentifyInfo(identifyResult);
-                toggleIdentifyPopup(true);
-                setIdentifyPoint(event.lngLat);
-              }
-            });
-        }
-      }}
-      onMouseMove={(event) => {
         const map = mapRef.current && mapRef.current.getMap ? mapRef.current.getMap() : null;
-        const features = event.features || [];
-
-        // Handle MA House Districts hover
+        let handled = false;
+        
+        // Handle MA House Districts click
         if (showMaHouseDistricts) {
-          let districtFeature = features.find((f) => f.layer && f.layer.id === "ma-house-districts-fill");
+          let districtFeature = event.features?.find((f) => f.layer && f.layer.id === "ma-house-districts-fill");
           
           if (!districtFeature && map) {
             const x = event.point.x;
@@ -363,8 +361,18 @@ const OriginalTrailsMap = ({
           }
           
           if (districtFeature) {
-            setHoverFeature(districtFeature);
-            setHoverPoint(event.lngLat);
+            // Clear other click states
+            setClickSenateFeature(null);
+            setClickSenatePoint(null);
+            setClickSenateFilterKey(null);
+            setClickSenateFilterValue(null);
+            setClickMuniFeature(null);
+            setClickMuniPoint(null);
+            setClickMuniFilterKey(null);
+            setClickMuniFilterValue(null);
+            
+            setClickHouseFeature(districtFeature);
+            setClickHousePoint(event.lngLat);
             const props = districtFeature.properties || {};
             const key =
               (props.REPDISTNUM !== undefined && "REPDISTNUM") ||
@@ -372,19 +380,15 @@ const OriginalTrailsMap = ({
               (props.OBJECTID !== undefined && "OBJECTID") ||
               null;
             const value = key ? props[key] : null;
-            setHoverFilterKey(key);
-            setHoverFilterValue(value);
-          } else {
-            setHoverFeature(null);
-            setHoverPoint(null);
-            setHoverFilterKey(null);
-            setHoverFilterValue(null);
+            setClickHouseFilterKey(key);
+            setClickHouseFilterValue(value);
+            handled = true;
           }
         }
 
-        // Handle MA Senate Districts hover
-        if (showMaSenateDistricts) {
-          let senateFeature = features.find((f) => f.layer && f.layer.id === "ma-senate-districts-fill");
+        // Handle MA Senate Districts click
+        if (!handled && showMaSenateDistricts) {
+          let senateFeature = event.features?.find((f) => f.layer && f.layer.id === "ma-senate-districts-fill");
           
           if (!senateFeature && map) {
             const x = event.point.x;
@@ -398,72 +402,141 @@ const OriginalTrailsMap = ({
           }
           
           if (senateFeature) {
-            setSenateHoverFeature(senateFeature);
-            setSenateHoverPoint(event.lngLat);
+            // Clear other click states
+            setClickHouseFeature(null);
+            setClickHousePoint(null);
+            setClickHouseFilterKey(null);
+            setClickHouseFilterValue(null);
+            setClickMuniFeature(null);
+            setClickMuniPoint(null);
+            setClickMuniFilterKey(null);
+            setClickMuniFilterValue(null);
+            
+            setClickSenateFeature(senateFeature);
+            setClickSenatePoint(event.lngLat);
             const props = senateFeature.properties || {};
             const key =
               (props.DIST_CODE !== undefined && "DIST_CODE") ||
               (props.OBJECTID !== undefined && "OBJECTID") ||
               null;
             const value = key ? props[key] : null;
-            setSenateHoverFilterKey(key);
-            setSenateHoverFilterValue(value);
-          } else {
-            setSenateHoverFeature(null);
-            setSenateHoverPoint(null);
-            setSenateHoverFilterKey(null);
-            setSenateHoverFilterValue(null);
+            setClickSenateFilterKey(key);
+            setClickSenateFilterValue(value);
+            handled = true;
           }
         }
 
-        // Handle Municipalities hover
-        if (showMunicipalities) {
-          let muniFeature = features.find((f) => f.layer && f.layer.id === "municipalities-fill");
+        // Check if clicking on a municipality when municipalities layer is visible
+        let muniFeature = null;
+        if (!handled && showMunicipalities) {
+          muniFeature = event.features?.find((f) => f.layer && f.layer.id === "municipalities-fill");
           
           if (!muniFeature && map) {
             const x = event.point.x;
             const y = event.point.y;
-            const queried = map.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {
-              layers: ["municipalities-fill"],
-            });
-            if (queried && queried.length > 0) {
-              muniFeature = queried[0];
+            // Try point query first (most reliable), then larger bbox for edge cases
+            const pointQuery = map.queryRenderedFeatures([x, y], { layers: ["municipalities-fill"] });
+            if (pointQuery && pointQuery.length > 0) {
+              muniFeature = pointQuery[0];
+            } else {
+              const queried = map.queryRenderedFeatures([[x - 16, y - 16], [x + 16, y + 16]], {
+                layers: ["municipalities-fill"],
+              });
+              if (queried && queried.length > 0) {
+                muniFeature = queried[0];
+              }
             }
           }
           
           if (muniFeature) {
-            setMuniHoverFeature(muniFeature);
-            setMuniHoverPoint(event.lngLat);
-            const props = muniFeature.properties || {};
-            const key =
-              (props.town !== undefined && "town") ||
-              (props.NAME !== undefined && "NAME") ||
-              (props.OBJECTID !== undefined && "OBJECTID") ||
-              null;
-            const value = key ? props[key] : null;
-            setMuniHoverFilterKey(key);
-            setMuniHoverFilterValue(value);
-          } else {
-            setMuniHoverFeature(null);
-            setMuniHoverPoint(null);
-            setMuniHoverFilterKey(null);
-            setMuniHoverFilterValue(null);
+            const townName = muniFeature.properties.town || muniFeature.properties.NAME;
+            if (townName) {
+              const muniName = townName.toLowerCase();
+              setSelectedMunicipality({
+                name: muniName,
+                properties: muniFeature.properties,
+                geometry: muniFeature.geometry
+              });
+              
+              // Clear other click states
+              setClickHouseFeature(null);
+              setClickHousePoint(null);
+              setClickHouseFilterKey(null);
+              setClickHouseFilterValue(null);
+              setClickSenateFeature(null);
+              setClickSenatePoint(null);
+              setClickSenateFilterKey(null);
+              setClickSenateFilterValue(null);
+              
+              // Also show click tooltip
+              setClickMuniFeature(muniFeature);
+              setClickMuniPoint(event.lngLat);
+              const props = muniFeature.properties || {};
+              const key =
+                (props.town !== undefined && "town") ||
+                (props.NAME !== undefined && "NAME") ||
+                (props.OBJECTID !== undefined && "OBJECTID") ||
+                null;
+              const value = key ? props[key] : null;
+              setClickMuniFilterKey(key);
+              setClickMuniFilterValue(value);
+              handled = true;
+            }
           }
         }
-      }}
-      onMouseLeave={() => {
-        setHoverFeature(null);
-        setHoverPoint(null);
-        setHoverFilterKey(null);
-        setHoverFilterValue(null);
-        setSenateHoverFeature(null);
-        setSenateHoverPoint(null);
-        setSenateHoverFilterKey(null);
-        setSenateHoverFilterValue(null);
-        setMuniHoverFeature(null);
-        setMuniHoverPoint(null);
-        setMuniHoverFilterKey(null);
-        setMuniHoverFilterValue(null);
+        
+        // If none of the above layers were clicked, clear all click states
+        if (!handled) {
+          setClickHouseFeature(null);
+          setClickHousePoint(null);
+          setClickHouseFilterKey(null);
+          setClickHouseFilterValue(null);
+          setClickSenateFeature(null);
+          setClickSenatePoint(null);
+          setClickSenateFilterKey(null);
+          setClickSenateFilterValue(null);
+          setClickMuniFeature(null);
+          setClickMuniPoint(null);
+          setClickMuniFilterKey(null);
+          setClickMuniFilterValue(null);
+        }
+        
+        // Handle identify popup for trails (only when NOT clicking on municipality)
+        if (!muniFeature) {
+          const allLayers = [
+            ...existingTrails.filter((et) => trailLayers.includes(et.id)).map((et) => et["esri-id"]),
+            ...proposedTrails.filter((et) => proposedLayers.includes(et.id)).map((et) => et["esri-id"]),
+          ].join(",");
+          if ((trailLayers.length > 0 || proposedLayers.length > 0) && allLayers) {
+            const currentMap = mapRef.current.getMap();
+            const currentMapBounds = currentMap.getBounds();
+            axios
+              .get(TRAILMAP_IDENTIFY_SOURCE, {
+                params: {
+                  geometry: `${event.lngLat.lng},${event.lngLat.lat}`,
+                  geometryType: "esriGeometryPoint",
+                  sr: 4326,
+                  layers: "visible:" + allLayers,
+                  tolerance: 5,
+                  mapExtent: `${currentMapBounds._sw.lng},${currentMapBounds._sw.lat},${currentMapBounds._ne.lng},${currentMapBounds._ne.lat}`,
+                  imageDisplay: `600,550,96`,
+                  returnGeometry: false,
+                  f: "pjson",
+                },
+              })
+              .then((res) => {
+                if (res.data.results && res.data.results.length > 0) {
+                  const identifyResult = [];
+                  for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
+                    identifyResult.push(res.data.results[i]);
+                  }
+                  setIdentifyInfo(identifyResult);
+                  toggleIdentifyPopup(true);
+                  setIdentifyPoint(event.lngLat);
+                }
+              });
+          }
+        }
       }}
       mapboxAccessToken={MAPBOX_TOKEN}
       mapStyle={baseLayer.url}
@@ -476,18 +549,18 @@ const OriginalTrailsMap = ({
           identifyResult={identifyInfo}
           handleShowPopup={() => {
             toggleIdentifyPopup(false);
-            setHoverFeature(null);
-            setHoverPoint(null);
-            setHoverFilterKey(null);
-            setHoverFilterValue(null);
-            setSenateHoverFeature(null);
-            setSenateHoverPoint(null);
-            setSenateHoverFilterKey(null);
-            setSenateHoverFilterValue(null);
-            setMuniHoverFeature(null);
-            setMuniHoverPoint(null);
-            setMuniHoverFilterKey(null);
-            setMuniHoverFilterValue(null);
+            setClickHouseFeature(null);
+            setClickHousePoint(null);
+            setClickHouseFilterKey(null);
+            setClickHouseFilterValue(null);
+            setClickSenateFeature(null);
+            setClickSenatePoint(null);
+            setClickSenateFilterKey(null);
+            setClickSenateFilterValue(null);
+            setClickMuniFeature(null);
+            setClickMuniPoint(null);
+            setClickMuniFilterKey(null);
+            setClickMuniFilterValue(null);
           }}
           handleCarousel={setPointIndex}
         />
@@ -500,16 +573,6 @@ const OriginalTrailsMap = ({
       )}
 
       {showBasemapPanel && <BasemapPanel />}
-      
-      {/* Render vector tile source for original trails filters */}
-      <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
-        <OriginalTrailsFilterLayers
-          trailLayers={trailLayers}
-          proposedLayers={proposedLayers}
-          existingTrails={existingTrails}
-          proposedTrails={proposedTrails}
-        />
-      </Source>
       
       <Source id="MAPC landline vector tiles" type="vector" tiles={[LANDLINE_SOURCE]}>
         {landlineLayers()}
@@ -555,6 +618,16 @@ const OriginalTrailsMap = ({
         {municipalitiesLayers()}
       </Source>
       
+      {/* Trail segments rendered last so they stay on top */}
+      <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
+        <OriginalTrailsFilterLayers
+          trailLayers={trailLayers}
+          proposedLayers={proposedLayers}
+          existingTrails={existingTrails}
+          proposedTrails={proposedTrails}
+        />
+      </Source>
+      
       <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
       
       <Control
@@ -571,17 +644,16 @@ const OriginalTrailsMap = ({
         clickHandler={() => toggleBasemapPanel(!showBasemapPanel)}
       />
       
-      {showMaHouseDistricts && hoverFeature && hoverPoint && (
+      {showMaHouseDistricts && clickHouseFeature && clickHousePoint && (
         <Popup
-          longitude={hoverPoint.lng}
-          latitude={hoverPoint.lat}
+          longitude={clickHousePoint.lng}
+          latitude={clickHousePoint.lat}
           closeButton={false}
-          closeOnMove={true}
           anchor="top"
           offset={12}
         >
           {(() => {
-            const p = hoverFeature.properties || {};
+            const p = clickHouseFeature.properties || {};
             const repName = p.REP || "";
             const distName = p.REP_DIST || "";
             const distNum = p.DIST_CODE || "";
@@ -596,17 +668,16 @@ const OriginalTrailsMap = ({
         </Popup>
       )}
       
-      {showMaSenateDistricts && senateHoverFeature && senateHoverPoint && (
+      {showMaSenateDistricts && clickSenateFeature && clickSenatePoint && (
         <Popup
-          longitude={senateHoverPoint.lng}
-          latitude={senateHoverPoint.lat}
+          longitude={clickSenatePoint.lng}
+          latitude={clickSenatePoint.lat}
           closeButton={false}
-          closeOnMove={true}
           anchor="top"
           offset={12}
         >
           {(() => {
-            const p = senateHoverFeature.properties || {};
+            const p = clickSenateFeature.properties || {};
             const repName = p.SENATOR || "";
             const distName = p.SEN_DIST || "";
             const distNum = p.SENDISTNUM || "";
@@ -621,25 +692,30 @@ const OriginalTrailsMap = ({
         </Popup>
       )}
       
-      {showMunicipalities && muniHoverFeature && muniHoverPoint && (
+      {showMunicipalities && clickMuniFeature && clickMuniPoint && (
         <Popup
-          longitude={muniHoverPoint.lng}
-          latitude={muniHoverPoint.lat}
-          closeButton={false}
-          closeOnMove={true}
+          key={`muni-${clickMuniFeature.properties?.town || clickMuniFeature.properties?.NAME || ""}-${clickMuniPoint.lng}-${clickMuniPoint.lat}`}
+          longitude={clickMuniPoint.lng}
+          latitude={clickMuniPoint.lat}
+          closeButton={true}
+          onClose={() => {
+            setClickMuniFeature(null);
+            setClickMuniPoint(null);
+            setClickMuniFilterKey(null);
+            setClickMuniFilterValue(null);
+          }}
           anchor="top"
           offset={12}
+          closeOnClick={false}
         >
-          {(() => {
-            const p = muniHoverFeature.properties || {};
-            const townName = p.town || "N/A";
-            const capitalizedTownName = townName && townName !== "N/A" ? townName.charAt(0).toUpperCase() + townName.slice(1).toLowerCase() : townName;
-            return (
-              <div style={{minWidth: 160, color: '#2774bd'}}>
-                {capitalizedTownName && <div style={{fontWeight: 400}}>Municipality: {capitalizedTownName}</div>}
-              </div>
-            );
-          })()}
+          <div style={{ minWidth: 120, color: "#2774bd", fontWeight: 500 }}>
+            Municipality:{" "}
+            {(() => {
+              const p = clickMuniFeature.properties || {};
+              const townName = p.town || p.NAME || "";
+              return townName ? townName.charAt(0).toUpperCase() + townName.slice(1).toLowerCase() : "Unknown";
+            })()}
+          </div>
         </Popup>
       )}
       

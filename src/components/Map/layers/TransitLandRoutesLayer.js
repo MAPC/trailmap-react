@@ -29,7 +29,7 @@ const TransitLandRoutesLayer = ({
         id="transit-land-routes"
         type="line"
         source-layer="routes"
-        interactive={false}
+        interactive={true}
         paint={{
           "line-color": [
             "case",

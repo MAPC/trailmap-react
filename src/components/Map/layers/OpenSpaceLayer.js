@@ -1,140 +1,102 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Source, Layer } from "react-map-gl";
 
 /**
- * Renders OpenSpace (Protected and Recreational OpenSpace) layer
- * Data source: https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/openspace/FeatureServer/0
- * 
- * Uses ArcGIS FeatureServer query endpoint to fetch GeoJSON features within current map bounds.
+ * Renders OpenSpace (Protected and Recreational OpenSpace) layer using Mapbox Vector Tileset
+ * Tileset ID: ihill.7fjeze3n
  */
-const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef, onDataChange }) => {
-  const [openSpaceData, setOpenSpaceData] = useState(null);
-  const [bounds, setBounds] = useState(null);
-  const updateTimeoutRef = useRef(null);
-  const queryTimeoutRef = useRef(null);
+const OPENSPACE_TILESET_ID = "ihill.7fjeze3n";
+const OPENSPACE_SOURCE_LAYER = "Protected_and_Recreational_Op-98eeg1";
 
+const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, showRegionalTrailsProfile, mapRef }) => {
+  // Use different source IDs for different pages to avoid conflicts
+  const sourceId = showMunicipalityProfileMap ? "openspace-source-community" : "openspace-source-regional";
+  const fillLayerId = showMunicipalityProfileMap ? "openspace-layer-community" : "openspace-layer-regional";
+  const outlineLayerId = showMunicipalityProfileMap ? "openspace-outline-community" : "openspace-outline-regional";
+  const otherSourceId = showMunicipalityProfileMap ? "openspace-source-regional" : "openspace-source-community";
+  const otherFillLayerId = showMunicipalityProfileMap ? "openspace-layer-regional" : "openspace-layer-community";
+  const otherOutlineLayerId = showMunicipalityProfileMap ? "openspace-outline-regional" : "openspace-outline-community";
+
+  // Clean up the other page's source and layers when this component mounts
   useEffect(() => {
-    if (!showOpenSpace || (!showMunicipalityProfileMap && !showProjectTrailsProfile) || !mapRef?.current) {
-      setOpenSpaceData(null);
-      setBounds(null);
-      if (onDataChange) onDataChange(null);
-      return;
-    }
+    if (!mapRef?.current) return;
+    
+    const map = mapRef.current.getMap();
+    if (!map) return;
 
-    const updateLayer = () => {
-      const map = mapRef.current?.getMap();
-      if (!map) return;
-
-      const mapBounds = map.getBounds();
-      const sw = mapBounds.getSouthWest();
-      const ne = mapBounds.getNorthEast();
-
-      // Convert lat/lon to Web Mercator (EPSG:3857) for ArcGIS query
-      const toWebMercator = (lon, lat) => {
-        const x = lon * 20037508.34 / 180;
-        let y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180);
-        y = y * 20037508.34 / 180;
-        return { x, y };
-      };
-
-      const swMerc = toWebMercator(sw.lng, sw.lat);
-      const neMerc = toWebMercator(ne.lng, ne.lat);
-
-      const OPENSPACE_SERVICE_URL = "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/openspace/FeatureServer/0";
-      const bbox = `${swMerc.x},${swMerc.y},${neMerc.x},${neMerc.y}`;
-
-      // Query GeoJSON from FeatureServer
-      const url = `${OPENSPACE_SERVICE_URL}/query?where=1=1&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=3857&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=1000`;
-
-      // Debounce queries
-      if (queryTimeoutRef.current) {
-        clearTimeout(queryTimeoutRef.current);
+    const cleanupOtherPage = () => {
+      // Wait for style to load before cleaning up
+      if (!map.isStyleLoaded()) {
+        map.once('styledata', cleanupOtherPage);
+        return;
       }
 
-      queryTimeoutRef.current = setTimeout(async () => {
-        try {
-          const response = await fetch(url);
-          const data = await response.json();
-          
-          if (data.features && data.features.length > 0) {
-            const featureCollection = {
-              type: "FeatureCollection",
-              features: data.features
-            };
-            setOpenSpaceData(featureCollection);
-            setBounds([
-              [sw.lng, sw.lat],
-              [ne.lng, ne.lat]
-            ]);
-            if (onDataChange) onDataChange(featureCollection);
-          } else {
-            setOpenSpaceData(null);
-            if (onDataChange) onDataChange(null);
-          }
-        } catch (error) {
-          console.error("Error fetching OpenSpace data:", error);
-          setOpenSpaceData(null);
+      // Remove the other page's layers and source if they exist
+      try {
+        // Remove other page's layers first
+        if (map.getLayer(otherFillLayerId)) {
+          map.removeLayer(otherFillLayerId);
         }
-      }, 300);
+        if (map.getLayer(otherOutlineLayerId)) {
+          map.removeLayer(otherOutlineLayerId);
+        }
+        
+        // Remove other page's source
+        if (map.getSource(otherSourceId)) {
+          map.removeSource(otherSourceId);
+        }
+      } catch (err) {
+        // Source or layer might not exist, which is fine
+      }
     };
 
-    // Initial update
-    updateLayer();
+    // Small delay to ensure current page's layers are added first
+    const timeoutId = setTimeout(cleanupOtherPage, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      if (map && map.off) {
+        map.off('styledata', cleanupOtherPage);
+      }
+    };
+  }, [mapRef, otherSourceId, otherFillLayerId, otherOutlineLayerId]);
 
-    // Update on map move (with debounce)
-    const map = mapRef.current?.getMap();
-    if (map) {
-      const handleMoveEnd = () => {
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-        updateTimeoutRef.current = setTimeout(updateLayer, 300);
-      };
-
-      map.on('moveend', handleMoveEnd);
-      map.on('zoomend', handleMoveEnd);
-
-      return () => {
-        map.off('moveend', handleMoveEnd);
-        map.off('zoomend', handleMoveEnd);
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-        if (queryTimeoutRef.current) {
-          clearTimeout(queryTimeoutRef.current);
-        }
-      };
-    }
-  }, [showOpenSpace, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef, onDataChange]);
-
-  // Handle hover events - removed, will be handled in parent component's onMouseMove
-
-  if (!showOpenSpace || (!showMunicipalityProfileMap && !showProjectTrailsProfile) || !openSpaceData) {
+  if (!showOpenSpace || (!showMunicipalityProfileMap && !showRegionalTrailsProfile)) {
     return null;
   }
 
+  // Mapbox tileset URL format: mapbox://tileset-id
+  const tilesetUrl = `mapbox://${OPENSPACE_TILESET_ID}`;
+
   return (
     <Source
-      id="openspace-source"
-      type="geojson"
-      data={openSpaceData}
+      id={sourceId}
+      type="vector"
+      url={tilesetUrl}
     >
+      {/* OpenSpace polygon fill layer */}
       <Layer
-        id="openspace-layer"
+        id={fillLayerId}
         type="fill"
+        source-layer={OPENSPACE_SOURCE_LAYER}
         paint={{
           "fill-color": "#73B273",
-          "fill-opacity": 0.3
+          "fill-opacity": 0.5
         }}
         interactive={true}
       />
+      {/* OpenSpace outline line layer */}
       <Layer
-        id="openspace-outline"
+        id={outlineLayerId}
         type="line"
+        source-layer={OPENSPACE_SOURCE_LAYER}
         paint={{
           "line-color": "#458A45",
           "line-width": 1,
-          "line-opacity": 0.6
+          "line-opacity": 0.8
+        }}
+        layout={{
+          "line-join": "round"
         }}
         interactive={true}
       />
@@ -143,4 +105,3 @@ const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, showProject
 };
 
 export default OpenSpaceLayer;
-

@@ -303,7 +303,7 @@ const BufferAnalysisWindow = ({
                     </div>
                   </div>
                   <div className="col-2 text-center">
-                    <div className="text-muted" style={{ fontSize: '0.7rem' }}>Subway Stations</div>
+                    <div className="text-muted" style={{ fontSize: '0.7rem' }}>T-stops</div>
                     <div className="fw-bold fs-5">
                       {bufferResults.subwayStations ? bufferResults.subwayStations.length : 0}
                     </div>
@@ -522,7 +522,7 @@ const BufferAnalysisWindow = ({
                       className="me-2"
                       style={{ transform: 'scale(0.8)' }}
                     />
-                    <span className="small fw-semibold">MBTA Subway Stations ({bufferResults.subwayStations ? bufferResults.subwayStations.length : 0})</span>
+                    <span className="small fw-semibold">T-stops ({bufferResults.subwayStations ? bufferResults.subwayStations.length : 0})</span>
                   </div>
                 </div>
                 {!showSubwayStations ? (

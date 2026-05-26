@@ -18,8 +18,8 @@ import MASenateDistrictsButton from '../MASenateDistrictsButton';
 import MunicipalitiesButton from '../MunicipalitiesButton';
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import GlossaryModal from "../Modals/GlossaryModal";
-import Identify from "./Identify";
-import CommunityIdentify from "./CommunityIdentify";
+import Identify from "./tooltip/Identify";
+import CommunityIdentify from "./tooltip/CommunityIdentify";
 import ShareModal from "../Modals/ShareModal";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
@@ -34,9 +34,9 @@ import * as turf from "@turf/turf";
 // Extracted components
 import CommunityTrailsProfile from "./CommunityTrailsProfile";
 import OriginalTrailsMap from "./OriginalTrailsMap";
-import ProjectTrailsProfile from "./ProjectTrailsProfile";
+import RegionalTrailsProfile from "./RegionalTrailsProfile";
 // Extracted constants
-import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
+import { trailsProfileLayers } from "./constants/mapConstants";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
@@ -67,8 +67,8 @@ const Map = () => {
     setMunicipalityTrails,
     showMunicipalityProfileMap,
     showMunicipalityView,
-    showProjectTrailsProfileMap,
-    showProjectTrailsView,
+    showRegionalTrailsProfileMap,
+    showRegionalTrailsView,
     // Layer toggle states from context
     showCommuterRail,
     setShowCommuterRail,
@@ -127,15 +127,15 @@ const Map = () => {
     setMapParam();
   }, []);
 
-  // Auto-switch to light basemap when entering municipality or project trails profile
+  // Auto-switch to light basemap when entering municipality or regional trails profile
   useEffect(() => {
-    if (showMunicipalityProfileMap || showProjectTrailsProfileMap) {
+    if (showMunicipalityProfileMap || showRegionalTrailsProfileMap) {
       const lightBasemap = basemaps.find((bm) => bm.id === 'mapboxLight');
       if (lightBasemap && baseLayer.id !== 'mapboxLight') {
         setBaseLayer(lightBasemap);
       }
     }
-  }, [showMunicipalityProfileMap, showProjectTrailsProfileMap, basemaps, baseLayer, setBaseLayer]);
+  }, [showMunicipalityProfileMap, showRegionalTrailsProfileMap, basemaps, baseLayer, setBaseLayer]);
 
   const generateShareUrl = () => {
     return `${window.location.href.split("?")[0]}?baseLayer=${baseLayer.id}&trailLayers=${trailLayers.join(
@@ -151,8 +151,8 @@ const Map = () => {
       <FailModal />
 
       <div className="Map position-relative">
-        {showProjectTrailsProfileMap ? (
-          <ProjectTrailsProfile
+        {showRegionalTrailsProfileMap ? (
+          <RegionalTrailsProfile
             viewport={viewport}
             setViewport={setViewport}
             baseLayer={baseLayer}
@@ -190,8 +190,8 @@ const Map = () => {
             />
           )}
         
-        {/* Share Control Button - hidden in community trails profile */}
-        {!showMunicipalityProfileMap && (
+        {/* Share Control Button - hidden in community trails profile and regional trails profile */}
+        {!showMunicipalityProfileMap && !showRegionalTrailsProfileMap && (
           <Control
             style={"Map_share d-block position-absolute m-0 p-0"}
             icon={ShareIcon}

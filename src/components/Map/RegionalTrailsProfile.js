@@ -1,0 +1,998 @@
+import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import ReactMapGL, { NavigationControl, GeolocateControl, ScaleControl, Popup, Source, Layer } from "react-map-gl";
+import BasemapPanel from "../BasemapPanel";
+import ControlPanel from "../ControlPanel";
+import Control from "./Control";
+import FilterIcon from "../../assets/icons/filter-icon.svg";
+import CommunityIdentify from "./tooltip/CommunityIdentify";
+import ProjectMetricsPanel from "./ProjectMetricsPanel";
+import GeocoderPanel from "../Geocoder/GeocoderPanel";
+import { LayerContext } from "../../App";
+import OtherRegionalTrailsLayer from "./layers/OtherRegionalTrailsLayer";
+import MajorTrailsLayer from "./layers/MajorTrailsLayer";
+import OpenSpaceLayer from "./layers/OpenSpaceLayer";
+import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
+import EnvironmentalJusticePopupContent from "./tooltip/EnvironmentalJusticePopupContent";
+import OpenSpacePopupContent from "./tooltip/OpenSpacePopupContent";
+import TrailPopupContent from "./tooltip/TrailPopupContent";
+import massachusettsData from "../../data/massachusetts.json";
+import { getMunicipalityName } from "./utils/municipalityUtils";
+import { queryFeatureAtPoint } from "./utils/arcgisPointQuery";
+import { getFeaturesAtPoint } from "./utils/mapQueryUtils";
+import { TRAIL_FACILITY_TYPE_LABELS, EJ2020_MAP_SERVER_URL } from "./constants/mapConstants";
+import bbox from "@turf/bbox";
+import styled from "styled-components";
+
+// Trail Status Legend
+const TrailStatusLegend = styled.div`
+  position: absolute;
+  bottom: 40px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  padding: 12px;
+  z-index: 1000;
+  font-size: 12px;
+  min-width: 180px;
+`;
+
+const TrailStatusLegendHeader = styled.div`
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+`;
+
+const TrailStatusLegendList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const TrailStatusLegendItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const TrailStatusLegendSwatch = styled.div`
+  width: 30px;
+  height: 3px;
+  background-color: ${(props) => props.$color};
+  border-radius: 2px;
+  flex-shrink: 0;
+`;
+
+const TrailStatusLegendLabel = styled.span`
+  color: #333;
+`;
+
+const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
+
+const INTERACTIVE_LAYER_IDS = [
+  "major-trails-layer",
+  "other-regional-trails-layer",
+  "gaps-other-regional-trails-layer",
+  "openspace-layer-regional",
+  "openspace-outline-regional"
+];
+
+const RegionalTrailsProfile = ({ 
+  viewport, 
+  setViewport, 
+  baseLayer, 
+  showBasemapPanel, 
+  toggleBasemapPanel,
+  showControlPanel,
+  toggleControlPanel,
+  mapRef
+}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const {
+    showTrailsRegNameSync,
+    setShowTrailsRegNameSync,
+    basemaps,
+    setProjectRegNames,
+    setSelectedProjectRegName,
+    showMunicipalities,
+    toggleMunicipalities,
+    showOpenSpace: showOpenSpaceFromContext,
+    setShowOpenSpace: setShowOpenSpaceFromContext,
+    showEnvironmentalJustice,
+    setShowEnvironmentalJustice,
+  } = useContext(LayerContext);
+
+  const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
+  const [identifyInfo, setIdentifyInfo] = useState(null);
+  const [identifyPoint, setIdentifyPoint] = useState(null);
+  const [pointIndex, setPointIndex] = useState(0);
+  const [regNames, setRegNames] = useState([]);
+  const [selectedRegNames, setSelectedRegNames] = useState(new Set()); // Track selected projects (Set for easy toggle)
+  const [selectedMajorTrails, setSelectedMajorTrails] = useState([]); // Track selected major trails (array of grouped_reg_name values)
+
+  // Reset selected projects when entering Regional Trails Profile and show municipalities by default
+  useEffect(() => {
+    if (location.pathname === '/regionalTrailsProfile') {
+      setSelectedRegNames(new Set());
+      setSelectedMajorTrails([]);
+      // Show municipalities by default
+      toggleMunicipalities(true);
+    }
+  }, [location.pathname, toggleMunicipalities]);
+  const [hoveredTrail, setHoveredTrail] = useState(null);
+  const allRegNamesRef = useRef(new Set()); // Track all unique reg_names seen using ref
+  const [allTrailsData, setAllTrailsData] = useState(null); // Store all trail data from OtherRegionalTrailsLayer
+  const [majorTrailsData, setMajorTrailsData] = useState(null); // Store all major trail data from MajorTrailsLayer
+  
+  // Use global OpenSpace state instead of local state to persist across profile switches
+  const showOpenSpace = showOpenSpaceFromContext;
+  
+  const [openSpaceClickInfo, setOpenSpaceClickInfo] = useState(null); // Store OpenSpace click info for popup
+  
+  // Listen for OpenSpace toggle events (only for Regional Trails Profile)
+  useEffect(() => {
+    const handleToggleOpenSpace = (event) => {
+      if (location.pathname === '/regionalTrailsProfile') {
+        setShowOpenSpaceFromContext(event.detail.show);
+        // Zoom to level 11 when OpenSpace is opened, only if current zoom is smaller than 11
+        if (event.detail.show && mapRef?.current) {
+          const map = mapRef.current.getMap();
+          if (map && map.getZoom() < 11) {
+            map.easeTo({
+              zoom: 11,
+              duration: 1000
+            });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
+    return () => {
+      window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
+    };
+  }, [location.pathname, setShowOpenSpaceFromContext, mapRef]);
+
+  const [environmentalJusticeClickInfo, setEnvironmentalJusticeClickInfo] = useState(null); // Store Environmental Justice click info for popup
+  const [majorTrailClickInfo, setMajorTrailClickInfo] = useState(null); // Store Major Trail click info for popup
+  const [regularTrailClickInfo, setRegularTrailClickInfo] = useState(null); // Store Regular Trail click info for popup
+  const ejHoverTimeoutRef = useRef(null);
+  const ejHoverQueryIdRef = useRef(0);
+
+  const getTrailTypeLabel = (segType, facStat) =>
+    TRAIL_FACILITY_TYPE_LABELS[`${segType},${facStat}`] 
+
+  // Update reg_names in context when discovered
+  useEffect(() => {
+    if (regNames.length > 0) {
+      const previousSize = allRegNamesRef.current.size;
+      regNames.forEach(name => {
+        if (name && name.trim() !== "") {
+          allRegNamesRef.current.add(name);
+        }
+      });
+
+      if (allRegNamesRef.current.size !== previousSize) {
+        const sortedRegNames = Array.from(allRegNamesRef.current).sort();
+        if (setProjectRegNames) setProjectRegNames(sortedRegNames);
+      } else if (setProjectRegNames) {
+        setProjectRegNames(regNames);
+      }
+    }
+  }, [regNames, setProjectRegNames]);
+
+  // Update selected reg names in context
+  useEffect(() => {
+    if (setSelectedProjectRegName) {
+      // Convert Set to array for context (or pass first selected if single selection expected)
+      const selectedArray = Array.from(selectedRegNames);
+      setSelectedProjectRegName(selectedArray.length > 0 ? selectedArray[0] : null);
+    }
+  }, [selectedRegNames, setSelectedProjectRegName]);
+
+  // Function to zoom to a specific project by regName (works for both regular projects and major trails)
+  const handleZoomToProject = (regName) => {
+    const map = mapRef.current?.getMap();
+    if (!map || !regName) {
+      return false;
+    }
+
+    let trailsToZoom = [];
+
+    // Check if it's a major trail (check selectedMajorTrails)
+    if (selectedMajorTrails.includes(regName) && majorTrailsData && majorTrailsData.features) {
+      trailsToZoom = majorTrailsData.features.filter(feature => {
+        const groupedRegName = (feature.properties?.grouped_reg_name || "").trim();
+        return groupedRegName === regName.trim();
+      });
+    }
+    // Otherwise, check regular projects
+    else if (allTrailsData && allTrailsData.features) {
+      trailsToZoom = allTrailsData.features.filter(feature => {
+        const featureRegName = (feature.properties?.reg_name || "").trim();
+        return featureRegName === regName.trim();
+      });
+    }
+
+    if (trailsToZoom.length === 0) {
+      return false;
+    }
+
+    try {
+        // Create a FeatureCollection with the trails
+        const featureCollection = {
+          type: "FeatureCollection",
+          features: trailsToZoom
+        };
+
+        // Calculate bounding box
+        const bounds = bbox(featureCollection);
+        
+        // Fit map to bounds with padding
+        map.fitBounds(
+          [
+            [bounds[0], bounds[1]], // Southwest corner
+            [bounds[2], bounds[3]]  // Northeast corner
+          ],
+          {
+            padding: { top: 100, bottom: 100, left: 500, right: 80 },
+            duration: 1000,
+            maxZoom: 12
+          }
+        );
+      return true;
+    } catch (e) {
+      console.warn("Error fitting bounds to project trails:", e);
+      return false;
+    }
+  };
+
+  // Zoom to trail when user checks a regional trail (other projects or major trails)
+  const previousSelectedRef = useRef(new Set());
+  const previousMajorTrailsRef = useRef([]);
+
+  useEffect(() => {
+    // Zoom when a new "other regional trail" project is selected
+    const newlySelected = Array.from(selectedRegNames).filter(
+      regName => !previousSelectedRef.current.has(regName)
+    );
+    if (newlySelected.length > 0) {
+      const zoomed = handleZoomToProject(newlySelected[0]);
+      if (zoomed) {
+        previousSelectedRef.current = new Set(selectedRegNames);
+      }
+    } else {
+      previousSelectedRef.current = new Set(selectedRegNames);
+    }
+  }, [selectedRegNames, allTrailsData]);
+
+  useEffect(() => {
+    // Zoom when a new major trail is selected
+    const newlySelected = selectedMajorTrails.filter(
+      name => !previousMajorTrailsRef.current.includes(name)
+    );
+    if (newlySelected.length > 0) {
+      const zoomed = handleZoomToProject(newlySelected[0]);
+      if (zoomed) {
+        previousMajorTrailsRef.current = [...selectedMajorTrails];
+      }
+    } else {
+      previousMajorTrailsRef.current = [...selectedMajorTrails];
+    }
+  }, [selectedMajorTrails, majorTrailsData]);
+
+  // Query Environmental Justice feature at a point
+  const queryEnvironmentalJusticeAtPoint = (lng, lat) =>
+    queryFeatureAtPoint(`${EJ2020_MAP_SERVER_URL}/0`, lng, lat);
+
+  const clearAllPopups = () => {
+    toggleIdentifyPopup(false);
+    setOpenSpaceClickInfo(null);
+    setEnvironmentalJusticeClickInfo(null);
+    setMajorTrailClickInfo(null);
+    setRegularTrailClickInfo(null);
+  };
+
+  const showPopup = (setter, data) => {
+    clearAllPopups();
+    setTimeout(() => setter(data), 10);
+  };
+
+  const pt = (e) => ({ lng: e.lngLat.lng, lat: e.lngLat.lat });
+
+  /**
+   * Handle map click: show popup for clicked feature (OpenSpace, trails, EJ) or clear all.
+   * Order: OpenSpace > major trails > regular trails > EJ (raster, needs server query).
+   */
+  const handleTrailClick = async (event) => {
+    const map = mapRef.current?.getMap();
+    if (!map || !event.lngLat) {
+      clearAllPopups();
+      return;
+    }
+
+    // 1. OpenSpace (vector)
+    if (showOpenSpace) {
+      const feature = getFeaturesAtPoint(map, event, ["openspace-layer-regional", "openspace-outline-regional"]);
+      if (feature) {
+        const isSame = openSpaceClickInfo?.feature?.properties?.OBJECTID === feature.properties?.OBJECTID;
+        if (isSame) setOpenSpaceClickInfo(null);
+        else showPopup(setOpenSpaceClickInfo, { point: pt(event), feature });
+        return;
+      }
+    }
+
+    // 2. Major trails (vector)
+    if (selectedMajorTrails?.length) {
+      const feature = getFeaturesAtPoint(map, event, ["major-trails-layer"]);
+      if (feature) {
+        showPopup(setMajorTrailClickInfo, { point: pt(event), feature });
+        return;
+      }
+    }
+
+    // 3. Regular trails (vector)
+    const trailFeatures = getFeaturesAtPoint(map, event, ["other-regional-trails-layer", "gaps-other-regional-trails-layer"], { returnAll: true });
+    if (trailFeatures.length) {
+      showPopup(setRegularTrailClickInfo, { point: pt(event), feature: trailFeatures[0] });
+      return;
+    }
+
+    // 4. EJ (raster - query server)
+    if (showEnvironmentalJustice) {
+      const ejFeature = await queryEnvironmentalJusticeAtPoint(event.lngLat.lng, event.lngLat.lat);
+      if (ejFeature) {
+        const isSame = environmentalJusticeClickInfo?.feature?.properties?.OBJECTID === ejFeature.properties?.OBJECTID;
+        if (isSame) setEnvironmentalJusticeClickInfo(null);
+        else showPopup(setEnvironmentalJusticeClickInfo, { point: pt(event), feature: ejFeature });
+        return;
+      }
+    }
+
+    clearAllPopups();
+  };
+
+  /**
+   * Handle map hover: set hoveredTrail to control cursor (pointer when over clickable features)
+   * and layer hover highlights (thicker line on trails).
+   *
+   * Flow:
+   * - Vector layers (trails, OpenSpace): use queryRenderedFeatures - any feature from
+   *   INTERACTIVE_LAYER_IDS = pointer. MajorTrailsLayer/OtherRegionalTrailsLayer need
+   *   featureId in hoveredTrail for their hover highlight.
+   * - EJ layer (raster): no vector data on client - debounced point query to server.
+   */
+  const handleTrailHover = (event) => {
+    const map = mapRef.current?.getMap();
+    if (!map || !event.lngLat) {
+      setHoveredTrail(null);
+      return;
+    }
+
+    const point = [event.lngLat.lng, event.lngLat.lat];
+    let features = event.features;
+    if (!features) {
+      try {
+        features = map.queryRenderedFeatures(point);
+      } catch (err) {
+        setHoveredTrail(null);
+        return;
+      }
+    }
+
+    // Vector layers: any feature from our layers = pointer (MajorTrailsLayer/OtherRegionalTrailsLayer need featureId for hover highlight)
+    const feature = features.find((f) => f.layer?.id && INTERACTIVE_LAYER_IDS.includes(f.layer.id));
+    if (feature) {
+      const layerId = feature.layer.id;
+      if (layerId === "major-trails-layer") {
+        setHoveredTrail({
+          properties: feature.properties,
+          lngLat: event.lngLat,
+          featureId: feature.properties?.OBJECTID ?? null,
+          isMajorTrail: true
+        });
+      } else if (layerId === "other-regional-trails-layer" || layerId === "gaps-other-regional-trails-layer") {
+        setHoveredTrail({
+          properties: feature.properties,
+          lngLat: event.lngLat,
+          featureId: feature.properties?.OBJECTID ?? null,
+          isRegularTrail: true
+        });
+      } else {
+        setHoveredTrail({ isOpenSpace: true });
+      }
+      return;
+    }
+
+    // EJ: raster layer - must query server (no vector data on client)
+    if (showEnvironmentalJustice) {
+      if (ejHoverTimeoutRef.current) clearTimeout(ejHoverTimeoutRef.current);
+      const queryId = ++ejHoverQueryIdRef.current;
+      ejHoverTimeoutRef.current = setTimeout(() => {
+        queryEnvironmentalJusticeAtPoint(event.lngLat.lng, event.lngLat.lat).then((ejFeature) => {
+          if (queryId !== ejHoverQueryIdRef.current) return;
+          setHoveredTrail(ejFeature ? { isEnvironmentalJustice: true } : null);
+        });
+      }, 150);
+      return;
+    }
+
+    if (ejHoverTimeoutRef.current) {
+      clearTimeout(ejHoverTimeoutRef.current);
+      ejHoverTimeoutRef.current = null;
+    }
+    setHoveredTrail(null);
+  };
+
+  // Helper function to calculate metrics for a set of trails
+  const calculateTrailMetrics = (trails, name) => {
+    if (!trails || trails.length === 0) {
+      return {
+        totalLength: 0,
+        totalLengthMiles: 0,
+        municipalities: []
+      };
+    }
+
+    // Calculate total length and categorize by status and type
+    let totalLengthFeet = 0;
+    let completedLengthFeet = 0; // fac_stat = 1 means existing/completed
+    const lengthByTypeExisting = {}; // Track length by trail type for existing trails
+    const lengthByTypePlanned = {}; // Track length by trail type for planned/envisioned/design trails
+    const gaps = []; // Track gaps (seg_type = 9)
+    
+    trails.forEach(trail => {
+      const props = trail.properties || {};
+      const segType = props.seg_type;
+      const facStat = props.fac_stat;
+      const trailTypeLabel = getTrailTypeLabel(segType, facStat);
+      
+      const lengthFeet = Number(props.length_ft) || 0;
+      
+      totalLengthFeet += lengthFeet;
+      
+      // Track completed length (fac_stat = 1)
+      if (facStat === 1 || facStat === "1") {
+        completedLengthFeet += lengthFeet;
+      }
+      
+      // Track gaps (seg_type = 9) separately
+      if (segType === 9 || segType === "9") {
+        gaps.push({
+          type: trailTypeLabel,
+          length: lengthFeet,
+          geometry: trail.geometry
+        });
+      } else {
+        // Track length by type, separated into existing and planned
+        if (facStat === 1 || facStat === "1") {
+          // Existing trails
+          if (!lengthByTypeExisting[trailTypeLabel]) {
+            lengthByTypeExisting[trailTypeLabel] = 0;
+          }
+          lengthByTypeExisting[trailTypeLabel] += lengthFeet;
+        } else {
+          // Planned trails (fac_stat = 2 or other values)
+          if (!lengthByTypePlanned[trailTypeLabel]) {
+            lengthByTypePlanned[trailTypeLabel] = 0;
+          }
+          lengthByTypePlanned[trailTypeLabel] += lengthFeet;
+        }
+      }
+    });
+
+    const totalLengthMiles = totalLengthFeet / 5280;
+    const completedLengthMiles = completedLengthFeet / 5280;
+    const percentageComplete = totalLengthFeet > 0 
+      ? ((completedLengthFeet / totalLengthFeet) * 100).toFixed(1)
+      : 0;
+
+    // Determine which municipalities the trails are in using muni_id from feature properties
+    const municipalitySet = new Set();
+    
+    // Extract muni_id from trail properties and look up municipality name
+    trails.forEach(trail => {
+      const props = trail.properties || {};
+      // Try different possible field names for muni_id
+      const muniId = props.muni_id || null;
+                    
+      if (muniId) {
+        const muniName = getMunicipalityName(muniId);
+        if (muniName) {
+          municipalitySet.add(muniName);
+        }
+      }
+    });
+
+    // Parks intersection calculation removed - using VectorTileServer now
+    const parksSet = new Set();
+
+    // Get trail steward and website from first trail (assuming they're consistent for a project)
+    const firstTrail = trails[0];
+    const steward = firstTrail?.properties?.steward || 
+                   firstTrail?.properties?.Steward || 
+                   firstTrail?.properties?.STEWARD ||
+                   null;
+    const website = firstTrail?.properties?.website || 
+                   firstTrail?.properties?.Website || 
+                   firstTrail?.properties?.WEBSITE ||
+                   firstTrail?.properties?.url ||
+                   firstTrail?.properties?.URL ||
+                   null;
+
+    // Convert lengthByType to arrays with miles, separated by existing, planned, and gap
+    const lengthByTypeExistingArray = Object.entries(lengthByTypeExisting).map(([type, feet]) => ({
+      type,
+      miles: (feet / 5280).toFixed(2),
+      category: 'existing'
+    }));
+    
+    const lengthByTypePlannedArray = Object.entries(lengthByTypePlanned).map(([type, feet]) => ({
+      type,
+      miles: (feet / 5280).toFixed(2),
+      category: 'planned'
+    }));
+    
+    const lengthByTypeGapArray = gaps.map(gap => ({
+      type: gap.type,
+      miles: (gap.length / 5280).toFixed(2),
+      category: 'gap'
+    }));
+
+    // Combine all length by type into a single array with categories
+    const lengthByTypeArray = [
+      ...lengthByTypeExistingArray.map(item => ({ ...item, category: 'existing' })),
+      ...lengthByTypePlannedArray.map(item => ({ ...item, category: 'planned' })),
+      ...lengthByTypeGapArray.map(item => ({ ...item, category: 'gap' }))
+    ];
+
+    return {
+      totalLength: totalLengthFeet,
+      totalLengthMiles: totalLengthMiles.toFixed(2),
+      completedLengthMiles: completedLengthMiles.toFixed(2),
+      percentageComplete: percentageComplete,
+      municipalities: Array.from(municipalitySet).sort(),
+      parks: Array.from(parksSet).sort(),
+      steward: steward,
+      website: website,
+      lengthByType: lengthByTypeArray,
+      gaps: gaps.map(gap => ({
+        type: gap.type,
+        lengthMiles: (gap.length / 5280).toFixed(2)
+      }))
+    };
+  };
+
+  // Calculate metrics for selected projects and major trails (including hidden ones for metrics display)
+  const projectMetrics = useMemo(() => {
+    const metrics = {};
+    
+    // Process each selected regular project (include hidden ones for metrics)
+    if (allTrailsData && allTrailsData.features && selectedRegNames.size > 0) {
+      Array.from(selectedRegNames).forEach(regName => {
+        // Filter trails for this project
+        const projectTrails = allTrailsData.features.filter(
+          feature => (feature.properties?.reg_name || "").trim() === regName.trim()
+        );
+        
+        metrics[regName] = calculateTrailMetrics(projectTrails, regName);
+      });
+    }
+    
+    // Process each selected major trail
+    if (majorTrailsData && majorTrailsData.features && selectedMajorTrails.length > 0) {
+      selectedMajorTrails.forEach(majorTrailName => {
+        // Filter trails for this major trail by grouped_reg_name
+        const majorTrailTrails = majorTrailsData.features.filter(
+          feature => {
+            const groupedRegName = (feature.properties?.grouped_reg_name || "").trim();
+            return groupedRegName === majorTrailName.trim();
+          }
+        );
+        
+        metrics[majorTrailName] = calculateTrailMetrics(majorTrailTrails, majorTrailName);
+      });
+    }
+
+    return metrics;
+  }, [allTrailsData, selectedRegNames, majorTrailsData, selectedMajorTrails]);
+
+
+  // Get all layer IDs for trails reg name sync (always include trail layers for click detection)
+  const getTrailLayerIds = () => {
+    const layerIds = [];
+    // Always add regular trail layers for click detection (even if no projects selected)
+    layerIds.push("other-regional-trails-layer");
+    layerIds.push("gaps-other-regional-trails-layer");
+    // Add Major Trail layer if major trails are selected (now includes gaps)
+    if (selectedMajorTrails && selectedMajorTrails.length > 0) {
+      layerIds.push("major-trails-layer");
+    }
+    // Add OpenSpace layers if OpenSpace is shown
+    if (showOpenSpace) {
+      layerIds.push("openspace-layer-regional");
+      layerIds.push("openspace-outline-regional");
+    }
+    // Add Environmental Justice layer if shown
+    if (showEnvironmentalJustice) {
+      layerIds.push("environmental-justice-layer-regional");
+    }
+    // Don't add municipalities-fill to interactive layers since we don't want hover
+    return layerIds;
+  };
+
+  // Municipality layers function - always show, no hover
+  const municipalitiesLayers = () => {
+    const visibleMunicipalitiesLayers = [];
+    // Always show municipalities in regional trails profile
+    visibleMunicipalitiesLayers.push(
+      <Layer
+        key="municipalities-fill"
+        id="municipalities-fill"
+        type="fill"
+        source="municipalities"
+        paint={{
+          "fill-color": "transparent",
+          "fill-outline-color": "black"
+        }}
+      />
+    );
+    return visibleMunicipalitiesLayers;
+  };
+
+  // Ensure trails layers are always on top
+  useEffect(() => {
+    if (!mapRef?.current) return;
+    
+    const map = mapRef.current.getMap();
+    if (!map) return;
+
+    const ensureTrailsOnTop = () => {
+      if (!map.isStyleLoaded()) {
+        map.once('styledata', ensureTrailsOnTop);
+        return;
+      }
+
+      try {
+        // Complete list of all trail layer IDs that should be on top
+        const trailLayerIds = [
+          'other-regional-trails-layer',
+          'other-regional-trails-layer-hover',
+          'other-regional-trails-layer-click',
+          'gaps-other-regional-trails-layer',
+          'major-trails-layer',
+          'major-trails-layer-hover',
+          'major-trails-layer-click'
+        ];
+
+        // Get all layer IDs in the current style
+        const style = map.getStyle();
+        if (!style || !style.layers) return;
+
+        const allLayerIds = style.layers.map(layer => layer.id);
+        
+        // Filter to get only existing trail layers
+        const existingTrailLayers = trailLayerIds.filter(id => map.getLayer(id));
+        
+        if (existingTrailLayers.length === 0) return;
+
+        // Find all non-trail layer IDs
+        const nonTrailLayerIds = allLayerIds.filter(id => !trailLayerIds.includes(id));
+        
+        if (nonTrailLayerIds.length === 0) return;
+
+        // Find the last non-trail layer ID - we'll move all trail layers after this
+        const lastNonTrailLayerId = nonTrailLayerIds[nonTrailLayerIds.length - 1];
+        
+        // Move each trail layer to be after the last non-trail layer
+        // Process in order to maintain relative order among trail layers
+        existingTrailLayers.forEach(trailLayerId => {
+          try {
+            // Check current position
+            const currentBeforeId = map.getLayer(trailLayerId)?.metadata?.beforeId;
+            
+            // Only move if not already in correct position
+            // Move to be after the last non-trail layer
+            map.moveLayer(trailLayerId, lastNonTrailLayerId);
+          } catch (err) {
+            // Layer might not exist or already in correct position - ignore
+          }
+        });
+      } catch (err) {
+        // Silently fail if there's an error
+        console.warn('Error ensuring trails on top:', err);
+      }
+    };
+
+    // Wait a bit for layers to be added
+    const timeoutId = setTimeout(ensureTrailsOnTop, 500);
+    
+    // Also listen for style changes and map movements
+    map.on('styledata', ensureTrailsOnTop);
+    map.on('moveend', ensureTrailsOnTop);
+    map.on('zoomend', ensureTrailsOnTop);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      if (map && map.off) {
+        map.off('styledata', ensureTrailsOnTop);
+        map.off('moveend', ensureTrailsOnTop);
+        map.off('zoomend', ensureTrailsOnTop);
+      }
+    };
+  }, [mapRef, selectedRegNames, selectedMajorTrails, showOpenSpace, showEnvironmentalJustice]);
+
+  // Ensure baseLayer and MAPBOX_TOKEN exist before rendering
+  if (!baseLayer || !baseLayer.url || !MAPBOX_TOKEN) {
+    return null;
+  }
+
+  return (
+    <div className="regional-trails-profile-map" style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <ReactMapGL
+        ref={mapRef}
+        {...viewport}
+        width="100%"
+        height="100%"
+        cursor={hoveredTrail ? "pointer" : "default"}
+        interactiveLayerIds={getTrailLayerIds()}
+        onMove={(event) => {
+          setViewport(event.viewState);
+        }}
+        onClick={handleTrailClick}
+        onMouseMove={handleTrailHover}
+        onMouseLeave={() => {
+          if (ejHoverTimeoutRef.current) {
+            clearTimeout(ejHoverTimeoutRef.current);
+            ejHoverTimeoutRef.current = null;
+          }
+          setHoveredTrail(null);
+        }}
+        mapboxAccessToken={MAPBOX_TOKEN}
+        mapStyle={baseLayer.url}
+        scrollZoom={true}
+        transitionDuration="1000"
+        transformRequest={(url, resourceType) => {
+          // Only transform non-Mapbox tile requests (e.g. ArcGIS VectorTileServer)
+          if (resourceType === 'Tile' && !url.includes('mapbox.com') && url.includes('VectorTileServer/tile/')) {
+            const convertedUrl = url.replace(/\/tile\/(\d+)\/(\d+)\/(\d+)\.pbf/, (match, z, y, x) => {
+              return `/tile/${z}/${x}/${y}.pbf`;
+            });
+            return { url: convertedUrl };
+          }
+          return { url };
+        }}
+      >
+        {/* Municipality Map Layer - always visible */}
+        <Source 
+          id="municipalities" 
+          type="geojson" 
+          data={massachusettsData}
+        >
+          {municipalitiesLayers()}
+        </Source>
+
+        {/* OpenSpace Layer - rendered before trails to ensure trails appear on top */}
+        {showOpenSpace && (
+          <OpenSpaceLayer
+            showOpenSpace={showOpenSpace}
+            showMunicipalityProfileMap={false}
+            showRegionalTrailsProfile={true}
+            mapRef={mapRef}
+          />
+        )}
+
+        {/* Environmental Justice Layer - rendered before trails to ensure trails appear on top */}
+        {showEnvironmentalJustice && (
+          <EnvironmentalJusticeLayer
+            showEnvironmentalJustice={showEnvironmentalJustice}
+            showMunicipalityProfileMap={false}
+            showRegionalTrailsProfile={true}
+            mapRef={mapRef}
+          />
+        )}
+
+        {/* Major Trails Layer - rendered after other layers to appear on top */}
+        <MajorTrailsLayer
+          showMajorTrails={selectedMajorTrails.length > 0}
+          showRegionalTrailsProfile={true}
+          mapRef={mapRef}
+          selectedMajorTrails={selectedMajorTrails}
+          onTrailsDataChange={setMajorTrailsData}
+          hoveredTrail={
+            hoveredTrail && (hoveredTrail.properties?.grouped_reg_name || hoveredTrail.isMajorTrail)
+              ? hoveredTrail 
+              : null
+          }
+          clickedTrail={majorTrailClickInfo ? {
+            featureId: majorTrailClickInfo.feature.properties?.OBJECTID 
+          } : null}
+        />
+
+        {/* other regional trails layer - rendered last to appear on top of all other layers */}
+        <OtherRegionalTrailsLayer
+          showTrailsRegNameSync={true}
+          showMunicipalityProfileMap={false}
+          showRegionalTrailsProfile={true}
+          mapRef={mapRef}
+          useColorCoding={false}
+          onRegNamesChange={setRegNames}
+          selectedRegNames={Array.from(selectedRegNames)}
+          onTrailsDataChange={setAllTrailsData}
+          hoveredTrail={hoveredTrail}
+          clickedTrail={regularTrailClickInfo ? {
+           featureId: regularTrailClickInfo.feature.properties?.OBJECTID } : null}
+        />
+
+        {/* No hover popup for regular trails - only show on click */}
+
+        {/* Identify popup */}
+        {showIdentifyPopup && identifyPoint && identifyInfo && identifyInfo.length > 0 && (
+          <CommunityIdentify
+            point={identifyPoint}
+            identifyResult={identifyInfo}
+            handleShowPopup={() => {
+              toggleIdentifyPopup(false);
+            }}
+            handleCarousel={setPointIndex}
+          />
+        )}
+        
+        {/* Environmental Justice Click Popup */}
+        {showEnvironmentalJustice && environmentalJusticeClickInfo?.point && environmentalJusticeClickInfo?.feature && (
+          <Popup
+            longitude={environmentalJusticeClickInfo.point.lng}
+            latitude={environmentalJusticeClickInfo.point.lat}
+            closeButton={true}
+            onClose={() => setEnvironmentalJusticeClickInfo(null)}
+            anchor="top"
+            offset={12}
+          >
+            <EnvironmentalJusticePopupContent properties={environmentalJusticeClickInfo.feature.properties} />
+          </Popup>
+        )}
+
+        {/* Major Trail Click Popup */}
+        {selectedMajorTrails && selectedMajorTrails.length > 0 && majorTrailClickInfo && majorTrailClickInfo.point && majorTrailClickInfo.feature && (
+          <Popup
+            longitude={majorTrailClickInfo.point.lng}
+            latitude={majorTrailClickInfo.point.lat}
+            closeButton={true}
+            onClose={() => setMajorTrailClickInfo(null)}
+            anchor="top"
+            offset={12}
+          >
+            <TrailPopupContent
+              properties={majorTrailClickInfo.feature.properties}
+              titleKey="grouped_reg_name"
+            />
+          </Popup>
+        )}
+
+        {/* Regular Trail Click Popup */}
+        {regularTrailClickInfo && regularTrailClickInfo.point && regularTrailClickInfo.feature && (
+          <Popup
+            longitude={regularTrailClickInfo.point.lng}
+            latitude={regularTrailClickInfo.point.lat}
+            closeButton={true}
+            onClose={() => setRegularTrailClickInfo(null)}
+            anchor="top"
+            offset={12}
+          >
+            <TrailPopupContent
+              properties={regularTrailClickInfo.feature.properties}
+              titleKey="reg_name"
+            />
+          </Popup>
+        )}
+
+        {/* OpenSpace Click Popup */}
+        {showOpenSpace && openSpaceClickInfo?.point && openSpaceClickInfo?.feature && (
+          <Popup
+            longitude={openSpaceClickInfo.point.lng}
+            latitude={openSpaceClickInfo.point.lat}
+            closeButton={true}
+            onClose={() => setOpenSpaceClickInfo(null)}
+            anchor="top"
+            offset={12}
+          >
+            <OpenSpacePopupContent properties={openSpaceClickInfo.feature.properties} />
+          </Popup>
+        )}
+
+        {/* Geocoder - styled to appear inside control panel */}
+        <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
+
+        {/* Map controls */}
+        <NavigationControl position="bottom-right" />
+        <GeolocateControl position="bottom-right" />
+        <ScaleControl position="bottom-left" />
+        
+        {/* Trail Status Legend - only show when trails are selected */}
+        {(selectedRegNames.size > 0 || selectedMajorTrails.length > 0) && (
+          <TrailStatusLegend>
+            <TrailStatusLegendHeader>Trail Status</TrailStatusLegendHeader>
+            <TrailStatusLegendList>
+              <TrailStatusLegendItem>
+                <TrailStatusLegendSwatch $color="#2774bd" />
+                <TrailStatusLegendLabel>Existing</TrailStatusLegendLabel>
+              </TrailStatusLegendItem>
+              <TrailStatusLegendItem>
+                <TrailStatusLegendSwatch $color="#6a1b9a" />
+                <TrailStatusLegendLabel>Planned/Envisioned/Design</TrailStatusLegendLabel>
+              </TrailStatusLegendItem>
+              <TrailStatusLegendItem>
+                <TrailStatusLegendSwatch $color="#FF0000" />
+                <TrailStatusLegendLabel>Gap</TrailStatusLegendLabel>
+              </TrailStatusLegendItem>
+            </TrailStatusLegendList>
+          </TrailStatusLegend>
+        )}
+        
+        {/* Control Panel Toggle Button */}
+        <Control
+          style={"Map_filter d-block position-absolute m-0 p-0"}
+          icon={FilterIcon}
+          alt={"Show Control Panel"}
+          clickHandler={() => toggleControlPanel(!showControlPanel)}
+        />
+      </ReactMapGL>
+
+
+      {/* Basemap Panel */}
+      {showBasemapPanel && (
+        <BasemapPanel
+          toggleBasemapPanel={toggleBasemapPanel}
+        />
+      )}
+
+      {/* Control Panel */}
+      {showControlPanel && (
+        <div>
+          <ControlPanel 
+            selectedRegNames={selectedRegNames}
+            selectedMajorTrails={selectedMajorTrails}
+            onToggleRegName={(regName) => {
+              const newSelected = new Set(selectedRegNames);
+              if (newSelected.has(regName)) {
+                newSelected.delete(regName);
+              } else {
+                newSelected.add(regName);
+              }
+              setSelectedRegNames(newSelected);
+            }}
+            onToggleMajorTrail={(majorTrailName) => {
+              const newSelected = [...selectedMajorTrails];
+              const index = newSelected.indexOf(majorTrailName);
+              if (index > -1) {
+                newSelected.splice(index, 1);
+              } else {
+                newSelected.push(majorTrailName);
+              }
+              setSelectedMajorTrails(newSelected);
+            }}
+          />
+        </div>
+      )}
+
+      {/* Regional Trails Metrics Panel - separate window on the left */}
+      <ProjectMetricsPanel 
+        selectedRegNames={selectedRegNames}
+        selectedMajorTrails={selectedMajorTrails}
+        projectMetrics={projectMetrics}
+        onZoomToProject={handleZoomToProject}
+        allTrailsData={allTrailsData}
+        majorTrailsData={majorTrailsData}
+      />
+    </div>
+  );
+};
+
+export default RegionalTrailsProfile;
+

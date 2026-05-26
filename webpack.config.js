@@ -21,12 +21,6 @@ module.exports = {
         use: ['babel-loader']
       },
       {
-        test: /\.(js|css)$/,
-        enforce: 'pre',
-        use: ['source-map-loader'],
-        exclude: /node_modules\/style-loader/,
-      },
-      {
         test: /\.svg$/,
         use: [
           {
@@ -42,7 +36,14 @@ module.exports = {
         use: [
           "style-loader",
           "css-loader",
-          "sass-loader",
+          {
+            loader: "sass-loader",
+            options: {
+              sassOptions: {
+                quietDeps: true,
+              },
+            },
+          },
         ],
       },
       {

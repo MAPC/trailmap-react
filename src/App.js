@@ -19,14 +19,14 @@ const App = () => {
   const proposedTrails = LayerData.proposed;
   const landlines = LayerData.landline;
 
-  // Don't show intro modal if user navigates directly to communityTrailsProfile
+  // Don't show intro modal if user navigates directly to communityTrailsProfile or regionalTrailsProfile
   const [showIntroModal, toggleIntroModal] = useState(
-    location.pathname !== '/communityTrailsProfile'
+    location.pathname !== '/communityTrailsProfile' && location.pathname !== '/regionalTrailsProfile'
   );
 
   // Update intro modal visibility when path changes
   useEffect(() => {
-    if (location.pathname === '/communityTrailsProfile' && showIntroModal) {
+    if ((location.pathname === '/communityTrailsProfile' || location.pathname === '/regionalTrailsProfile') && showIntroModal) {
       toggleIntroModal(false);
     }
   }, [location.pathname]);
@@ -52,8 +52,8 @@ const App = () => {
   const [municipalityTrails, setMunicipalityTrails] = useState([]);
   const [showMunicipalityView, setShowMunicipalityView] = useState(false);
   const [showMunicipalityProfileMap, setShowMunicipalityProfileMap] = useState(false);
-  const [showProjectTrailsView, setShowProjectTrailsView] = useState(false);
-  const [showProjectTrailsProfileMap, setShowProjectTrailsProfileMap] = useState(false);
+  const [showRegionalTrailsView, setShowRegionalTrailsView] = useState(false);
+  const [showRegionalTrailsProfileMap, setShowRegionalTrailsProfileMap] = useState(false);
   
   // Layer toggle states for municipality profile
   const [showCommuterRail, setShowCommuterRail] = useState(false);
@@ -66,10 +66,9 @@ const App = () => {
   const [showTrailsRegNameSync, setShowTrailsRegNameSync] = useState(false);
   const [showTransitLandStops, setShowTransitLandStops] = useState(false);
   
-  // Project trails profile state
+  // Regional trails profile state
   const [projectRegNames, setProjectRegNames] = useState([]);
   const [selectedProjectRegName, setSelectedProjectRegName] = useState(null);
-  const [projectColorPalette, setProjectColorPalette] = useState({});
 
   return (
     <div className="App">
@@ -123,10 +122,10 @@ const App = () => {
               setShowMunicipalityView,
               showMunicipalityProfileMap,
               setShowMunicipalityProfileMap,
-              showProjectTrailsView,
-              setShowProjectTrailsView,
-              showProjectTrailsProfileMap,
-              setShowProjectTrailsProfileMap,
+              showRegionalTrailsView,
+              setShowRegionalTrailsView,
+              showRegionalTrailsProfileMap,
+              setShowRegionalTrailsProfileMap,
               // Layer toggle states
               showCommuterRail,
               setShowCommuterRail,
@@ -150,8 +149,6 @@ const App = () => {
               setProjectRegNames,
               selectedProjectRegName,
               setSelectedProjectRegName,
-              projectColorPalette,
-              setProjectColorPalette,
               basemaps,
               existingTrails,
               proposedTrails,
