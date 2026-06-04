@@ -4,7 +4,12 @@ import { Layer } from "react-map-gl";
 /**
  * Renders vector tile layers for original trails filters
  */
-const OriginalTrailsFilterLayers = ({ trailLayers, proposedLayers, existingTrails, proposedTrails }) => {
+const OriginalTrailsFilterLayers = ({
+  trailLayers = [],
+  proposedLayers = [],
+  existingTrails = [],
+  proposedTrails = [],
+}) => {
   const filterLayers = [];
   
   const allLayers = [...trailLayers, ...proposedLayers];
