@@ -142,7 +142,7 @@ const TrailsRegNameSyncLayer = ({
       const bbox = `${swMerc.x},${swMerc.y},${neMerc.x},${neMerc.y}`;
       
       // ArcGIS token for authentication
-      const ARCGIS_TOKEN = "AAPTxy8BH1VEsoebNVZXo8HurFEryhzMUuo6HFsZYNxtvAJokki38mbvq7ULTwGi9aIiHg4Ov6mdqMd5YhY2eBLginTWOW2s0AQjeI7Ykqag6M-aN9ebZDjDH92AC2SZZXZMAva-9dhU3So7ctlz8NNnI5atBAQ3zzUBhRN7PBfx6N9e-Dr6ye-m_8BAjmSw2KJDlOpeyXL4Zzk31HB6h95KMEUz0KeUmSeCEw6OsOp3Zeg.AT1_U0702ST1";
+      const ARCGIS_TOKEN = "AAPTaucDi8_DdZbjNjhaAYvWCQA..A05LEOZ-QCx9bKC21Tsk1K0A7Yoql8kZNK3V7F7COkFiE0vn0bVYZti5Eaq_Db7r4UqKV1Y02-9ilPUWjj0barvUV7sdmMM2AgnBJEYMapTJKRzGHJBBGfQV_8KlE5scYMM4iNUNpj7TVvKklvCfr764dCKDmt6ubnI2rW9mRBj7dGZLwbmbKMJFiNx2wAiZoDFGClDOcsxt83kCFCjoGug-Jhqwb0xdl_9lpX38IIoKJ0JAcmgkF6MmiwY9Zgm4Z23T_sSUdSo.AT1_U0702ST1"
 
       // Query GeoJSON from FeatureServer with token authentication
       const url = `${TRAILS_SERVICE_URL}/query?where=1=1&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=3857&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=2000&token=${ARCGIS_TOKEN}`;

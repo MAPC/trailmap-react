@@ -16,7 +16,7 @@ import BufferAnalysisWindow from "../BufferAnalysisWindow";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
 import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
-import { DEFAULT_BUFFER_RADIUS } from "./constants/mapConstants";
+const DEFAULT_BUFFER_RADIUS = 1609; // 1 mile in meters
 import { queryMunicipalityTrails } from "./utils/trailQueries";
 import { calculateBufferAnalysis } from "./utils/bufferAnalysis";
 import CommunityTrailsProfileLayers from "./layers/CommunityTrailsProfileLayers";
