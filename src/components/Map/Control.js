@@ -1,12 +1,18 @@
 import React from "react";
 
-const Control = ({ style, icon, alt, clickHandler }) => {
+const Control = ({ style, icon, iconClass, alt, clickHandler }) => {
   return (
     <button
       className={style}
       onClick={clickHandler}
+      type="button"
+      aria-label={alt}
     >
-      <img src={icon} alt={alt} />
+      {iconClass ? (
+        <i className={iconClass} aria-hidden="true" />
+      ) : (
+        <img src={icon} alt={alt} />
+      )}
     </button>
   );
 };
