@@ -1,6 +1,5 @@
 import BasemapIcon from "../../assets/icons/basemap-icon.svg";
 import FilterIcon from "../../assets/icons/filter-icon.svg";
-import ShareIcon from "../../assets/icons/share-icon.svg";
 import Button from "react-bootstrap/Button";
 import CloseButton from "react-bootstrap/CloseButton";
 import React, { useState, useRef, useEffect, useContext } from "react";
@@ -194,8 +193,8 @@ const Map = () => {
         {!showMunicipalityProfileMap && (
           <Control
             style={"Map_share d-block position-absolute m-0 p-0"}
-            icon={ShareIcon}
-            alt={"Share Map"}
+            iconClass="fa-solid fa-file-arrow-down"
+            alt={"Download map data"}
             clickHandler={() => toggleShareModal(!showShareModal)}
           />
         )}
