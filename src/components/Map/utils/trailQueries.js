@@ -1,5 +1,6 @@
-import { FEATURE_SERVER_BASE } from "../constants/mapConstants";
 import { geojsonTrailLayers } from "../constants/geojsonTrailLayers";
+
+const FEATURE_SERVER_BASE = process.env.REACT_APP_TRAIL_MAP_FEATURE_SERVER_BASE;
 
 /**
  * Convert GeoJSON Polygon/MultiPolygon to ESRI Polygon JSON
@@ -53,6 +54,10 @@ export const ensureLengthFeet = (attributes, geojsonGeometry) => {
  * Fetch all features for a layer with pagination support
  */
 export const fetchAllFeaturesForLayer = async ({ layerId, esriPolygon }) => {
+  if (!FEATURE_SERVER_BASE) {
+    throw new Error("REACT_APP_TRAIL_MAP_FEATURE_SERVER_BASE is not set");
+  }
+
   const all = [];
   const pageSize = 2000;
   let offset = 0;
@@ -170,11 +175,7 @@ export const queryMunicipalityTrails = async ({
     setLoadingMessage("Finalizing results...");
     setLoadingProgress(90);
 
-    console.log(`Total trails found: ${allTrailResults.length}`);
-    console.log('Trails by layer ID:', allTrailResults.reduce((acc, trail) => {
-      acc[trail.layerId] = (acc[trail.layerId] || 0) + 1;
-      return acc;
-    }, {}));
+  
 
     setLoadingProgress(100);
     

@@ -11,7 +11,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 const ControlPanel = ({ 
   selectedRegNames = null,
-  onToggleRegName = null
+  onToggleRegName = null,
+  selectedMajorTrails = [],
+  onToggleMajorTrail = null,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -288,7 +290,7 @@ const ControlPanel = ({
       <div>
         {showProjectTrailsView ? (
           <>
-            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Project Trails Profile</span>
+            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Regional Trails Profile</span>
             <Button 
               variant="outline-secondary"
               size="sm"
@@ -338,7 +340,7 @@ const ControlPanel = ({
           </>
         ) : showMunicipalityView ? (
           <>
-            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Community Trails Profile</span>
+            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Community Profile</span>
             <Button 
               variant="outline-secondary"
               size="sm"
@@ -365,7 +367,7 @@ const ControlPanel = ({
               }}
               onClick={handleViewToggle}
             >
-              View Community Trails Profile
+              View Community Profile
             </Button>
             <Button 
               variant="primary"
@@ -378,7 +380,7 @@ const ControlPanel = ({
               }}
               onClick={handleProjectTrailsToggle}
             >
-              View Project Trails Profile
+              View Regional Trails Profile
             </Button>
           </div>
         )}
@@ -389,6 +391,8 @@ const ControlPanel = ({
               regNames={projectRegNames || []}
               selectedRegNames={selectedRegNames instanceof Set ? selectedRegNames : (selectedRegNames ? new Set(selectedRegNames) : new Set())}
               onToggleRegName={onToggleRegName || (() => {})}
+              selectedMajorTrails={selectedMajorTrails || []}
+              onToggleMajorTrail={onToggleMajorTrail || (() => {})}
             />
           </div>
         ) : !showMunicipalityView ? (
