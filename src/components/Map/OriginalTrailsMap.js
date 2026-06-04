@@ -18,7 +18,8 @@ import OriginalTrailsFilterLayers from "./layers/OriginalTrailsFilterLayers";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
 const LANDLINE_SOURCE = process.env.REACT_APP_LANDLINE_TILE_URL;
-const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL;
+const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL 
+
 
 const OriginalTrailsMap = ({ 
   viewport, 
@@ -29,11 +30,15 @@ const OriginalTrailsMap = ({
   showControlPanel,
   toggleControlPanel,
   mapRef,
-  trailLayers,
-  proposedLayers,
-  existingTrails,
-  proposedTrails
+  trailLayers: trailLayersProp,
+  proposedLayers: proposedLayersProp,
+  existingTrails: existingTrailsProp,
+  proposedTrails: proposedTrailsProp,
 }) => {
+  const trailLayers = trailLayersProp || [];
+  const proposedLayers = proposedLayersProp || [];
+  const existingTrails = existingTrailsProp || [];
+  const proposedTrails = proposedTrailsProp || [];
   const {
     showLandlineLayer,
     showMaHouseDistricts,
@@ -313,8 +318,11 @@ const OriginalTrailsMap = ({
           ...existingTrails.filter((et) => trailLayers.includes(et.id)).map((et) => et["esri-id"]),
           ...proposedTrails.filter((et) => proposedLayers.includes(et.id)).map((et) => et["esri-id"]),
         ].join(",");
+        if (!allLayers) return;
+
         if (trailLayers.length > 0 || proposedLayers.length > 0) {
-          const currentMap = mapRef.current.getMap();
+          const currentMap = mapRef.current?.getMap?.();
+          if (!currentMap) return;
           const currentMapBounds = currentMap.getBounds();
           axios
             .get(TRAILMAP_IDENTIFY_SOURCE, {
@@ -331,15 +339,23 @@ const OriginalTrailsMap = ({
               },
             })
             .then((res) => {
-              if (res.data.results.length > 0) {
+              if (res?.data?.error) {
+                console.error("Trail identify error:", res.data.error);
+                return;
+              }
+              const results = res?.data?.results;
+              if (results && results.length > 0) {
                 const identifyResult = [];
-                for (let i = 0; i < Math.min(5, res.data.results.length); i++) {
-                  identifyResult.push(res.data.results[i]);
+                for (let i = 0; i < Math.min(5, results.length); i++) {
+                  identifyResult.push(results[i]);
                 }
                 setIdentifyInfo(identifyResult);
                 toggleIdentifyPopup(true);
                 setIdentifyPoint(event.lngLat);
               }
+            })
+            .catch((err) => {
+              console.error("Trail identify request failed:", err);
             });
         }
       }}
