@@ -53,7 +53,7 @@ const ShareModal = ({ url }) => {
             <span>
               To download the CSV and Shapefiles for these trails, visit{" "}
               <a
-                href="https://datacommon.mapc.org/browser?geos=all&q=lines"
+                href="https://datacommon.mapc.org/browser?geos=all&category=Transportation&q=lines"
                 target="_blank"
               >
                 MAPC's DataCommon
