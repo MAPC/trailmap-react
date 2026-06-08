@@ -2,12 +2,9 @@ import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactMapGL, { NavigationControl, GeolocateControl, ScaleControl, Popup, Source, Layer } from "react-map-gl";
 import BasemapPanel from "../BasemapPanel";
-import ControlPanel from "../ControlPanel";
-import Control from "./Control";
-import FilterIcon from "../../assets/icons/filter-icon.svg";
+import ControlPanelShell from "../ControlPanel/ControlPanelShell";
 import CommunityIdentify from "./tooltip/CommunityIdentify";
 import ProjectMetricsPanel from "./ProjectMetricsPanel";
-import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import { LayerContext } from "../../App";
 import OtherRegionalTrailsLayer from "./layers/OtherRegionalTrailsLayer";
 import MajorTrailsLayer from "./layers/MajorTrailsLayer";
@@ -891,9 +888,6 @@ const ProjectTrailsProfile = ({
           </Popup>
         )}
 
-        {/* Geocoder - styled to appear inside control panel */}
-        <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
-
         {/* Map controls */}
         <NavigationControl position="bottom-right" />
         <GeolocateControl position="bottom-right" />
@@ -903,52 +897,39 @@ const ProjectTrailsProfile = ({
         {(selectedRegNames.size > 0 || selectedMajorTrails.length > 0) && (
           <TrailStatusLegend />
         )}
-        
-        {/* Control Panel Toggle Button */}
-        <Control
-          style={"Map_filter d-block position-absolute m-0 p-0"}
-          icon={FilterIcon}
-          alt={"Show Control Panel"}
-          clickHandler={() => toggleControlPanel(!showControlPanel)}
-        />
       </ReactMapGL>
 
-
-      {/* Basemap Panel */}
       {showBasemapPanel && (
         <BasemapPanel
           toggleBasemapPanel={toggleBasemapPanel}
         />
       )}
 
-      {/* Control Panel */}
-      {showControlPanel && (
-        <div>
-          <ControlPanel 
-            selectedRegNames={selectedRegNames}
-            selectedMajorTrails={selectedMajorTrails}
-            onToggleRegName={(regName) => {
-              const newSelected = new Set(selectedRegNames);
-              if (newSelected.has(regName)) {
-                newSelected.delete(regName);
-              } else {
-                newSelected.add(regName);
-              }
-              setSelectedRegNames(newSelected);
-            }}
-            onToggleMajorTrail={(majorTrailName) => {
-              const newSelected = [...selectedMajorTrails];
-              const index = newSelected.indexOf(majorTrailName);
-              if (index > -1) {
-                newSelected.splice(index, 1);
-              } else {
-                newSelected.push(majorTrailName);
-              }
-              setSelectedMajorTrails(newSelected);
-            }}
-          />
-        </div>
-      )}
+      <ControlPanelShell
+        showControlPanel={showControlPanel}
+        toggleControlPanel={toggleControlPanel}
+        selectedRegNames={selectedRegNames}
+        selectedMajorTrails={selectedMajorTrails}
+        onToggleRegName={(regName) => {
+          const newSelected = new Set(selectedRegNames);
+          if (newSelected.has(regName)) {
+            newSelected.delete(regName);
+          } else {
+            newSelected.add(regName);
+          }
+          setSelectedRegNames(newSelected);
+        }}
+        onToggleMajorTrail={(majorTrailName) => {
+          const newSelected = [...selectedMajorTrails];
+          const index = newSelected.indexOf(majorTrailName);
+          if (index > -1) {
+            newSelected.splice(index, 1);
+          } else {
+            newSelected.push(majorTrailName);
+          }
+          setSelectedMajorTrails(newSelected);
+        }}
+      />
 
       {/* Regional Trails Metrics Panel - separate window on the left */}
       <ProjectMetricsPanel 
