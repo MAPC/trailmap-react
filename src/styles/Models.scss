@@ -66,6 +66,9 @@
 
 .modal-dialog {
   width: 500px;
+  max-width: calc(100vw - 2rem);
+  margin-left: auto;
+  margin-right: auto;
 
   @media only screen and (max-width: 325px) {
     width: 275px;
@@ -78,6 +81,11 @@
   @media only screen and (min-width: 2000px) {
     width: 450px;
   }
+}
+
+.GlossaryModal__dialog {
+  width: min(760px, calc(100vw - 2rem)) !important;
+  max-width: 760px;
 }
 
 .direct-download {
