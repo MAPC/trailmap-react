@@ -2,14 +2,12 @@ import React, { useState, useContext } from "react";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
 import axios from "axios";
 import BasemapIcon from "../../assets/icons/basemap-icon.svg";
-import FilterIcon from "../../assets/icons/filter-icon.svg";
 import BasemapPanel from "../BasemapPanel";
 import Control from "./Control";
-import ControlPanel from "../ControlPanel";
+import ControlPanelShell from "../ControlPanel/ControlPanelShell";
 import MAhouseDistrictsButton from '../MAhouseDistrictsButton';
 import MASenateDistrictsButton from '../MASenateDistrictsButton';
 import MunicipalitiesButton from '../MunicipalitiesButton';
-import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import Identify from "./Identify";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
@@ -509,11 +507,10 @@ const OriginalTrailsMap = ({
         />
       )}
       
-      {showControlPanel && (
-        <div>
-          <ControlPanel />
-        </div>
-      )}
+      <ControlPanelShell
+        showControlPanel={showControlPanel}
+        toggleControlPanel={toggleControlPanel}
+      />
 
       {showBasemapPanel && <BasemapPanel />}
       
@@ -570,16 +567,6 @@ const OriginalTrailsMap = ({
       >
         {municipalitiesLayers()}
       </Source>
-      
-      <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
-      
-      <Control
-        style={"Map_filter d-block position-absolute m-0 p-0"}
-        icon={FilterIcon}
-        alt={"Show Control Panel"}
-        clickHandler={() => toggleControlPanel(!showControlPanel)}
-      />
-      
       <Control
         style={"Map_basemap d-block position-absolute m-0 p-0"}
         icon={BasemapIcon}

@@ -85,42 +85,6 @@
 
 // Overrides
 
-.mapboxgl-ctrl-top-left .mapboxgl-ctrl {
-  margin-top: 70px;
-  width: 240px;
-}
-
-// Geocoder styling to fit control panel width for project trails profile
-.mapboxgl-ctrl-geocoder {
-  width: 100% !important;
-  max-width: 520px;
-  
-  @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    max-width: 550px;
-  }
-  
-  input {
-    width: 100% !important;
-  }
-}
-
-.mapboxgl-ctrl-top-left .mapboxgl-ctrl.mapboxgl-ctrl-geocoder {
-  width: 240px !important;
-  
-  @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    width: 240px !important;
-  }
-}
-
-// Geocoder for project trails profile - same positioning as community profile
-.project-trails-profile-map .mapboxgl-ctrl-top-left .mapboxgl-ctrl.mapboxgl-ctrl-geocoder {
-  width: 240px !important;
-  
-  @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    width: 240px !important;
-  }
-}
-
 .mapboxgl-ctrl-top-left {
   z-index: 600;
 }

@@ -15,7 +15,6 @@ import ControlPanel from "../ControlPanel";
 import MAhouseDistrictsButton from '../MAhouseDistrictsButton';
 import MASenateDistrictsButton from '../MASenateDistrictsButton';
 import MunicipalitiesButton from '../MunicipalitiesButton';
-import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import GlossaryModal from "../Modals/GlossaryModal";
 import Identify from "./Identify";
 import CommunityIdentify from "./CommunityIdentify";
