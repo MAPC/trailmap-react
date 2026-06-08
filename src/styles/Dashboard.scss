@@ -1,0 +1,31 @@
+.Dashboard {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: $light-grey;
+  overflow: auto;
+  z-index: 2;
+
+  &__content {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+  }
+
+  &__title {
+    font-family: $title-font;
+    font-size: 1.75rem;
+    color: $dark-blue;
+    margin: 0 0 0.75rem;
+  }
+
+  &__lead {
+    font-family: $body-font;
+    font-size: 1rem;
+    color: $dark-grey;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
