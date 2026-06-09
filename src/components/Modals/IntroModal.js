@@ -1,149 +1,168 @@
 import React, { useContext, useState } from "react";
-import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
+import Form from "react-bootstrap/Form";
 import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
+import { usePrimaryNavigation } from "../../hooks/usePrimaryNavigation";
+
+const INTRO_DISMISSED_KEY = "trailmap-intro-dismissed";
+
+export const isIntroModalDismissed = () =>
+  typeof window !== "undefined" && localStorage.getItem(INTRO_DISMISSED_KEY) === "true";
+
+const INTRO_CARDS = [
+  {
+    id: "community",
+    title: "Community Profile",
+    description:
+      "Dive into one municipality — trail miles, build-out, and how it compares across the region.",
+    iconClass: "bi-people-fill",
+    accent: "community",
+  },
+  {
+    id: "regional",
+    title: "Regional Trails Profile",
+    description:
+      "Follow named trail networks like the Mass Central Rail Trail across community lines.",
+    iconClass: "bi-signpost-split-fill",
+    accent: "regional",
+  },
+  {
+    id: "map",
+    title: "View All Trails",
+    description: "Jump straight to the full interactive map and toggle every trail type yourself.",
+    iconClass: "bi-map-fill",
+    accent: "map",
+  },
+];
 
 const IntroModal = () => {
-  const { showIntroModal, toggleIntroModal } = useContext(ModalContext);
-  const { showContributeModal, toggleContributeModal } = useContext(ModalContext);
-  const { basemaps, setBaseLayer, setTrailLayers } = useContext(LayerContext);
-  const [assist, toggleAssist] = useState(false);
+  const { showIntroModal, toggleIntroModal, toggleContributeModal } = useContext(ModalContext);
+  const {
+    basemaps,
+    setBaseLayer,
+    setTrailLayers,
+    setProposedLayers,
+    setSelectedMunicipality,
+    setShowMunicipalityProfileMap,
+    setShowMunicipalityView,
+    setShowProjectTrailsProfileMap,
+    setShowProjectTrailsView,
+  } = useContext(LayerContext);
+  const { enterCommunityProfile, enterRegionalProfile, goToTrailsOverview } = usePrimaryNavigation();
 
-  const handleCannedMap = (mapType) => {
-    const setMap = (mapLayers) => {
-      setBaseLayer(basemaps.find((bm) => bm.id == mapLayers.baseLayer));
-      setTrailLayers(mapLayers.trailLayers);
-    };
+  const [dontShowAgain, setDontShowAgain] = useState(false);
 
-    switch (mapType) {
-      case "hiking":
-        setMap({ baseLayer: "terrain", trailLayers: ["unimprovedPaths", "naturalSurfaceFootway"] });
-        break;
-      case "biking":
-        setMap({
-          baseLayer: "streets",
-          trailLayers: ["bikeLane", "protectedBikeLane", "pavedPaths", "unimprovedPaths"],
-        });
-        break;
-      case "walking":
-        setMap({ baseLayer: "streets", trailLayers: ["pavedPaths", "pavedFootway", "unimprovedPaths"] });
-        break;
-      case "all":
-        setMap({
-          baseLayer: "terrain",
-          trailLayers: [
-            "pavedPaths",
-            "bikeLane",
-            "pavedFootway",
-            "naturalSurfaceFootway",
-            "protectedBikeLane",
-            "unimprovedPaths",
-          ],
-        });
-      default:
-        break;
+  const closeIntro = () => {
+    if (dontShowAgain) {
+      localStorage.setItem(INTRO_DISMISSED_KEY, "true");
     }
-    toggleIntroModal(!showIntroModal);
+    toggleIntroModal(false);
+  };
+
+  const handleCardSelect = (cardId) => {
+    if (cardId === "community") {
+      enterCommunityProfile();
+      closeIntro();
+    } else if (cardId === "regional") {
+      enterRegionalProfile();
+      closeIntro();
+    } else {
+      enterFullMap();
+    }
+  };
+
+  const enterFullMap = () => {
+    setShowMunicipalityView(false);
+    setShowMunicipalityProfileMap(false);
+    setShowProjectTrailsView(false);
+    setShowProjectTrailsProfileMap(false);
+    setSelectedMunicipality(null);
+    setBaseLayer(basemaps.find((bm) => bm.id === "terrain"));
+    setTrailLayers([
+      "pavedPaths",
+      "bikeLane",
+      "pavedFootway",
+      "naturalSurfaceFootway",
+      "protectedBikeLane",
+      "unimprovedPaths",
+    ]);
+    setProposedLayers([]);
+    goToTrailsOverview();
+    closeIntro();
   };
 
   return (
     <Modal
-      className="Modal"
-      dialogClassName="mx-auto"
+      className="IntroModal"
+      dialogClassName="IntroModal__dialog mx-auto"
       show={showIntroModal}
-      onHide={() => {
-        toggleIntroModal(!showIntroModal);
-      }}
+      onHide={closeIntro}
       centered
+      backdrop="static"
     >
-      <Modal.Title>
-        <span className="Modal__title text-center d-block mt-1 mb-1 ms-2 me-2 p-3 lh-lg">Welcome to Trailmap!</span>
-        <span className="Modal__subtitle text-center d-block mt-1 mb-1 ms-2 me-2 p-3">
-          Metro Boston's Regional Walking and Cycling Map
-        </span>
-      </Modal.Title>
-      <Modal.Body className="Modal__body text-center">
-        {!assist && (
-          <>
-            <Button
-              className="intro-button m-2"
-              variant="primary"
-              onClick={() => {
-                toggleAssist(!assist);
+      <div className="IntroModal__inner">
+        <button
+          type="button"
+          className="IntroModal__close"
+          aria-label="Close welcome dialog"
+          onClick={closeIntro}
+        >
+          <i className="bi bi-x-lg" aria-hidden="true" />
+        </button>
+
+        <span className="IntroModal__eyebrow">Welcome to Trailmap</span>
+        <h2 className="IntroModal__title">Where would you like to start?</h2>
+        <p className="IntroModal__lead">
+          Metro Boston&apos;s regional walking &amp; cycling map. Pick a path below — you can switch
+          anytime from the top navigation.
+        </p>
+
+        <div className="IntroModal__cards">
+          {INTRO_CARDS.map((card) => (
+            <button
+              key={card.id}
+              type="button"
+              className={`IntroModal__card IntroModal__card--${card.accent}`}
+              onClick={() => handleCardSelect(card.id)}
+            >
+              <div className={`IntroModal__icon-wrap IntroModal__icon-wrap--${card.accent}`}>
+                <i className={`bi ${card.iconClass}`} aria-hidden="true" />
+              </div>
+              <h3 className="IntroModal__card-title">{card.title}</h3>
+              <p className="IntroModal__card-text">{card.description}</p>
+              <span className={`IntroModal__card-action IntroModal__card-action--${card.accent}`}>
+                Start <i className="bi bi-chevron-right" aria-hidden="true" />
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="IntroModal__footer">
+          <Form.Check
+            type="checkbox"
+            id="intro-dont-show-again"
+            className="IntroModal__checkbox"
+            checked={dontShowAgain}
+            onChange={(e) => setDontShowAgain(e.target.checked)}
+            label="Don't show this again"
+          />
+          <p className="IntroModal__contribute">
+            Have better data? Trailmap improves with the community —{" "}
+            <a
+              href="#contribute"
+              onClick={(e) => {
+                e.preventDefault();
+                closeIntro();
+                toggleContributeModal(true);
               }}
             >
-              Help Me Get Started
-            </Button>
-            <Button
-              className="intro-button m-2"
-              variant="primary"
-              onClick={() => {
-                handleCannedMap("all");
-              }}
-            >
-              Show me Everything
-            </Button>
-          </>
-        )}
-        {assist && (
-          <>
-            I'm interested in:
-            <div>
-              <Button
-                className="intro-button m-2"
-                variant="primary"
-                onClick={() => {
-                  handleCannedMap("biking");
-                }}
-              >
-                Biking
-              </Button>
-              <Button
-                className="intro-button m-2"
-                variant="primary"
-                onClick={() => {
-                  handleCannedMap("hiking");
-                }}
-              >
-                Hiking
-              </Button>
-              <Button
-                className="intro-button m-2"
-                variant="primary"
-                onClick={() => {
-                  handleCannedMap("walking");
-                }}
-              >
-                Walking
-              </Button>
-            </div>
-          </>
-        )}
-      </Modal.Body>
-      <Modal.Footer>
-        <span className="Modal__footer text-center p-1">
-          Trailmaps is always looking for new and improved data from the community. We encourage everyone to submit
-          up-to-date infomration on individual trails so we can continue to improve this dataset. Learn more about
-          trailmaps and continuing{" "}
-          <a
-            onClick={() => {
-              toggleIntroModal(false);
-              toggleContributeModal(true);
-            }}
-            className="modal-footer-link"
-          >
-            here
-          </a>
-          .
-        </span>
-        <span className="Modal__disclaimer p-1 fst-italic">
-          Disclaimer: The data herein is provided for informational purposes only. MAPC makes no warranties, either
-          expressed or implied, and assumes no responsibility for its completeness or accuracy. Users assume all
-          responsibility and risk associated with use of the map and agree to indemnify and hold harmless MAPC with
-          respect to any and all claims and demands that may arise resulting from use of this map.
-        </span>
-      </Modal.Footer>
+              contribute trail info
+            </a>
+            .
+          </p>
+        </div>
+      </div>
     </Modal>
   );
 };

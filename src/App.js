@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import "./styles/App.scss";
 import Header from "./components/Header";
-import IntroModal from "./components/Modals/IntroModal";
+import IntroModal, { isIntroModalDismissed } from "./components/Modals/IntroModal";
 import ContributeModal from "./components/Modals/ContributeModal";
 import AboutModal from "./components/Modals/AboutModal";
 import EditModal from "./components/Modals/EditModal";
@@ -19,14 +19,20 @@ const App = () => {
   const proposedTrails = LayerData.proposed;
   const landlines = LayerData.landline;
 
-  // Don't show intro modal if user navigates directly to communityTrailsProfile
-  const [showIntroModal, toggleIntroModal] = useState(
-    location.pathname !== '/communityTrailsProfile'
-  );
+  const shouldSkipIntro =
+    location.pathname === "/communityTrailsProfile" ||
+    location.pathname === "/projectTrailsProfile" ||
+    isIntroModalDismissed();
+
+  const [showIntroModal, toggleIntroModal] = useState(!shouldSkipIntro);
 
   // Update intro modal visibility when path changes
   useEffect(() => {
-    if (location.pathname === '/communityTrailsProfile' && showIntroModal) {
+    if (
+      (location.pathname === "/communityTrailsProfile" ||
+        location.pathname === "/projectTrailsProfile") &&
+      showIntroModal
+    ) {
       toggleIntroModal(false);
     }
   }, [location.pathname]);
