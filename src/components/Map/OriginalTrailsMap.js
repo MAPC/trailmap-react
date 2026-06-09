@@ -2,10 +2,10 @@ import React, { useState, useContext } from "react";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
 import axios from "axios";
 import BasemapIcon from "../../assets/icons/basemap-icon.svg";
-import FilterIcon from "../../assets/icons/filter-icon.svg";
-import BasemapPanel from "../BasemapPanel";
 import Control from "./Control";
-import ControlPanel from "../ControlPanel";
+import BasemapPanel from "../BasemapPanel";
+import ControlPanelShell from "../ControlPanel/ControlPanelShell";
+import MapLegend from "./MapLegend";
 import MAhouseDistrictsButton from '../MAhouseDistrictsButton';
 import MASenateDistrictsButton from '../MASenateDistrictsButton';
 import MunicipalitiesButton from '../MunicipalitiesButton';
@@ -278,6 +278,7 @@ const OriginalTrailsMap = ({
   };
 
   return (
+    <>
     <ReactMapGL
       ref={mapRef}
       {...viewport}
@@ -509,12 +510,6 @@ const OriginalTrailsMap = ({
         />
       )}
       
-      {showControlPanel && (
-        <div>
-          <ControlPanel />
-        </div>
-      )}
-
       {showBasemapPanel && <BasemapPanel />}
       
       {/* Render vector tile source for original trails filters */}
@@ -572,13 +567,6 @@ const OriginalTrailsMap = ({
       </Source>
       
       <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
-      
-      <Control
-        style={"Map_filter d-block position-absolute m-0 p-0"}
-        icon={FilterIcon}
-        alt={"Show Control Panel"}
-        clickHandler={() => toggleControlPanel(!showControlPanel)}
-      />
       
       <Control
         style={"Map_basemap d-block position-absolute m-0 p-0"}
@@ -696,6 +684,14 @@ const OriginalTrailsMap = ({
         position="bottom-right"
       />
     </ReactMapGL>
+
+    <ControlPanelShell
+      showControlPanel={showControlPanel}
+      toggleControlPanel={toggleControlPanel}
+    />
+
+    <MapLegend controlPanelOpen={showControlPanel} />
+    </>
   );
 };
 
