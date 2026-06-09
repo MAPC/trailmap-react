@@ -36,7 +36,7 @@ const Header = () => {
           alt="Contribute trail info"
           tooltip="Contribute trail info"
           tooltipId="header-contribute-tooltip"
-          tooltipPlacement="left"
+          tooltipPlacement="bottom"
           clickHandler={() => toggleHeaderModal("contribute")}
         />
         <Control
@@ -45,7 +45,7 @@ const Header = () => {
           alt="About Trailmap"
           tooltip="About Trailmap"
           tooltipId="header-about-tooltip"
-          tooltipPlacement="left"
+          tooltipPlacement="bottom"
           clickHandler={() => toggleHeaderModal("about")}
         />
         <Control
@@ -54,7 +54,7 @@ const Header = () => {
           alt="Glossary of trail types"
           tooltip="Glossary of trail types"
           tooltipId="header-glossary-tooltip"
-          tooltipPlacement="left"
+          tooltipPlacement="bottom"
           clickHandler={() => toggleHeaderModal("glossary")}
         />
         <Control
@@ -63,7 +63,7 @@ const Header = () => {
           alt="Help and getting started"
           tooltip="Help & getting started"
           tooltipId="header-help-tooltip"
-          tooltipPlacement="left"
+          tooltipPlacement="bottom"
           clickHandler={() => toggleHeaderModal("intro")}
         />
       </div>
