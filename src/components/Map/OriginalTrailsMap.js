@@ -1,13 +1,9 @@
 import React, { useState, useContext } from "react";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
 import axios from "axios";
-import BasemapIcon from "../../assets/icons/basemap-icon.svg";
-import BasemapPanel from "../BasemapPanel";
-import Control from "./Control";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
-import MAhouseDistrictsButton from '../MAhouseDistrictsButton';
-import MASenateDistrictsButton from '../MASenateDistrictsButton';
-import MunicipalitiesButton from '../MunicipalitiesButton';
+import MapToolbar from "./MapToolbar";
+import MapLegend from "./MapLegend";
 import Identify from "./Identify";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
@@ -25,6 +21,8 @@ const OriginalTrailsMap = ({
   baseLayer, 
   showBasemapPanel, 
   toggleBasemapPanel,
+  showBoundariesPanel,
+  toggleBoundariesPanel,
   showControlPanel,
   toggleControlPanel,
   mapRef,
@@ -512,7 +510,6 @@ const OriginalTrailsMap = ({
         toggleControlPanel={toggleControlPanel}
       />
 
-      {showBasemapPanel && <BasemapPanel />}
       
       {/* Render vector tile source for original trails filters */}
       <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
@@ -567,13 +564,17 @@ const OriginalTrailsMap = ({
       >
         {municipalitiesLayers()}
       </Source>
-      <Control
-        style={"Map_basemap d-block position-absolute m-0 p-0"}
-        icon={BasemapIcon}
-        alt={"Show Basemaps"}
-        clickHandler={() => toggleBasemapPanel(!showBasemapPanel)}
+      <MapToolbar
+        showBasemapPanel={showBasemapPanel}
+        toggleBasemapPanel={toggleBasemapPanel}
+        showBoundariesPanel={showBoundariesPanel}
+        toggleBoundariesPanel={toggleBoundariesPanel}
+        onBoundaryLayerToggle={() => setShowOneLayerNotice(true)}
+        onBoundaryPanelOpen={() => setShowOneLayerNotice(true)}
+        showOneLayerNotice={showOneLayerNotice}
+        onDismissOneLayerNotice={() => setShowOneLayerNotice(false)}
       />
-      
+
       {showMaHouseDistricts && hoverFeature && hoverPoint && (
         <Popup
           longitude={hoverPoint.lng}
@@ -645,32 +646,8 @@ const OriginalTrailsMap = ({
           })()}
         </Popup>
       )}
-      
-      <MunicipalitiesButton />
-      <MASenateDistrictsButton />
-      <MAhouseDistrictsButton />
-      
-      {showOneLayerNotice && (showMunicipalities || showMaHouseDistricts || showMaSenateDistricts) && (
-        <div
-          className="Map_oneLayerNotice position-absolute"
-          style={{
-            top: 117,
-            right: 11,
-            background: "rgba(255,255,255,0.95)",
-            border: "1px solid rgba(0,0,0,0.1)",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-            borderRadius: 6,
-            padding: "4px 8px",
-            fontSize: 12,
-            color: "#333",
-            zIndex: 1000
-          }}
-          onClick={() => setShowOneLayerNotice(false)}
-        >
-          For clarity, only one map (Municipalities, MA Senate, or MA House) is shown at a time
-        </div>
-      )}
-      
+      <MapLegend controlPanelOpen={showControlPanel} />
+
       <ScaleControl position="bottom-right" />
       <NavigationControl className="map_navigation" position="bottom-right" />
       <GeolocateControl

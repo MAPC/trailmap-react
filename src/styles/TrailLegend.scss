@@ -20,6 +20,20 @@
     font-size: 13px;
   }
 
+  &__section {
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__section-header {
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
   &__items {
     display: flex;
     flex-direction: column;

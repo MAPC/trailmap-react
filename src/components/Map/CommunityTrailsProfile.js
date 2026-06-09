@@ -5,9 +5,8 @@ import axios from "axios";
 import bbox from "@turf/bbox";
 import * as turf from "@turf/turf";
 import LoadingBar from "../LoadingBar";
-import BasemapPanel from "../BasemapPanel";
-import Control from "./Control";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
+import MapToolbar from "./MapToolbar";
 import CommunityIdentify from "./CommunityIdentify";
 import TrailLegend from "./TrailLegend";
 import BufferAnalysisWindow from "../BufferAnalysisWindow";
@@ -931,8 +930,6 @@ const CommunityTrailsProfile = ({
           </Popup>
         )}
         
-        {showBasemapPanel && <BasemapPanel />}
-        
         {/* Render GeoJSON sources for community trails profile */}
         <CommunityTrailsProfileLayers
           showMunicipalityProfileMap={true}
@@ -1053,11 +1050,19 @@ const CommunityTrailsProfile = ({
         
       </ReactMapGL>
 
+      <MapToolbar
+        showBasemapPanel={showBasemapPanel}
+        toggleBasemapPanel={toggleBasemapPanel}
+        showBoundariesPanel={false}
+        toggleBoundariesPanel={() => {}}
+        showBoundaries={false}
+      />
+
       <ControlPanelShell
         showControlPanel={showControlPanel}
         toggleControlPanel={toggleControlPanel}
       />
-      
+
       {/* Buffer Analysis Window */}
       <BufferAnalysisWindow
         show={showBufferAnalysis}

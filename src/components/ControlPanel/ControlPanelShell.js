@@ -7,20 +7,27 @@ const ControlPanelShell = ({
   ...controlPanelProps
 }) => {
   return (
-    <>
-      {showControlPanel && <ControlPanel {...controlPanelProps} />}
+    <div
+      className={`ControlPanelShell${
+        showControlPanel ? " ControlPanelShell--open" : " ControlPanelShell--closed"
+      }`}
+    >
+      <div
+        className="ControlPanelShell__drawer"
+        aria-hidden={!showControlPanel}
+      >
+        <ControlPanel {...controlPanelProps} />
+      </div>
       <button
         type="button"
-        className={`ControlPanelToggle${
-          showControlPanel ? " ControlPanelToggle--open" : " ControlPanelToggle--closed"
-        }`}
+        className="ControlPanelShell__toggle"
         onClick={() => toggleControlPanel(!showControlPanel)}
         aria-label={showControlPanel ? "Collapse trail filters panel" : "Expand trail filters panel"}
         aria-expanded={showControlPanel}
       >
         <i className={`bi bi-chevron-${showControlPanel ? "left" : "right"}`} aria-hidden="true" />
       </button>
-    </>
+    </div>
   );
 };
 

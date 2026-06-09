@@ -64,6 +64,15 @@
   margin: 7px 0 7px 0;
 }
 
+// Above Header (z-index: 1100) so modals are not covered
+.modal-backdrop {
+  z-index: 1190 !important;
+}
+
+.modal {
+  z-index: 1200 !important;
+}
+
 .modal-dialog {
   width: 500px;
   max-width: calc(100vw - 2rem);
@@ -86,6 +95,11 @@
 .GlossaryModal__dialog {
   width: min(760px, calc(100vw - 2rem)) !important;
   max-width: 760px;
+}
+
+.ShareModal__dialog {
+  width: min(520px, calc(100vw - 2rem)) !important;
+  max-width: 520px;
 }
 
 .direct-download {
