@@ -235,8 +235,9 @@ const ControlPanel = ({
         // Update the ref
         prevMunicipalityNameRef.current = selectedMunicipality.name;
       }
-    } else if (!selectedMunicipality) {
-      // Clear the ref when no municipality is selected
+    } else if (!selectedMunicipality && showMunicipalityView) {
+      setTrailLayers([]);
+      setProposedLayers([]);
       prevMunicipalityNameRef.current = null;
     }
   }, [selectedMunicipality, municipalityTrails, showMunicipalityView]);
@@ -285,8 +286,10 @@ const ControlPanel = ({
   };
 
   return (
-    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto ${showProjectTrailsView ? 'project-trails-profile' : ''}`}>
-      <div className="ControlPanel_opacity position-fixed"></div>
+    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto${showProjectTrailsView ? " project-trails-profile" : ""}${showMunicipalityView ? " ControlPanel--communityProfile" : ""}`}>
+      {!showMunicipalityView && (
+        <div className="ControlPanel_opacity position-fixed"></div>
+      )}
       <div>
         {showProjectTrailsView ? (
           <>
@@ -338,19 +341,7 @@ const ControlPanel = ({
               </Button>
             </div>
           </>
-        ) : showMunicipalityView ? (
-          <>
-            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Community Profile</span>
-            <Button 
-              variant="outline-secondary"
-              size="sm"
-              className="w-100 mb-3 ControlPanel__toggle-btn"
-              onClick={handleViewToggle}
-            >
-              ← Back to Trail Filters
-            </Button>
-          </>
-        ) : (
+        ) : showMunicipalityView ? null : (
           <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Find the trails that work for you!</span>
         )}
        
@@ -450,8 +441,7 @@ const ControlPanel = ({
             </div>
           </>
         ) : (
-          <div className="mt-2">
-            <MunicipalityProfile
+          <MunicipalityProfile
               selectedMunicipality={selectedMunicipality}
               onMunicipalitySelect={setSelectedMunicipality}
               municipalityTrails={municipalityTrails}
@@ -478,7 +468,6 @@ const ControlPanel = ({
               showTrailsRegNameSync={showTrailsRegNameSync}
               onToggleTrailsRegNameSync={setShowTrailsRegNameSync}
             />
-          </div>
         )}
       </div>
     </div>
