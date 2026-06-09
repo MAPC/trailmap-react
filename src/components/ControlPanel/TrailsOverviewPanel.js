@@ -2,6 +2,7 @@ import React, { useContext, useMemo } from "react";
 import { LayerContext } from "../../App";
 import TrailLayerSection from "./TrailLayerSection";
 import TrailLayerRow from "./TrailLayerRow";
+import PanelShareButton from "./PanelShareButton";
 import {
   TRAIL_LAYER_CATEGORIES,
   LANDLINE_SWATCH_COLOR,
@@ -114,6 +115,8 @@ const TrailsOverviewPanel = () => {
           </button>
         )}
       </div>
+
+      <PanelShareButton />
 
       <TrailLayerSection
         title="Existing trails"

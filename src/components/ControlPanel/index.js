@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import TrailsOverviewPanel from "./TrailsOverviewPanel";
+import PanelShareButton from "./PanelShareButton";
 import MunicipalityProfile from "./MunicipalityProfile";
 import ProjectTrailsProfile from "./ProjectTrailsProfile";
 import { LayerContext } from "../../App";
@@ -347,6 +348,7 @@ const ControlPanel = ({
 
         {showProjectTrailsView && (
           <div className="mt-2">
+            <PanelShareButton />
             <ProjectTrailsProfile
               regNames={projectRegNames || []}
               selectedRegNames={selectedRegNames instanceof Set ? selectedRegNames : (selectedRegNames ? new Set(selectedRegNames) : new Set())}

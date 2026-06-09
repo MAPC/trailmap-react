@@ -14,6 +14,7 @@ const TrailLayerSection = ({
 }) => {
   const [expanded, setExpanded] = useState(true);
   const allOn = allLayerIds.length > 0 && allLayerIds.every((id) => activeLayerIds.includes(id));
+  const activeCount = activeLayerIds.length;
 
   const handleToggleAll = () => {
     onToggleAll(!allOn);
@@ -22,23 +23,35 @@ const TrailLayerSection = ({
   return (
     <section className="TrailLayerSection">
       <div className="TrailLayerSection__header">
-        <button
-          type="button"
-          className="TrailLayerSection__title-btn"
-          onClick={() => setExpanded((prev) => !prev)}
-          aria-expanded={expanded}
-        >
+        <div className="TrailLayerSection__header-main">
           <span className="TrailLayerSection__title">{title}</span>
-          <i className={`bi bi-chevron-${expanded ? "up" : "down"}`} aria-hidden="true" />
-        </button>
-        <Form.Check
-          type="switch"
-          id={`${layerType}-trails-master`}
-          className="TrailLayerSection__master-switch"
-          checked={allOn}
-          onChange={handleToggleAll}
-          aria-label={`Toggle all ${title.toLowerCase()}`}
-        />
+          <span
+            className="TrailLayerSection__count"
+            aria-label={`${activeCount} active trail type${activeCount === 1 ? "" : "s"}`}
+          >
+            {activeCount}
+          </span>
+        </div>
+
+        <div className="TrailLayerSection__header-actions">
+          <button
+            type="button"
+            className="TrailLayerSection__collapse-btn"
+            onClick={() => setExpanded((prev) => !prev)}
+            aria-expanded={expanded}
+            aria-label={expanded ? `Collapse ${title}` : `Expand ${title}`}
+          >
+            <i className={`bi bi-chevron-${expanded ? "up" : "down"}`} aria-hidden="true" />
+          </button>
+          <Form.Check
+            type="switch"
+            id={`${layerType}-trails-master`}
+            className="TrailLayerSection__master-switch"
+            checked={allOn}
+            onChange={handleToggleAll}
+            aria-label={`Toggle all ${title.toLowerCase()}`}
+          />
+        </div>
       </div>
 
       {expanded && (

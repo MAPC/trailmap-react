@@ -24,12 +24,13 @@ const ShareModal = ({ url }) => {
 
   return (
     <Modal
-      className="Modal"
-      dialogClassName="mx-auto"
+      className="Modal ShareModal"
+      dialogClassName="ShareModal__dialog mx-auto"
       show={showShareModal}
       onHide={() => {
         toggleShareModal(false);
       }}
+      centered
     >
       <Modal.Title>
         <span className="Modal__title text-center d-block mt-1 mb-1 ms-2 me-2 p-3 lh-lg">

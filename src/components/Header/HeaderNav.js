@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { usePrimaryNavigation } from "../../hooks/usePrimaryNavigation";
 
 const NAV_ITEMS = [
@@ -8,7 +8,6 @@ const NAV_ITEMS = [
     label: "Trails Overview",
     path: "/",
     icon: "bi-map-fill",
-    isHome: true,
   },
   {
     id: "dashboard",
@@ -32,8 +31,8 @@ const NAV_ITEMS = [
 
 const HeaderNav = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { enterCommunityProfile, enterRegionalProfile } = usePrimaryNavigation();
+  const { enterCommunityProfile, enterRegionalProfile, goToTrailsOverview, goToDashboard } =
+    usePrimaryNavigation();
 
   const isActive = (path) => {
     if (path === "/") {
@@ -43,12 +42,14 @@ const HeaderNav = () => {
   };
 
   const handleNavClick = (item) => {
-    if (item.id === "community") {
+    if (item.id === "trails") {
+      goToTrailsOverview();
+    } else if (item.id === "dashboard") {
+      goToDashboard();
+    } else if (item.id === "community") {
       enterCommunityProfile();
     } else if (item.id === "regional") {
       enterRegionalProfile();
-    } else {
-      navigate(item.path);
     }
   };
 
@@ -60,26 +61,15 @@ const HeaderNav = () => {
       <ul className="Header__nav-list">
         {NAV_ITEMS.map((item) => (
           <li key={item.id}>
-            {item.isHome ? (
-              <Link
-                to="/"
-                className={`${navItemClass(item.path)} Header__nav-item--link`}
-                aria-current={isActive(item.path) ? "page" : undefined}
-              >
-                <i className={`bi ${item.icon}`} aria-hidden="true" />
-                <span className="Header__nav-label">{item.label}</span>
-              </Link>
-            ) : (
-              <button
-                type="button"
-                className={navItemClass(item.path)}
-                aria-current={isActive(item.path) ? "page" : undefined}
-                onClick={() => handleNavClick(item)}
-              >
-                <i className={`bi ${item.icon}`} aria-hidden="true" />
-                <span className="Header__nav-label">{item.label}</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className={navItemClass(item.path)}
+              aria-current={isActive(item.path) ? "page" : undefined}
+              onClick={() => handleNavClick(item)}
+            >
+              <i className={`bi ${item.icon}`} aria-hidden="true" />
+              <span className="Header__nav-label">{item.label}</span>
+            </button>
           </li>
         ))}
       </ul>

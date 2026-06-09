@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactMapGL, { NavigationControl, GeolocateControl, ScaleControl, Popup, Source, Layer } from "react-map-gl";
-import BasemapPanel from "../BasemapPanel";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
+import MapToolbar from "./MapToolbar";
 import CommunityIdentify from "./tooltip/CommunityIdentify";
 import ProjectMetricsPanel from "./ProjectMetricsPanel";
 import { LayerContext } from "../../App";
@@ -899,11 +899,13 @@ const ProjectTrailsProfile = ({
         )}
       </ReactMapGL>
 
-      {showBasemapPanel && (
-        <BasemapPanel
-          toggleBasemapPanel={toggleBasemapPanel}
-        />
-      )}
+      <MapToolbar
+        showBasemapPanel={showBasemapPanel}
+        toggleBasemapPanel={toggleBasemapPanel}
+        showBoundariesPanel={false}
+        toggleBoundariesPanel={() => {}}
+        showBoundaries={false}
+      />
 
       <ControlPanelShell
         showControlPanel={showControlPanel}
