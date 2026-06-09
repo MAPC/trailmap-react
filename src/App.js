@@ -6,6 +6,7 @@ import ContributeModal from "./components/Modals/ContributeModal";
 import AboutModal from "./components/Modals/AboutModal";
 import EditModal from "./components/Modals/EditModal";
 import Map from "./components/Map";
+import Dashboard from "./components/Dashboard";
 import LayerData from "./data/LayerData";
 import { useLocation } from "react-router-dom";
 
@@ -71,6 +72,39 @@ const App = () => {
   const [selectedProjectRegName, setSelectedProjectRegName] = useState(null);
   const [projectColorPalette, setProjectColorPalette] = useState({});
 
+  const toggleHeaderModal = (modalId) => {
+    const isOpen = {
+      intro: showIntroModal,
+      about: showAboutModal,
+      contribute: showContributeModal,
+      glossary: showGlossaryModal,
+    }[modalId];
+
+    toggleIntroModal(false);
+    toggleAboutModal(false);
+    toggleContributeModal(false);
+    toggleGlossaryModal(false);
+
+    if (!isOpen) {
+      switch (modalId) {
+        case "intro":
+          toggleIntroModal(true);
+          break;
+        case "about":
+          toggleAboutModal(true);
+          break;
+        case "contribute":
+          toggleContributeModal(true);
+          break;
+        case "glossary":
+          toggleGlossaryModal(true);
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
   return (
     <div className="App">
       <div className="App-wrapper position-relative vw-100 vh-100">
@@ -92,9 +126,9 @@ const App = () => {
             toggleSuccessModal,
             showFailModal,
             toggleFailModal,
+            toggleHeaderModal,
           }}
         >
-          <Header />
           <AboutModal />
           <ContributeModal />
           <LayerContext.Provider
@@ -158,8 +192,9 @@ const App = () => {
               landlines,
             }}
           >
+            <Header />
             <IntroModal />
-            <Map />
+            {location.pathname === "/dashboard" ? <Dashboard /> : <Map />}
           </LayerContext.Provider>
         </ModalContext.Provider>
       </div>

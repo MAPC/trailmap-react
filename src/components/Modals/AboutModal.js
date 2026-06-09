@@ -3,8 +3,7 @@ import Modal from "react-bootstrap/Modal";
 import { ModalContext } from "../../App";
 
 const AboutModal = () => {
-  const { showAboutModal, toggleAboutModal } = useContext(ModalContext);
-  const { showContributeModal, toggleContributeModal } = useContext(ModalContext);
+  const { showAboutModal, toggleAboutModal, toggleHeaderModal } = useContext(ModalContext);
 
   return (
 
@@ -12,7 +11,7 @@ const AboutModal = () => {
       className="Modal"
       dialogClassName="mx-auto"
       show={showAboutModal}
-      onHide={() => toggleAboutModal(!showAboutModal)}
+      onHide={() => toggleAboutModal(false)}
       centered
     >
       <Modal.Title>
@@ -34,10 +33,7 @@ const AboutModal = () => {
           up-to-date infomration on individual trails so we can continue to improve this dataset. Learn more about
           trailmaps and continuing{" "}
           <a
-            onClick={() => {
-              toggleAboutModal(false);
-              toggleContributeModal(true);
-            }}
+            onClick={() => toggleHeaderModal("contribute")}
             className="modal-footer-link"
           >
             here

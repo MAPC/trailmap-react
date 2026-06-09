@@ -20,9 +20,7 @@ const ContributeModal = () => {
       className="Modal"
       dialogClassName="mx-auto"
       show={showContributeModal}
-      onHide={() => {
-        toggleContributeModal(!showContributeModal);
-      }}
+      onHide={() => toggleContributeModal(false)}
       centered
     >
       <Modal.Title>
