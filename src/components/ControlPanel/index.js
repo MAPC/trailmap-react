@@ -14,6 +14,15 @@ const ControlPanel = ({
   onToggleRegName = null,
   selectedMajorTrails = [],
   onToggleMajorTrail = null,
+  allTrailMetrics = {},
+  detailTrail = null,
+  onOpenDetail = null,
+  onCloseDetail = null,
+  onClearAll = null,
+  onZoomToProject = null,
+  allTrailsData = null,
+  majorTrailsData = null,
+  regNames: regNamesProp = null,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -285,60 +294,12 @@ const ControlPanel = ({
   };
 
   return (
-    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto ${showProjectTrailsView ? 'project-trails-profile' : ''}`}>
-      <div className="ControlPanel_opacity position-fixed"></div>
+    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto${showProjectTrailsView ? " ControlPanel--regionalProfile" : ""}`}>
+      {!showProjectTrailsView && (
+        <div className="ControlPanel_opacity position-fixed"></div>
+      )}
       <div>
-        {showProjectTrailsView ? (
-          <>
-            <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Regional Trails Profile</span>
-            <Button 
-              variant="outline-secondary"
-              size="sm"
-              className="w-100 mb-3 ControlPanel__toggle-btn"
-              onClick={handleProjectTrailsToggle}
-            >
-              ← Back to Trail Filters
-            </Button>
-
-            {/* Map Layers Section */}
-            <div className="mb-3 mt-3">
-              <Form.Label className="small fw-semibold d-block mb-2">Map Layers</Form.Label>
-              <Button
-                variant={showEnvironmentalJustice ? "primary" : "outline-secondary"}
-                size="sm"
-                className="w-100 mb-2"
-                onClick={() => {
-                  const newState = !showEnvironmentalJustice;
-                  setShowEnvironmentalJustice(newState);
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('toggleEnvironmentalJustice', { 
-                      detail: { show: newState } 
-                    }));
-                  }, 10);
-                }}
-              >
-                {showEnvironmentalJustice ? "Hide" : "Show"} Environmental Justice
-              </Button>
-
-              <Button
-                variant={showOpenSpace ? "primary" : "outline-secondary"}
-                size="sm"
-                className="w-100 mb-2"
-                onClick={() => {
-                  const newState = !showOpenSpace;
-                  setShowOpenSpace(newState);
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('toggleOpenSpace', { 
-                      detail: { show: newState } 
-                    }));
-                  }, 10);
-                }}
-              >
-                {showOpenSpace ? "Hide" : "Show"} OpenSpace
-              </Button>
-            </div>
-          </>
-        ) : showMunicipalityView ? (
+        {showProjectTrailsView ? null : showMunicipalityView ? (
           <>
             <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Community Profile</span>
             <Button 
@@ -388,11 +349,39 @@ const ControlPanel = ({
         {showProjectTrailsView ? (
           <div className="mt-2">
             <ProjectTrailsProfile
-              regNames={projectRegNames || []}
+              regNames={regNamesProp ?? projectRegNames ?? []}
               selectedRegNames={selectedRegNames instanceof Set ? selectedRegNames : (selectedRegNames ? new Set(selectedRegNames) : new Set())}
               onToggleRegName={onToggleRegName || (() => {})}
               selectedMajorTrails={selectedMajorTrails || []}
               onToggleMajorTrail={onToggleMajorTrail || (() => {})}
+              allTrailMetrics={allTrailMetrics}
+              detailTrail={detailTrail}
+              onOpenDetail={onOpenDetail}
+              onCloseDetail={onCloseDetail}
+              onClearAll={onClearAll}
+              onZoomToProject={onZoomToProject}
+              allTrailsData={allTrailsData}
+              majorTrailsData={majorTrailsData}
+              showEnvironmentalJustice={showEnvironmentalJustice}
+              onToggleEnvironmentalJustice={(show) => {
+                setShowEnvironmentalJustice(show);
+                setTimeout(() => {
+                  window.dispatchEvent(
+                    new CustomEvent("toggleEnvironmentalJustice", {
+                      detail: { show },
+                    })
+                  );
+                }, 10);
+              }}
+              showOpenSpace={showOpenSpace}
+              onToggleOpenSpace={(show) => {
+                setShowOpenSpace(show);
+                setTimeout(() => {
+                  window.dispatchEvent(
+                    new CustomEvent("toggleOpenSpace", { detail: { show } })
+                  );
+                }, 10);
+              }}
             />
           </div>
         ) : !showMunicipalityView ? (

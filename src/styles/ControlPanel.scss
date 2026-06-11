@@ -16,19 +16,23 @@
   top: 60px;
   z-index: 6;
 
-  @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    width: 275px;
-  }
+  width: $control-panel-width;
 
-  width: 260px;
+  @media only screen and (max-height: 920px) and (min-width: 1000px) {
+    width: $control-panel-width-lg;
+  }
 
   &_opacity {
     background-color: $lighter-blue;
     height: 3rem;
     margin-top: -3rem;
     opacity: 0.8;
-    width: 245px;
+    width: calc(#{$control-panel-width} - 15px);
     z-index: 500;
+
+    @media only screen and (max-height: 920px) and (min-width: 1000px) {
+      width: calc(#{$control-panel-width-lg} - 15px);
+    }
   }
 
   &__title {
@@ -236,10 +240,14 @@
       margin-left: 0.5rem;
     }
   }
-  div.ButtonGroup{
+  div.ButtonGroup {
     display: flex;
     flex-wrap: wrap;
-    width: 260px;
-    min-width: 260px;
+    width: 100%;
+    max-width: $control-panel-width;
+
+    @media only screen and (max-height: 920px) and (min-width: 1000px) {
+      max-width: $control-panel-width-lg;
+    }
   }
 }

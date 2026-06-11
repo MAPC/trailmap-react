@@ -5,8 +5,12 @@
 
   &_filter {
     visibility: visible;
-    left: 280px;
+    left: calc(#{$control-panel-width} + 20px);
     top: 70px;
+
+    @media only screen and (max-height: 920px) and (min-width: 1000px) {
+      left: calc(#{$control-panel-width-lg} + 20px);
+    }
 
     img {
       height: 36px;
@@ -19,8 +23,12 @@
   }
 
   &_share {
-    left: 325px;
+    left: calc(#{$control-panel-width} + 65px);
     top: 70px;
+
+    @media only screen and (max-height: 920px) and (min-width: 1000px) {
+      left: calc(#{$control-panel-width-lg} + 65px);
+    }
 
     @media only screen and (max-width: 325px) {
       right: 10px;
@@ -87,7 +95,11 @@
 
 .mapboxgl-ctrl-top-left .mapboxgl-ctrl {
   margin-top: 70px;
-  width: 240px;
+  width: calc(#{$control-panel-width} - 20px);
+
+  @media only screen and (max-height: 920px) and (min-width: 1000px) {
+    width: calc(#{$control-panel-width-lg} - 20px);
+  }
 }
 
 // Geocoder styling to fit control panel width for project trails profile
@@ -105,19 +117,10 @@
 }
 
 .mapboxgl-ctrl-top-left .mapboxgl-ctrl.mapboxgl-ctrl-geocoder {
-  width: 240px !important;
-  
-  @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    width: 240px !important;
-  }
-}
+  width: calc(#{$control-panel-width} - 20px) !important;
 
-// Geocoder for project trails profile - same positioning as community profile
-.project-trails-profile-map .mapboxgl-ctrl-top-left .mapboxgl-ctrl.mapboxgl-ctrl-geocoder {
-  width: 240px !important;
-  
   @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    width: 240px !important;
+    width: calc(#{$control-panel-width-lg} - 20px) !important;
   }
 }
 
@@ -144,12 +147,55 @@
 .identify-contribute-btn:hover {
   background-color: transparent !important;
 }
+.ControlPanelEdgeToggle {
+  position: fixed;
+  z-index: 7;
+  top: 9.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 2.35rem;
+  padding: 0;
+  background-color: $white;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 0 10px 2px;
+  cursor: pointer;
+  color: #6b7280;
+
+  .fas {
+    font-size: 0.58rem;
+  }
+
+  &:hover {
+    background-color: $light-grey;
+    color: $dark-blue;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(13, 110, 253, 0.5);
+    outline-offset: 1px;
+  }
+
+  &--close {
+    left: calc(#{$control-panel-width} - 1px);
+
+    @media only screen and (max-height: 920px) and (min-width: 1000px) {
+      left: calc(#{$control-panel-width-lg} - 1px);
+    }
+  }
+
+  &--open {
+    left: 0;
+  }
+}
+
 #control-close-btn {
   position: absolute;
   background-color: $lighter-blue;
   z-index: 5;
-  left: 259px;
-  // top: 7.8rem;
+  left: calc(#{$control-panel-width} - 1px);
   top: 89.5vh;
   padding: 10px 10px;
   opacity: 100%;
@@ -158,7 +204,7 @@
   border-bottom-left-radius: 0;
 
   @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    left: 274px;
+    left: calc(#{$control-panel-width-lg} - 1px);
   }
 }
 
