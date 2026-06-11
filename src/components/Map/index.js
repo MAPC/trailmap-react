@@ -189,8 +189,8 @@ const Map = () => {
             />
           )}
         
-        {/* Share Control Button - hidden in community trails profile */}
-        {!showMunicipalityProfileMap && (
+        {/* Share Control Button - hidden in community & regional trails profiles */}
+        {!showMunicipalityProfileMap && !showProjectTrailsProfileMap && (
           <Control
             style={"Map_share d-block position-absolute m-0 p-0"}
             iconClass="fa-solid fa-file-arrow-down"

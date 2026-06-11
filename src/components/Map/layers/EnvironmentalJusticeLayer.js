@@ -83,7 +83,12 @@ const EnvironmentalJusticeLayer = ({ showEnvironmentalJustice, showMunicipalityP
     }
   }, [showEnvironmentalJustice, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef]);
 
-  if (!showEnvironmentalJustice || !showMunicipalityProfileMap || !imageUrl || !bounds) {
+  if (
+    !showEnvironmentalJustice ||
+    (!showMunicipalityProfileMap && !showProjectTrailsProfile) ||
+    !imageUrl ||
+    !bounds
+  ) {
     return null;
   }
 
