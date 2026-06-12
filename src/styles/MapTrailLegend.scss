@@ -1,0 +1,138 @@
+.MapTrailLegend {
+  --panel-width: 320px;
+  --toggle-width: 1.5rem;
+
+  position: absolute;
+  bottom: 2.5rem;
+  left: calc(var(--toggle-width) + 0.65rem);
+  z-index: 1000;
+  width: 260px;
+  max-width: min(260px, calc(100vw - 2rem));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  pointer-events: none;
+
+  @media only screen and (max-height: 920px) and (min-width: 1000px) {
+    --panel-width: 330px;
+  }
+
+  &--panelOpen {
+    left: calc(var(--panel-width) + var(--toggle-width) + 0.65rem);
+  }
+
+  &__toggle,
+  &__collapse,
+  &__panel {
+    pointer-events: auto;
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.35rem 0.5rem;
+    font-family: $body-font;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: $dark-grey;
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+    .fas {
+      font-size: 0.65rem;
+      opacity: 0.85;
+    }
+
+    &:hover {
+      background: $white;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $dark-blue;
+      outline-offset: 2px;
+    }
+  }
+
+  &--open &__toggle {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+    box-shadow: none;
+  }
+
+  &__panel {
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    max-height: min(42vh, 280px);
+    overflow-y: auto;
+    padding: 0.55rem 0.65rem 0.65rem;
+
+    .TrailLegend {
+      position: static;
+      bottom: auto;
+      right: auto;
+      max-width: none;
+      max-height: none;
+      margin: 0;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+      overflow: visible;
+    }
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__swatch {
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 3px;
+    border-radius: 2px;
+    background-color: var(--swatch-color);
+
+    &--dashed {
+      background-color: transparent;
+      background-image: repeating-linear-gradient(
+        90deg,
+        var(--swatch-color),
+        var(--swatch-color) 3px,
+        transparent 3px,
+        transparent 5px
+      );
+    }
+  }
+
+  &__label {
+    font-family: $body-font;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    color: $dark-grey;
+  }
+}
