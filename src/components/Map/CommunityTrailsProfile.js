@@ -5,11 +5,8 @@ import axios from "axios";
 import bbox from "@turf/bbox";
 import * as turf from "@turf/turf";
 import LoadingBar from "../LoadingBar";
-import BasemapPanel from "../BasemapPanel";
-import Control from "./Control";
-import ControlPanel from "../ControlPanel";
-import FilterIcon from "../../assets/icons/filter-icon.svg";
-import GeocoderPanel from "../Geocoder/GeocoderPanel";
+import ControlPanelShell from "../ControlPanel/ControlPanelShell";
+import MapToolbar from "./MapToolbar";
 import CommunityIdentify from "./CommunityIdentify";
 import TrailLegend from "./TrailLegend";
 import BufferAnalysisWindow from "../BufferAnalysisWindow";
@@ -933,14 +930,6 @@ const CommunityTrailsProfile = ({
           </Popup>
         )}
         
-        {showControlPanel && (
-          <div>
-            <ControlPanel />
-          </div>
-        )}
-
-        {showBasemapPanel && <BasemapPanel />}
-        
         {/* Render GeoJSON sources for community trails profile */}
         <CommunityTrailsProfileLayers
           showMunicipalityProfileMap={true}
@@ -1039,9 +1028,6 @@ const CommunityTrailsProfile = ({
         {renderBufferPreview(bufferPreviewCenter, isBufferActive, bufferRadius)}
         {renderBufferCircle(bufferCenter, bufferRadius)}
         {renderBufferCenter(bufferCenter)}
-        
-        <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
-        
         <ScaleControl position="bottom-right" />
         <NavigationControl className="map_navigation" position="bottom-right" />
         <GeolocateControl
@@ -1062,15 +1048,21 @@ const CommunityTrailsProfile = ({
           />
         )}
         
-        {/* Control Panel Toggle Button */}
-        <Control
-          style={"Map_filter d-block position-absolute m-0 p-0"}
-          icon={FilterIcon}
-          alt={"Show Control Panel"}
-          clickHandler={() => toggleControlPanel(!showControlPanel)}
-        />
       </ReactMapGL>
-      
+
+      <MapToolbar
+        showBasemapPanel={showBasemapPanel}
+        toggleBasemapPanel={toggleBasemapPanel}
+        showBoundariesPanel={false}
+        toggleBoundariesPanel={() => {}}
+        showBoundaries={false}
+      />
+
+      <ControlPanelShell
+        showControlPanel={showControlPanel}
+        toggleControlPanel={toggleControlPanel}
+      />
+
       {/* Buffer Analysis Window */}
       <BufferAnalysisWindow
         show={showBufferAnalysis}

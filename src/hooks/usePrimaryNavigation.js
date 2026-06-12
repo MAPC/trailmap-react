@@ -44,6 +44,11 @@ export const usePrimaryNavigation = () => {
   };
 
   const goToTrailsOverview = () => {
+    setShowMunicipalityProfileMap(false);
+    setShowMunicipalityView(false);
+    setShowProjectTrailsProfileMap(false);
+    setShowProjectTrailsView(false);
+    setSelectedMunicipality(null);
     navigate("/");
   };
 

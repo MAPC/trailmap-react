@@ -1,4 +1,3 @@
-import BasemapIcon from "../../assets/icons/basemap-icon.svg";
 import FilterIcon from "../../assets/icons/filter-icon.svg";
 import Button from "react-bootstrap/Button";
 import CloseButton from "react-bootstrap/CloseButton";
@@ -12,15 +11,10 @@ import TrailListWindow from "../TrailListWindow";
 import BasemapPanel from "../BasemapPanel";
 import Control from "./Control";
 import ControlPanel from "../ControlPanel";
-import MAhouseDistrictsButton from '../MAhouseDistrictsButton';
-import MASenateDistrictsButton from '../MASenateDistrictsButton';
-import MunicipalitiesButton from '../MunicipalitiesButton';
-import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import GlossaryModal from "../Modals/GlossaryModal";
 import Identify from "./Identify";
 import CommunityIdentify from "./CommunityIdentify";
 import ShareModal from "../Modals/ShareModal";
-import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import EditModal from "../Modals/EditModal";
 import massachusettsData from "../../data/massachusetts.json";
@@ -45,7 +39,6 @@ const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL;
 const Map = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { showShareModal, toggleShareModal } = useContext(ModalContext);
   const {
     trailLayers,
     setTrailLayers,
@@ -86,6 +79,7 @@ const Map = () => {
     transitionDuration: 1000,
   });
   const [showBasemapPanel, toggleBasemapPanel] = useState(false);
+  const [showBoundariesPanel, toggleBoundariesPanel] = useState(false);
   const [showControlPanel, toggleControlPanel] = useState(true);
   // Shared state for modals (EditModal needs identifyInfo)
   const [identifyInfo, setIdentifyInfo] = useState(null);
@@ -179,6 +173,8 @@ const Map = () => {
             baseLayer={baseLayer}
             showBasemapPanel={showBasemapPanel}
             toggleBasemapPanel={toggleBasemapPanel}
+            showBoundariesPanel={showBoundariesPanel}
+            toggleBoundariesPanel={toggleBoundariesPanel}
             showControlPanel={showControlPanel}
             toggleControlPanel={toggleControlPanel}
             mapRef={mapRef}
@@ -189,15 +185,6 @@ const Map = () => {
             />
           )}
         
-        {/* Share Control Button - hidden in community trails profile */}
-        {!showMunicipalityProfileMap && (
-          <Control
-            style={"Map_share d-block position-absolute m-0 p-0"}
-            iconClass="fa-solid fa-file-arrow-down"
-            alt={"Download map data"}
-            clickHandler={() => toggleShareModal(!showShareModal)}
-          />
-        )}
                   </div>
     </>
   );

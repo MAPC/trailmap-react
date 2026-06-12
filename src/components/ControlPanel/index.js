@@ -1,11 +1,10 @@
 import React, { useContext, useState, useEffect } from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import TypeButton from "./TypeButton";
-import Legend from "./Legend";
+import TrailsOverviewPanel from "./TrailsOverviewPanel";
+import PanelShareButton from "./PanelShareButton";
 import MunicipalityProfile from "./MunicipalityProfile";
 import ProjectTrailsProfile from "./ProjectTrailsProfile";
-import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -17,12 +16,9 @@ const ControlPanel = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { showGlossaryModal, toggleGlossaryModal } = useContext(ModalContext);
   const { 
     existingTrails, 
     proposedTrails, 
-    showLandlineLayer, 
-    toggleLandlineLayer,
     selectedMunicipality,
     setSelectedMunicipality,
     municipalityTrails,
@@ -75,14 +71,6 @@ const ControlPanel = ({
   const [savedProposedLayers, setSavedProposedLayers] = useState([]);
   const isNavigatingRef = React.useRef(false);
 
-  const renderTypeButton = existingTrails.map((layer, index) => {
-    return <TypeButton key={index} layer={layer} type="trail" />;
-  });
-
-  const renderProposedTypeButton = proposedTrails.map((layer, index) => {
-    return <TypeButton key={index} layer={layer} type="proposed" />;
-  });
-
   // Check URL parameters and path on initial load and when location changes
   useEffect(() => {
     // Skip if we're in the middle of a programmatic navigation
@@ -119,7 +107,11 @@ const ControlPanel = ({
       toggleMunicipalities(false);
       setShowProjectTrailsProfileMap(true);
       setShowProjectTrailsView(true);
-    } else if (currentPath !== '/communityTrailsProfile' && currentPath !== '/projectTrailsProfile' && (showMunicipalityView || showProjectTrailsView)) {
+    } else if (
+      currentPath !== "/communityTrailsProfile" &&
+      currentPath !== "/projectTrailsProfile" &&
+      (showMunicipalityView || showProjectTrailsView)
+    ) {
       // If we're not on a profile path but a view is active, switch back
       setTrailLayers(savedTrailLayers);
       setProposedLayers(savedProposedLayers);
@@ -350,43 +342,13 @@ const ControlPanel = ({
               ← Back to Trail Filters
             </Button>
           </>
-        ) : (
-          <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Find the trails that work for you!</span>
-        )}
+        ) : null}
        
-        {!showProjectTrailsView && !showMunicipalityView && (
-          <div className="mb-3">
-            <Button 
-              variant="primary"
-              size="sm"
-              className="w-100 mb-2 ControlPanel__toggle-btn"
-              style={{
-                backgroundColor: 'rgba(59, 131, 199, 0.85)',
-                borderColor: 'rgba(59, 131, 199, 0.85)',
-                color: 'white'
-              }}
-              onClick={handleViewToggle}
-            >
-              View Community Profile
-            </Button>
-            <Button 
-              variant="primary"
-              size="sm"
-              className="w-100 ControlPanel__toggle-btn"
-              style={{
-                backgroundColor: 'rgba(59, 131, 199, 0.85)',
-                borderColor: 'rgba(59, 131, 199, 0.85)',
-                color: 'white'
-              }}
-              onClick={handleProjectTrailsToggle}
-            >
-              View Regional Trails Profile
-            </Button>
-          </div>
-        )}
+        {!showProjectTrailsView && !showMunicipalityView && <TrailsOverviewPanel />}
 
-        {showProjectTrailsView ? (
+        {showProjectTrailsView && (
           <div className="mt-2">
+            <PanelShareButton />
             <ProjectTrailsProfile
               regNames={projectRegNames || []}
               selectedRegNames={selectedRegNames instanceof Set ? selectedRegNames : (selectedRegNames ? new Set(selectedRegNames) : new Set())}
@@ -395,68 +357,15 @@ const ControlPanel = ({
               onToggleMajorTrail={onToggleMajorTrail || (() => {})}
             />
           </div>
-        ) : !showMunicipalityView ? (
-          <>
-            <p>
-              Select from various trail types to find trails best suited to your needs. Find a description of each to the
-              trail types{" "}
-              <span
-                className="ControlPanel__glossary"
-                onClick={() => {
-                  toggleGlossaryModal(!showGlossaryModal);
-                }}
-              >
-                here
-              </span>
-              .
-            </p>
-            <p>Click an existing or proposed trail on the map for more information.</p>
-            
-            <div>
-              <span className="ControlPanel__subtitle mt-2 mb-2 d-block fw-bold">Existing:</span>
-              <div className="ButtonGroup">
-               {renderTypeButton}
-              </div>
-              
-            </div>
-            <div>
-              <span className="ControlPanel__subtitle mt-2 mb-2 d-block fw-bold">Planned:</span>
-              <div className="ButtonGroup">
-              {renderProposedTypeButton}
-              </div>
-             
-            </div>
-            <div>
-              <span className="ControlPanel__subtitle mt-2 mb-2 d-block fw-bold">Regional Greenway Network:</span>
-              <Form.Check
-                type="checkbox"
-                id="default-checkbox"
-                className="ControlPanel_checkbox mb-3 d-flex align-items-center"
-                checked={showLandlineLayer}
-                onChange={() => toggleLandlineLayer(!showLandlineLayer)}
-                label={
-                  <a 
-                    href="https://mapc.github.io/embedded-map/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ color: '#0070cd', textDecoration: 'underline' }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Show LandLine greenway layer
-                  </a>
-                }
-              />
-              <Legend />
-            </div>
-          </>
-        ) : (
+        )}
+
+        {showMunicipalityView && (
           <div className="mt-2">
             <MunicipalityProfile
               selectedMunicipality={selectedMunicipality}
               onMunicipalitySelect={setSelectedMunicipality}
               municipalityTrails={municipalityTrails}
               onTrailClick={(trail) => {
-                // Trail click will be handled by parent Map component
                 window.dispatchEvent(new CustomEvent('trailSelected', { 
                   detail: { trail } 
                 }));
