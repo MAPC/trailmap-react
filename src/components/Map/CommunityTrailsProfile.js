@@ -8,6 +8,7 @@ import LoadingBar from "../LoadingBar";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
 import MapToolbar from "./MapToolbar";
 import CommunityIdentify from "./CommunityIdentify";
+import CollapsibleTrailLegend from "./CollapsibleTrailLegend";
 import TrailLegend from "./TrailLegend";
 import BufferAnalysisWindow from "../BufferAnalysisWindow";
 import { LayerContext } from "../../App";
@@ -75,6 +76,14 @@ const CommunityTrailsProfile = ({
   const [pointIndex, setPointIndex] = useState(0);
   const [isQueryingTrails, setIsQueryingTrails] = useState(false);
   const lastQueriedMunicipality = useRef(null);
+  const prevSelectedMunicipalityRef = useRef(null);
+
+  const COMMUNITY_PROFILE_DEFAULT_VIEWPORT = {
+    latitude: 42.3772,
+    longitude: -71.0244,
+    zoom: 10,
+    transitionDuration: 1000,
+  };
   const [selectedTrailFromList, setSelectedTrailFromList] = useState(null);
   const [highlightedTrail, setHighlightedTrail] = useState(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -330,6 +339,23 @@ const CommunityTrailsProfile = ({
       return () => clearTimeout(timer);
     }
   }, [selectedMunicipality]);
+
+  // Reset map to regional view when municipality selection is cleared
+  useEffect(() => {
+    const hadSelection = prevSelectedMunicipalityRef.current !== null;
+    const hasSelection = selectedMunicipality !== null;
+
+    if (hadSelection && !hasSelection) {
+      setViewport((prev) => ({
+        ...prev,
+        ...COMMUNITY_PROFILE_DEFAULT_VIEWPORT,
+      }));
+      setIntersectedTrails([]);
+      setHoveredTrail(null);
+    }
+
+    prevSelectedMunicipalityRef.current = selectedMunicipality;
+  }, [selectedMunicipality, setViewport]);
 
   return (
     <>
@@ -1028,6 +1054,7 @@ const CommunityTrailsProfile = ({
         {renderBufferPreview(bufferPreviewCenter, isBufferActive, bufferRadius)}
         {renderBufferCircle(bufferCenter, bufferRadius)}
         {renderBufferCenter(bufferCenter)}
+        
         <ScaleControl position="bottom-right" />
         <NavigationControl className="map_navigation" position="bottom-right" />
         <GeolocateControl
@@ -1040,14 +1067,15 @@ const CommunityTrailsProfile = ({
           position="bottom-right"
         />
         
-        {/* Trail Legend */}
         {showMunicipalityView && selectedMunicipality && (
-          <TrailLegend 
-            visibleTrailTypes={visibleTrailTypes}
-            onToggleTrailType={handleToggleTrailType}
-          />
+          <CollapsibleTrailLegend controlPanelOpen={showControlPanel}>
+            <TrailLegend
+              visibleTrailTypes={visibleTrailTypes}
+              onToggleTrailType={handleToggleTrailType}
+              hideHeader
+            />
+          </CollapsibleTrailLegend>
         )}
-        
       </ReactMapGL>
 
       <MapToolbar

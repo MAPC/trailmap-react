@@ -4,6 +4,7 @@ import axios from "axios";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
 import MapToolbar from "./MapToolbar";
 import MapLegend from "./MapLegend";
+import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import Identify from "./Identify";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
@@ -274,6 +275,7 @@ const OriginalTrailsMap = ({
   };
 
   return (
+    <>
     <ReactMapGL
       ref={mapRef}
       {...viewport}
@@ -505,12 +507,6 @@ const OriginalTrailsMap = ({
         />
       )}
       
-      <ControlPanelShell
-        showControlPanel={showControlPanel}
-        toggleControlPanel={toggleControlPanel}
-      />
-
-      
       {/* Render vector tile source for original trails filters */}
       <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
         <OriginalTrailsFilterLayers
@@ -564,16 +560,9 @@ const OriginalTrailsMap = ({
       >
         {municipalitiesLayers()}
       </Source>
-      <MapToolbar
-        showBasemapPanel={showBasemapPanel}
-        toggleBasemapPanel={toggleBasemapPanel}
-        showBoundariesPanel={showBoundariesPanel}
-        toggleBoundariesPanel={toggleBoundariesPanel}
-        onBoundaryLayerToggle={() => setShowOneLayerNotice(true)}
-        onBoundaryPanelOpen={() => setShowOneLayerNotice(true)}
-        showOneLayerNotice={showOneLayerNotice}
-        onDismissOneLayerNotice={() => setShowOneLayerNotice(false)}
-      />
+
+      <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
+      <MapLegend controlPanelOpen={showControlPanel} />
 
       {showMaHouseDistricts && hoverFeature && hoverPoint && (
         <Popup
@@ -646,7 +635,6 @@ const OriginalTrailsMap = ({
           })()}
         </Popup>
       )}
-      <MapLegend controlPanelOpen={showControlPanel} />
 
       <ScaleControl position="bottom-right" />
       <NavigationControl className="map_navigation" position="bottom-right" />
@@ -660,6 +648,23 @@ const OriginalTrailsMap = ({
         position="bottom-right"
       />
     </ReactMapGL>
+
+    <MapToolbar
+      showBasemapPanel={showBasemapPanel}
+      toggleBasemapPanel={toggleBasemapPanel}
+      showBoundariesPanel={showBoundariesPanel}
+      toggleBoundariesPanel={toggleBoundariesPanel}
+      onBoundaryLayerToggle={() => setShowOneLayerNotice(true)}
+      onBoundaryPanelOpen={() => setShowOneLayerNotice(true)}
+      showOneLayerNotice={showOneLayerNotice}
+      onDismissOneLayerNotice={() => setShowOneLayerNotice(false)}
+    />
+
+    <ControlPanelShell
+      showControlPanel={showControlPanel}
+      toggleControlPanel={toggleControlPanel}
+    />
+    </>
   );
 };
 

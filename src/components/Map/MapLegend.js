@@ -1,14 +1,13 @@
-import React, { useContext, useMemo, useState } from "react";
-import Collapse from "react-bootstrap/Collapse";
+import React, { useContext, useMemo } from "react";
 import { LayerContext } from "../../App";
+import CollapsibleTrailLegend from "./CollapsibleTrailLegend";
 import {
   TRAIL_LAYER_CATEGORIES,
   LANDLINE_SWATCH_COLOR,
   getLayerColor,
 } from "../ControlPanel/trailLayerConfig";
 
-const MapLegend = ({ controlPanelOpen = false }) => {
-  const [open, setOpen] = useState(true);
+const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
   const {
     trailLayers,
     proposedLayers,
@@ -64,46 +63,25 @@ const MapLegend = ({ controlPanelOpen = false }) => {
   }
 
   return (
-    <div
-      className={`MapLegend${open ? " MapLegend--open" : ""}${
-        controlPanelOpen ? " MapLegend--panelOpen" : ""
-      }`}
+    <CollapsibleTrailLegend
+      controlPanelOpen={controlPanelOpen}
+      defaultOpen={defaultOpen}
     >
-      <button
-        type="button"
-        className="MapLegend__toggle"
-        aria-expanded={open}
-        aria-controls="map-legend-panel"
-        id="map-legend-toggle"
-        onClick={() => setOpen((isOpen) => !isOpen)}
-      >
-        <span>On the map</span>
-        <i
-          className={`bi bi-chevron-${open ? "up" : "down"}`}
-          aria-hidden="true"
-        />
-      </button>
-      <Collapse in={open}>
-        <div id="map-legend-panel">
-          <div className="MapLegend__panel">
-            <ul className="MapLegend__list">
-              {legendItems.map((item) => (
-                <li key={item.key} className="MapLegend__item">
-                  <span
-                    className={`MapLegend__swatch${
-                      item.dashed ? " MapLegend__swatch--dashed" : ""
-                    }`}
-                    style={{ "--swatch-color": item.color }}
-                    aria-hidden="true"
-                  />
-                  <span className="MapLegend__label">{item.label}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </Collapse>
-    </div>
+      <ul className="MapTrailLegend__list">
+        {legendItems.map((item) => (
+          <li key={item.key} className="MapTrailLegend__item">
+            <span
+              className={`MapTrailLegend__swatch${
+                item.dashed ? " MapTrailLegend__swatch--dashed" : ""
+              }`}
+              style={{ "--swatch-color": item.color }}
+              aria-hidden="true"
+            />
+            <span className="MapTrailLegend__label">{item.label}</span>
+          </li>
+        ))}
+      </ul>
+    </CollapsibleTrailLegend>
   );
 };
 
