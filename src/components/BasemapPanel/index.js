@@ -10,8 +10,8 @@ const BasemapPanel = () => {
   });
 
   return (
-    <div className="BasemapPanel position-absolute">
-      <ul className="BasemapPanel_list text-center">
+    <div className="BasemapPanel">
+      <ul className="BasemapPanel_list">
         {renderButtons}
       </ul>
     </div>

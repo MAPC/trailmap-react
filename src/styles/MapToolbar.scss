@@ -1,0 +1,126 @@
+.MapToolbar {
+  --map-header-offset: 60px;
+
+  right: 10px;
+  top: calc(var(--map-header-offset) + 12px);
+  z-index: 1090;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+
+  &__terrainAnchor {
+    position: relative;
+  }
+
+  &__notice {
+    position: absolute;
+    right: calc(100% + 1.5rem);
+    top: calc(50% + 0.4rem);
+    transform: translateY(-50%);
+    width: max-content;
+    max-width: 14rem;
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    padding: 0.4rem 0.65rem;
+    font-family: $body-font;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: $dark-grey;
+    cursor: pointer;
+    text-align: right;
+    pointer-events: auto;
+  }
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+
+    .BasemapPanel_list,
+    .BoundariesPanel_list {
+      gap: 0.25rem;
+      min-width: 8.25rem;
+    }
+
+    .BasemapPanel_list__item,
+    .BoundariesPanel_list__item {
+      padding: 0.3rem 0.55rem;
+      font-size: 0.72rem;
+      line-height: 1.2;
+      border-radius: 6px;
+      box-shadow: rgba(0, 0, 0, 0.08) 0 1px 4px;
+    }
+  }
+}
+
+.MapToolbarButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.9rem 0.42rem 0.65rem;
+  border: none;
+  border-radius: 999px;
+  background: $white;
+  box-shadow: rgba(0, 0, 0, 0.12) 0 2px 8px;
+  cursor: pointer;
+  font-family: $basemap-font;
+  font-size: 0.85rem;
+  color: $dark-grey;
+  line-height: 1.2;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    background: $light-grey;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $dark-blue;
+    outline-offset: 2px;
+  }
+
+  &--active {
+    background: $light-blue;
+    box-shadow: rgba(0, 0, 0, 0.14) 0 2px 10px;
+  }
+
+  &__icon {
+    font-size: 1rem;
+    line-height: 1;
+    color: $black;
+  }
+
+  &__label {
+    white-space: nowrap;
+  }
+}
+
+.BoundariesPanel {
+  &_list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    &__item {
+      background-color: $white;
+      border: solid rgba(0, 112, 205, 0.7) 0.5px;
+      color: $dark-blue;
+      cursor: pointer;
+      font-family: $basemap-font;
+      transition: all 0.2s ease-in-out;
+      text-align: center;
+
+      &:hover,
+      &_selected {
+        color: $white;
+        background-color: $dark-blue;
+      }
+    }
+  }
+}
