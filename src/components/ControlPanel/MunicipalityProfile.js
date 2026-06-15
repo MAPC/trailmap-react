@@ -983,17 +983,6 @@ const MunicipalityProfile = ({
             <button
               type="button"
               role="tab"
-              aria-selected={activeTab === "compare"}
-              className={`MunicipalityProfile__tab${
-                activeTab === "compare" ? " MunicipalityProfile__tab--active" : ""
-              }`}
-              onClick={() => setActiveTab("compare")}
-            >
-              Compare
-            </button>
-            <button
-              type="button"
-              role="tab"
               aria-selected={activeTab === "mapLayers"}
               className={`MunicipalityProfile__tab${
                 activeTab === "mapLayers" ? " MunicipalityProfile__tab--active" : ""
@@ -1078,15 +1067,6 @@ const MunicipalityProfile = ({
                     No trails found in this municipality.
                   </div>
                 )}
-              </div>
-            )}
-
-            {activeTab === "compare" && (
-              <div className="MunicipalityProfile__compare">
-                <p className="MunicipalityProfile__compare-text">
-                  Compare this community&apos;s trail network to others in the region.
-                </p>
-                <p className="MunicipalityProfile__compare-note">Coming soon.</p>
               </div>
             )}
 

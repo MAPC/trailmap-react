@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Source, Layer } from "react-map-gl";
+import { withArcGisToken } from "../constants/arcgisConfig";
 
 /**
  * Generates a color palette for different reg_name values
@@ -141,11 +142,10 @@ const TrailsRegNameSyncLayer = ({
       const TRAILS_SERVICE_URL = "https://services.arcgis.com/c5WwApDsDjRhIVkH/arcgis/rest/services/Trails_Reg_Name_Sync/FeatureServer/0";
       const bbox = `${swMerc.x},${swMerc.y},${neMerc.x},${neMerc.y}`;
       
-      // ArcGIS token for authentication
-      const ARCGIS_TOKEN = "AAPTaucDi8_DdZbjNjhaAYvWCQA..A05LEOZ-QCx9bKC21Tsk1K0A7Yoql8kZNK3V7F7COkFiE0vn0bVYZti5Eaq_Db7r4UqKV1Y02-9ilPUWjj0barvUV7sdmMM2AgnBJEYMapTJKRzGHJBBGfQV_8KlE5scYMM4iNUNpj7TVvKklvCfr764dCKDmt6ubnI2rW9mRBj7dGZLwbmbKMJFiNx2wAiZoDFGClDOcsxt83kCFCjoGug-Jhqwb0xdl_9lpX38IIoKJ0JAcmgkF6MmiwY9Zgm4Z23T_sSUdSo.AT1_U0702ST1"
-
       // Query GeoJSON from FeatureServer with token authentication
-      const url = `${TRAILS_SERVICE_URL}/query?where=1=1&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=3857&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=2000&token=${ARCGIS_TOKEN}`;
+      const url = withArcGisToken(
+        `${TRAILS_SERVICE_URL}/query?where=1=1&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=3857&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=2000`
+      );
 
       // Debounce queries
       if (queryTimeoutRef.current) {

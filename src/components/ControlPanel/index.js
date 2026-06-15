@@ -13,6 +13,15 @@ const ControlPanel = ({
   onToggleRegName = null,
   selectedMajorTrails = [],
   onToggleMajorTrail = null,
+  allTrailMetrics = {},
+  detailTrail = null,
+  onOpenDetail = null,
+  onCloseDetail = null,
+  onClearAll = null,
+  onZoomToProject = null,
+  allTrailsData = null,
+  majorTrailsData = null,
+  regNames: regNamesProp = null,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,73 +138,6 @@ const ControlPanel = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  // Handle view toggle - show municipality profile map, hide trails
-  const handleViewToggle = () => {
-    if (!showMunicipalityView) {
-      // Switching TO municipality view
-      // Mark that we're doing a programmatic navigation
-      isNavigatingRef.current = true;
-      
-      // Save current trail layers
-      setSavedTrailLayers([...trailLayers]);
-      setSavedProposedLayers([...proposedLayers]);
-      
-      // Clear all trail layers
-      setTrailLayers([]);
-      setProposedLayers([]);
-      
-      // Turn off other district layers
-      if (showMaHouseDistricts) toggleMaHouseDistricts(false);
-      if (showMaSenateDistricts) toggleMaSenateDistricts(false);
-      
-      // Turn off the regular municipalities button layer
-      if (showMunicipalities) toggleMunicipalities(false);
-      
-      // Enable the municipality profile map layer instead
-      setShowMunicipalityProfileMap(true);
-      
-      // Clear any selected municipality when entering the view
-      setSelectedMunicipality(null);
-      
-      setShowMunicipalityView(true);
-      
-      // Navigate to /communityTrailsProfile
-      navigate('/communityTrailsProfile');
-    } else {
-      // Switching BACK to trail filters
-      // Mark that we're doing a programmatic navigation
-      isNavigatingRef.current = true;
-      
-      // Restore saved trail layers
-      setTrailLayers(savedTrailLayers);
-      setProposedLayers(savedProposedLayers);
-      
-      // Disable the municipality profile map
-      setShowMunicipalityProfileMap(false);
-      
-      // Clear selected municipality
-      setSelectedMunicipality(null);
-      
-      // Reset municipality profile related states
-      setShowMunicipalityView(false);
-      
-      // Reset all municipality profile map layer states
-      setShowCommuterRail(false);
-      setShowStationLabels(false);
-      setShowBlueBikeStations(false);
-      setShowSubwayStations(false);
-      
-      // Re-enable the regular municipalities button (if it was previously enabled)
-      // Note: We don't automatically turn it on, just ensure it can be toggled
-      
-      // Dispatch events to reset Map component states
-      window.dispatchEvent(new CustomEvent('resetMunicipalityProfile'));
-      
-      // Navigate back to root path
-      navigate('/');
-    }
-  };
-
   // Track previous municipality to avoid unnecessary layer updates
   const prevMunicipalityNameRef = React.useRef(null);
   
@@ -278,10 +220,8 @@ const ControlPanel = ({
   };
 
   return (
-    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto${showProjectTrailsView ? " project-trails-profile" : ""}${showMunicipalityView ? " ControlPanel--communityProfile" : ""}`}>
-      {!showMunicipalityView && (
-        <div className="ControlPanel_opacity position-fixed"></div>
-      )}
+    <div className={`ControlPanel text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto ${showProjectTrailsView ? 'project-trails-profile' : ''}`}>
+      <div className="ControlPanel_opacity position-fixed"></div>
       <div>
         {showProjectTrailsView ? (
           <>
@@ -333,9 +273,9 @@ const ControlPanel = ({
               </Button>
             </div>
           </>
-        ) : showMunicipalityView ? null : (
-          <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Find the trails that work for you!</span>
-        )}
+        ) : showMunicipalityView ? (
+          <span className="ControlPanel__title lh-base d-block mt-2 mb-2">Community Profile</span>
+        ) : null}
        
         {!showProjectTrailsView && !showMunicipalityView && <TrailsOverviewPanel />}
 
@@ -343,11 +283,39 @@ const ControlPanel = ({
           <div className="mt-2">
             <PanelShareButton />
             <ProjectTrailsProfile
-              regNames={projectRegNames || []}
+              regNames={regNamesProp ?? projectRegNames ?? []}
               selectedRegNames={selectedRegNames instanceof Set ? selectedRegNames : (selectedRegNames ? new Set(selectedRegNames) : new Set())}
               onToggleRegName={onToggleRegName || (() => {})}
               selectedMajorTrails={selectedMajorTrails || []}
               onToggleMajorTrail={onToggleMajorTrail || (() => {})}
+              allTrailMetrics={allTrailMetrics}
+              detailTrail={detailTrail}
+              onOpenDetail={onOpenDetail}
+              onCloseDetail={onCloseDetail}
+              onClearAll={onClearAll}
+              onZoomToProject={onZoomToProject}
+              allTrailsData={allTrailsData}
+              majorTrailsData={majorTrailsData}
+              showEnvironmentalJustice={showEnvironmentalJustice}
+              onToggleEnvironmentalJustice={(show) => {
+                setShowEnvironmentalJustice(show);
+                setTimeout(() => {
+                  window.dispatchEvent(
+                    new CustomEvent("toggleEnvironmentalJustice", {
+                      detail: { show },
+                    })
+                  );
+                }, 10);
+              }}
+              showOpenSpace={showOpenSpace}
+              onToggleOpenSpace={(show) => {
+                setShowOpenSpace(show);
+                setTimeout(() => {
+                  window.dispatchEvent(
+                    new CustomEvent("toggleOpenSpace", { detail: { show } })
+                  );
+                }, 10);
+              }}
             />
           </div>
         )}

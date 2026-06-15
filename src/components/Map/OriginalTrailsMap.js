@@ -4,7 +4,6 @@ import axios from "axios";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
 import MapToolbar from "./MapToolbar";
 import MapLegend from "./MapLegend";
-import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import Identify from "./Identify";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
@@ -561,7 +560,6 @@ const OriginalTrailsMap = ({
         {municipalitiesLayers()}
       </Source>
 
-      <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
       <MapLegend controlPanelOpen={showControlPanel} />
 
       {showMaHouseDistricts && hoverFeature && hoverPoint && (
