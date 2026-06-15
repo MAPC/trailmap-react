@@ -6,6 +6,7 @@ import bbox from "@turf/bbox";
 import * as turf from "@turf/turf";
 import LoadingBar from "../LoadingBar";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
+import CommunityProfileControlPanel from "../ControlPanel/CommunityProfileControlPanel";
 import MapToolbar from "./MapToolbar";
 import CommunityIdentify from "./CommunityIdentify";
 import CollapsibleTrailLegend from "./CollapsibleTrailLegend";
@@ -1089,7 +1090,9 @@ const CommunityTrailsProfile = ({
       <ControlPanelShell
         showControlPanel={showControlPanel}
         toggleControlPanel={toggleControlPanel}
-      />
+      >
+        <CommunityProfileControlPanel isLoadingTrails={isQueryingTrails} />
+      </ControlPanelShell>
 
       {/* Buffer Analysis Window */}
       <BufferAnalysisWindow

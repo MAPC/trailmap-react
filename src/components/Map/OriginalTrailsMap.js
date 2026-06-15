@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
 import axios from "axios";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
+import ControlPanel from "../ControlPanel";
 import MapToolbar from "./MapToolbar";
 import MapLegend from "./MapLegend";
 import Identify from "./Identify";
@@ -661,7 +662,9 @@ const OriginalTrailsMap = ({
     <ControlPanelShell
       showControlPanel={showControlPanel}
       toggleControlPanel={toggleControlPanel}
-    />
+    >
+      <ControlPanel />
+    </ControlPanelShell>
     </>
   );
 };

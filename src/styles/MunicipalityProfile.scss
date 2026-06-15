@@ -800,6 +800,42 @@
       }
     }
   }
+
+  &__skeleton {
+    display: inline-block;
+    border-radius: 4px;
+    background-color: #eef1f3;
+    background-image: linear-gradient(
+      90deg,
+      #eef1f3 0%,
+      #f8fafb 20%,
+      #eef1f3 40%,
+      #eef1f3 100%
+    );
+    background-size: 200% 100%;
+    animation: muniSkeletonShimmer 1.4s ease-in-out infinite;
+  }
+
+  &__skeletonBar {
+    display: block;
+    border-radius: 999px;
+  }
+
+  &__skeletonButton {
+    display: block;
+    border-radius: 8px;
+  }
+
+  &__summaryCard--skeleton {
+    pointer-events: none;
+  }
+
+  &__actionsSkeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 0.15rem;
+  }
 }
 
 @keyframes fadeIn {
@@ -810,6 +846,15 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes muniSkeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 

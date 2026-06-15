@@ -34,6 +34,14 @@ const INTRO_CARDS = [
     iconClass: "bi-map-fill",
     accent: "map",
   },
+  {
+    id: "dashboard",
+    title: "Dashboard",
+    description:
+      "Explore regional trail metrics and insights across Metro Boston.",
+    iconClass: "bi-grid-fill",
+    accent: "dashboard",
+  },
 ];
 
 const IntroModal = () => {
@@ -49,7 +57,8 @@ const IntroModal = () => {
     setShowProjectTrailsProfileMap,
     setShowProjectTrailsView,
   } = useContext(LayerContext);
-  const { enterCommunityProfile, enterRegionalProfile, goToTrailsOverview } = usePrimaryNavigation();
+  const { enterCommunityProfile, enterRegionalProfile, goToTrailsOverview, goToDashboard } =
+    usePrimaryNavigation();
 
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
@@ -67,9 +76,21 @@ const IntroModal = () => {
     } else if (cardId === "regional") {
       enterRegionalProfile();
       closeIntro();
+    } else if (cardId === "dashboard") {
+      enterDashboard();
     } else {
       enterFullMap();
     }
+  };
+
+  const enterDashboard = () => {
+    setShowMunicipalityView(false);
+    setShowMunicipalityProfileMap(false);
+    setShowProjectTrailsView(false);
+    setShowProjectTrailsProfileMap(false);
+    setSelectedMunicipality(null);
+    goToDashboard();
+    closeIntro();
   };
 
   const enterFullMap = () => {

@@ -13,7 +13,16 @@ import massachusettsData from "../../data/massachusetts.json";
 import { useNavigate, useLocation } from "react-router-dom";
 import TrailsInventoryModal from "../Modals/TrailsInventoryModal";
 
+const Skeleton = ({ className = "", style = {} }) => (
+  <span
+    className={`MunicipalityProfile__skeleton${className ? ` ${className}` : ""}`}
+    style={style}
+    aria-hidden="true"
+  />
+);
+
 const MunicipalityProfile = ({ 
+  isLoadingTrails = false,
   selectedMunicipality, 
   onMunicipalitySelect,
   municipalityTrails,
@@ -472,6 +481,81 @@ const MunicipalityProfile = ({
     >
       Trail Density = Existing Trails Length (miles) / Municipality Area (sq miles)
     </Tooltip>
+  );
+
+  const renderOverviewSkeleton = () => (
+    <div className="MunicipalityProfile__summaryCard MunicipalityProfile__summaryCard--skeleton">
+      <div className="MunicipalityProfile__trailOverview">
+        <div className="MunicipalityProfile__trailOverviewSection">
+          <Skeleton
+            style={{ width: "5.5rem", height: "0.62rem", marginBottom: "0.45rem" }}
+          />
+          <Skeleton
+            style={{ width: "4.5rem", height: "1.35rem", marginBottom: "0.35rem" }}
+          />
+          <Skeleton
+            style={{ width: "6rem", height: "0.62rem", marginBottom: "0.75rem" }}
+          />
+          <Skeleton
+            className="MunicipalityProfile__skeletonBar"
+            style={{ width: "100%", height: "0.55rem", marginBottom: "0.75rem" }}
+          />
+          <div className="MunicipalityProfile__trailBreakdown">
+            <div className="MunicipalityProfile__trailBreakdownItem">
+              <Skeleton
+                style={{ width: "0.55rem", height: "0.55rem", borderRadius: "2px" }}
+              />
+              <div className="MunicipalityProfile__trailBreakdownCopy">
+                <Skeleton style={{ width: "3.5rem", height: "0.62rem" }} />
+                <Skeleton
+                  style={{ width: "2.75rem", height: "0.72rem", marginTop: "0.2rem" }}
+                />
+              </div>
+            </div>
+            <div className="MunicipalityProfile__trailBreakdownItem">
+              <Skeleton
+                style={{ width: "0.55rem", height: "0.55rem", borderRadius: "2px" }}
+              />
+              <div className="MunicipalityProfile__trailBreakdownCopy">
+                <Skeleton style={{ width: "3.25rem", height: "0.62rem" }} />
+                <Skeleton
+                  style={{ width: "2.75rem", height: "0.72rem", marginTop: "0.2rem" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="MunicipalityProfile__trailOverviewDivider" aria-hidden="true" />
+
+        <div className="MunicipalityProfile__trailOverviewSection MunicipalityProfile__trailOverviewSection--density">
+          <Skeleton
+            style={{ width: "4.5rem", height: "0.62rem", marginBottom: "0.45rem" }}
+          />
+          <Skeleton
+            style={{ width: "3.75rem", height: "1.35rem", marginBottom: "0.35rem" }}
+          />
+          <Skeleton style={{ width: "8.5rem", height: "0.62rem" }} />
+        </div>
+      </div>
+
+      <Skeleton
+        className="MunicipalityProfile__skeletonButton"
+        style={{ width: "100%", height: "2rem", marginTop: "0.85rem" }}
+      />
+    </div>
+  );
+
+  const renderOverviewActionsSkeleton = () => (
+    <div className="MunicipalityProfile__actionsSkeleton">
+      <Skeleton className="MunicipalityProfile__skeletonButton" style={{ width: "100%", height: "2rem" }} />
+      {location.pathname === "/communityTrailsProfile" && (
+        <Skeleton className="MunicipalityProfile__skeletonButton" style={{ width: "100%", height: "2rem" }} />
+      )}
+      <Skeleton style={{ width: "7rem", height: "0.72rem", marginTop: "0.15rem" }} />
+      <Skeleton className="MunicipalityProfile__skeletonButton" style={{ width: "100%", height: "2rem" }} />
+      <Skeleton className="MunicipalityProfile__skeletonButton" style={{ width: "100%", height: "2.25rem" }} />
+    </div>
   );
 
   const renderOverviewTrailStats = (stats) => {
@@ -937,6 +1021,9 @@ const MunicipalityProfile = ({
     }
   };
 
+  const isOverviewLoading =
+    isLoadingTrails || (selectedMunicipality && trailStats === null);
+
   return (
     <div
       className={`MunicipalityProfile${
@@ -1001,71 +1088,80 @@ const MunicipalityProfile = ({
           <div className="MunicipalityProfile__tabPanel">
             {activeTab === "overview" && (
               <div className="MunicipalityProfile__content">
-                {trailStats && renderOverviewTrailStats(trailStats)}
-
-                {municipalityTrails && municipalityTrails.length > 0 && (
+                {isOverviewLoading ? (
                   <>
-                    <div className="mb-2">
-                      <Button
-                        variant="outline-info"
-                        size="sm"
-                        className="w-100"
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent("openBufferAnalysis"));
-                        }}
-                      >
-                        Buffer Analysis Tool
-                      </Button>
-                    </div>
-                    {location.pathname === "/communityTrailsProfile" && (
-                      <div className="mb-2">
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
-                          className="w-100"
-                          onClick={() => setShowTrailsInventoryModal(true)}
-                        >
-                          Trails inventory (table & map)
-                        </Button>
+                    {renderOverviewSkeleton()}
+                    {renderOverviewActionsSkeleton()}
+                  </>
+                ) : (
+                  <>
+                    {trailStats && renderOverviewTrailStats(trailStats)}
+
+                    {municipalityTrails && municipalityTrails.length > 0 && (
+                      <>
+                        <div className="mb-2">
+                          <Button
+                            variant="outline-info"
+                            size="sm"
+                            className="w-100"
+                            onClick={() => {
+                              window.dispatchEvent(new CustomEvent("openBufferAnalysis"));
+                            }}
+                          >
+                            Buffer Analysis Tool
+                          </Button>
+                        </div>
+                        {location.pathname === "/communityTrailsProfile" && (
+                          <div className="mb-2">
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="w-100"
+                              onClick={() => setShowTrailsInventoryModal(true)}
+                            >
+                              Trails inventory (table & map)
+                            </Button>
+                          </div>
+                        )}
+                        <div className="mb-2">
+                          <Form.Label className="small fw-semibold d-block mb-2">
+                            Download Trail Data
+                          </Form.Label>
+                          <Form.Select
+                            size="sm"
+                            value={downloadOption}
+                            onChange={(e) => setDownloadOption(e.target.value)}
+                            className="mb-2"
+                          >
+                            <option value="both">Both (Existing + Planned)</option>
+                            <option value="existing">Existing Trails Only</option>
+                            <option value="planned">Planned Trails Only</option>
+                          </Form.Select>
+                          <Button
+                            variant="outline-success"
+                            size="sm"
+                            className="w-100"
+                            onClick={() => handleDownloadTrailsData(downloadOption)}
+                          >
+                            <i className="fas fa-download me-1"></i>
+                            Download{" "}
+                            {downloadOption === "both"
+                              ? "Trail Data"
+                              : downloadOption === "existing"
+                                ? "Existing Trails"
+                                : "Planned Trails"}{" "}
+                            (GeoJSON)
+                          </Button>
+                        </div>
+                      </>
+                    )}
+
+                    {(!municipalityTrails || municipalityTrails.length === 0) && (
+                      <div className="alert alert-info small p-2 mb-2">
+                        No trails found in this municipality.
                       </div>
                     )}
-                    <div className="mb-2">
-                      <Form.Label className="small fw-semibold d-block mb-2">
-                        Download Trail Data
-                      </Form.Label>
-                      <Form.Select
-                        size="sm"
-                        value={downloadOption}
-                        onChange={(e) => setDownloadOption(e.target.value)}
-                        className="mb-2"
-                      >
-                        <option value="both">Both (Existing + Planned)</option>
-                        <option value="existing">Existing Trails Only</option>
-                        <option value="planned">Planned Trails Only</option>
-                      </Form.Select>
-                      <Button
-                        variant="outline-success"
-                        size="sm"
-                        className="w-100"
-                        onClick={() => handleDownloadTrailsData(downloadOption)}
-                      >
-                        <i className="fas fa-download me-1"></i>
-                        Download{" "}
-                        {downloadOption === "both"
-                          ? "Trail Data"
-                          : downloadOption === "existing"
-                            ? "Existing Trails"
-                            : "Planned Trails"}{" "}
-                        (GeoJSON)
-                      </Button>
-                    </div>
                   </>
-                )}
-
-                {(!municipalityTrails || municipalityTrails.length === 0) && (
-                  <div className="alert alert-info small p-2 mb-2">
-                    No trails found in this municipality.
-                  </div>
                 )}
               </div>
             )}

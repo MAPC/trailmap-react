@@ -126,6 +126,8 @@ export const queryMunicipalityTrails = async ({
   }
 
   setIsQueryingTrails(true);
+  setMunicipalityTrails([]);
+  setIntersectedTrails([]);
   setLoadingProgress(0);
   setLoadingMessage("Loading trail data...");
   console.log("Starting FeatureServer query for municipality:", municipality.name);

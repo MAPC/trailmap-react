@@ -98,10 +98,6 @@ const ProjectTrailsProfile = ({
   onZoomToProject,
   allTrailsData = null,
   majorTrailsData = null,
-  showEnvironmentalJustice = false,
-  onToggleEnvironmentalJustice,
-  showOpenSpace = false,
-  onToggleOpenSpace,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [listTab, setListTab] = useState("major");
@@ -175,10 +171,28 @@ const ProjectTrailsProfile = ({
 
     const handleToggle = (e) => {
       e.stopPropagation();
-      if (isMajor) {
-        onToggleMajorTrail?.(name);
+      if (isSelected) {
+        if (isMajor) {
+          onToggleMajorTrail?.(name);
+        } else {
+          onToggleRegName?.(name);
+        }
+        if (isActiveDetailTrail(name, isMajor)) {
+          const remaining = selectedNames.filter((trailName) => trailName !== name);
+          if (remaining.length > 0) {
+            const nextName = remaining[remaining.length - 1];
+            handleOpenTrailDetail(nextName, isMajorTrail(nextName));
+          } else {
+            onCloseDetail?.();
+          }
+        }
       } else {
-        onToggleRegName?.(name);
+        if (isMajor) {
+          onToggleMajorTrail?.(name);
+        } else {
+          onToggleRegName?.(name);
+        }
+        handleOpenTrailDetail(name, isMajor);
       }
     };
 
@@ -215,7 +229,19 @@ const ProjectTrailsProfile = ({
               aria-label={`Select ${displayName}`}
             />
           </div>
-          <div className="ProjectTrailsProfile__cardContent">
+          <div
+            className="ProjectTrailsProfile__cardContent"
+            role="button"
+            tabIndex={0}
+            title={VIEW_DETAILS_TOOLTIP}
+            onClick={handleOpenDetail}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleOpenDetail(e);
+              }
+            }}
+          >
             <p className="ProjectTrailsProfile__cardName">{displayName}</p>
           </div>
         </div>
@@ -238,30 +264,6 @@ const ProjectTrailsProfile = ({
       </div>
     );
   };
-
-  const renderMapContextLayers = () => (
-    <div className="ProjectTrailsProfile__mapLayers">
-      <p className="ProjectTrailsProfile__mapLayersTitle">Map context layers</p>
-      <div className="ProjectTrailsProfile__mapLayerToggle">
-        <Form.Check
-          type="switch"
-          id="project-trails-toggle-ej"
-          label="Environmental Justice"
-          checked={showEnvironmentalJustice}
-          onChange={(e) => onToggleEnvironmentalJustice?.(e.target.checked)}
-        />
-      </div>
-      <div className="ProjectTrailsProfile__mapLayerToggle">
-        <Form.Check
-          type="switch"
-          id="project-trails-toggle-openspace"
-          label="Open space"
-          checked={showOpenSpace}
-          onChange={(e) => onToggleOpenSpace?.(e.target.checked)}
-        />
-      </div>
-    </div>
-  );
 
   const handleOpenTrailDetail = (name, isMajor) => {
     setDetailTab("overview");
@@ -336,8 +338,20 @@ const ProjectTrailsProfile = ({
                   aria-label={`Remove ${displayName}`}
                   onClick={(e) => {
                     e.stopPropagation();
+                    const wasActive = isActiveDetailTrail(name, isMajor);
                     if (isMajor) onToggleMajorTrail?.(name);
                     else onToggleRegName?.(name);
+                    if (wasActive) {
+                      const remaining = selectedNames.filter(
+                        (trailName) => trailName !== name
+                      );
+                      if (remaining.length > 0) {
+                        const nextName = remaining[remaining.length - 1];
+                        handleOpenTrailDetail(nextName, isMajorTrail(nextName));
+                      } else {
+                        onCloseDetail?.();
+                      }
+                    }
                   }}
                 >
                   <i className="fas fa-times" aria-hidden="true" />
@@ -423,8 +437,6 @@ const ProjectTrailsProfile = ({
           <p className="ProjectTrailsProfile__empty">No trails match your search.</p>
         )}
       </div>
-
-      {renderMapContextLayers()}
     </>
   );
 
@@ -786,8 +798,6 @@ const ProjectTrailsProfile = ({
           )}
         </div>
 
-        {renderMapContextLayers()}
-
         <div className="ProjectTrailsProfile__footer">
           <Button
             variant="primary"
@@ -798,10 +808,10 @@ const ProjectTrailsProfile = ({
             <i className="fas fa-map me-1" aria-hidden="true" />
             View full route on map
           </Button>
-          <button
-            type="button"
+          <Button
+            variant="outline-primary"
+            size="sm"
             className="ProjectTrailsProfile__footerDownload"
-            aria-label="Download trail data"
             onClick={() =>
               downloadTrailGeoJSON({
                 regName: name,
@@ -811,8 +821,9 @@ const ProjectTrailsProfile = ({
               })
             }
           >
-            <i className="fas fa-download" aria-hidden="true" />
-          </button>
+            <i className="fas fa-download me-1" aria-hidden="true" />
+            Download trails
+          </Button>
         </div>
       </>
     );
