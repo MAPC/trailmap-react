@@ -1,10 +1,9 @@
 import React from "react";
-import ControlPanel from "./index";
 
 const ControlPanelShell = ({
   showControlPanel,
   toggleControlPanel,
-  ...controlPanelProps
+  children,
 }) => {
   return (
     <div
@@ -16,7 +15,7 @@ const ControlPanelShell = ({
         className="ControlPanelShell__drawer"
         aria-hidden={!showControlPanel}
       >
-        <ControlPanel {...controlPanelProps} />
+        {children}
       </div>
       <button
         type="button"

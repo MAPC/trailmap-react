@@ -7,7 +7,7 @@
   }
 
   &__dialog {
-    max-width: 920px;
+    max-width: 1080px;
     width: calc(100% - 2rem);
   }
 
@@ -71,11 +71,15 @@
 
   &__cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     margin-bottom: 1.25rem;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 576px) {
       grid-template-columns: 1fr;
     }
   }
@@ -109,6 +113,10 @@
     &--map {
       border-top-color: $medium-orange;
     }
+
+    &--dashboard {
+      border-top-color: $dark-purple;
+    }
   }
 
   &__icon-wrap {
@@ -137,6 +145,11 @@
     &--map {
       background: $light-orange;
       color: $dark-orange;
+    }
+
+    &--dashboard {
+      background: $light-purple;
+      color: $dark-purple;
     }
   }
 
@@ -179,6 +192,10 @@
 
     &--map {
       color: $medium-orange;
+    }
+
+    &--dashboard {
+      color: $dark-purple;
     }
   }
 

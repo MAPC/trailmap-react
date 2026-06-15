@@ -2,11 +2,9 @@ import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactMapGL, { NavigationControl, GeolocateControl, ScaleControl, Popup, Source, Layer } from "react-map-gl";
 import BasemapPanel from "../BasemapPanel";
-import ControlPanel from "../ControlPanel";
-import Control from "./Control";
-import FilterIcon from "../../assets/icons/filter-icon.svg";
+import ControlPanelShell from "../ControlPanel/ControlPanelShell";
+import RegionalTrailsControlPanel from "../ControlPanel/RegionalTrailsControlPanel";
 import CommunityIdentify from "./tooltip/CommunityIdentify";
-import ProjectMetricsPanel from "./ProjectMetricsPanel";
 import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import { LayerContext } from "../../App";
 import OtherRegionalTrailsLayer from "./layers/OtherRegionalTrailsLayer";
@@ -793,14 +791,6 @@ const ProjectTrailsProfile = ({
         {(selectedRegNames.size > 0 || selectedMajorTrails.length > 0) && (
           <TrailStatusLegend />
         )}
-        
-        {/* Control Panel Toggle Button */}
-        <Control
-          style={"Map_filter d-block position-absolute m-0 p-0"}
-          icon={FilterIcon}
-          alt={"Show Control Panel"}
-          clickHandler={() => toggleControlPanel(!showControlPanel)}
-        />
       </ReactMapGL>
 
 
@@ -811,44 +801,47 @@ const ProjectTrailsProfile = ({
         />
       )}
 
-      {/* Control Panel */}
-      {showControlPanel && (
-        <div>
-          <ControlPanel 
-            selectedRegNames={selectedRegNames}
-            selectedMajorTrails={selectedMajorTrails}
-            onToggleRegName={(regName) => {
-              const newSelected = new Set(selectedRegNames);
-              if (newSelected.has(regName)) {
-                newSelected.delete(regName);
-              } else {
-                newSelected.add(regName);
-              }
-              setSelectedRegNames(newSelected);
-            }}
-            onToggleMajorTrail={(majorTrailName) => {
-              const newSelected = [...selectedMajorTrails];
-              const index = newSelected.indexOf(majorTrailName);
-              if (index > -1) {
-                newSelected.splice(index, 1);
-              } else {
-                newSelected.push(majorTrailName);
-              }
-              setSelectedMajorTrails(newSelected);
-            }}
-          />
-        </div>
-      )}
-
-      {/* Regional Trails Metrics Panel - separate window on the left */}
-      <ProjectMetricsPanel 
-        selectedRegNames={selectedRegNames}
-        selectedMajorTrails={selectedMajorTrails}
-        projectMetrics={allTrailMetrics}
-        onZoomToProject={handleZoomToProject}
-        allTrailsData={allTrailsData}
-        majorTrailsData={majorTrailsData}
-      />
+      <ControlPanelShell
+        showControlPanel={showControlPanel}
+        toggleControlPanel={toggleControlPanel}
+      >
+        <RegionalTrailsControlPanel
+          regNames={regNames}
+          selectedRegNames={selectedRegNames}
+          onToggleRegName={(regName) => {
+            const newSelected = new Set(selectedRegNames);
+            if (newSelected.has(regName)) {
+              newSelected.delete(regName);
+            } else {
+              newSelected.add(regName);
+            }
+            setSelectedRegNames(newSelected);
+          }}
+          selectedMajorTrails={selectedMajorTrails}
+          onToggleMajorTrail={(majorTrailName) => {
+            const newSelected = [...selectedMajorTrails];
+            const index = newSelected.indexOf(majorTrailName);
+            if (index > -1) {
+              newSelected.splice(index, 1);
+            } else {
+              newSelected.push(majorTrailName);
+            }
+            setSelectedMajorTrails(newSelected);
+          }}
+          allTrailMetrics={allTrailMetrics}
+          detailTrail={detailTrail}
+          onOpenDetail={setDetailTrail}
+          onCloseDetail={() => setDetailTrail(null)}
+          onClearAll={() => {
+            setSelectedRegNames(new Set());
+            setSelectedMajorTrails([]);
+            setDetailTrail(null);
+          }}
+          onZoomToProject={handleZoomToProject}
+          allTrailsData={allTrailsData}
+          majorTrailsData={majorTrailsData}
+        />
+      </ControlPanelShell>
     </div>
   );
 };

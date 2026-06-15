@@ -802,20 +802,10 @@
 
   &__footerDownload {
     flex-shrink: 0;
-    width: 2.25rem;
-    height: 2.25rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid $dark-blue;
-    border-radius: 8px;
-    background: $white;
-    color: $dark-blue;
-    cursor: pointer;
-
-    &:hover {
-      background: #f5faff;
-    }
+    font-size: 0.72rem !important;
+    padding: 0.45rem 0.65rem !important;
+    white-space: nowrap;
+    line-height: 1.3;
   }
 
   &__mapLayers {
