@@ -15,6 +15,7 @@ import GlossaryModal from "../Modals/GlossaryModal";
 import Identify from "./Identify";
 import CommunityIdentify from "./CommunityIdentify";
 import ShareModal from "../Modals/ShareModal";
+import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import EditModal from "../Modals/EditModal";
 import massachusettsData from "../../data/massachusetts.json";
@@ -39,6 +40,7 @@ const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL;
 const Map = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showShareModal, toggleShareModal } = useContext(ModalContext);
   const {
     trailLayers,
     setTrailLayers,
@@ -185,6 +187,15 @@ const Map = () => {
             />
           )}
         
+        {/* Share Control Button - hidden in community trails profile */}
+        {!showMunicipalityProfileMap && (
+          <Control
+            style={"Map_share d-block position-absolute m-0 p-0"}
+            iconClass="fa-solid fa-file-arrow-down"
+            alt={"Download map data"}
+            clickHandler={() => toggleShareModal(!showShareModal)}
+          />
+        )}
                   </div>
     </>
   );

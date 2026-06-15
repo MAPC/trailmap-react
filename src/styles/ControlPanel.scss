@@ -16,19 +16,23 @@
   top: 60px;
   z-index: 6;
 
-  @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    width: 330px;
-  }
+  width: $control-panel-width;
 
-  width: 320px;
+  @media only screen and (max-height: 920px) and (min-width: 1000px) {
+    width: $control-panel-width-lg;
+  }
 
   &_opacity {
     background-color: $white;
     height: 3rem;
     margin-top: -3rem;
     opacity: 0.8;
-    width: 305px;
+    width: calc(#{$control-panel-width} - 15px);
     z-index: 500;
+
+    @media only screen and (max-height: 920px) and (min-width: 1000px) {
+      width: calc(#{$control-panel-width-lg} - 15px);
+    }
   }
 
   &__title {
@@ -241,23 +245,16 @@
       margin-left: 0.5rem;
     }
   }
-  div.ButtonGroup{
+  div.ButtonGroup {
     display: flex;
     flex-wrap: wrap;
-    width: 320px;
-    min-width: 320px;
+    width: 100%;
+    min-width: 260px;
   }
 }
 
-.ControlPanel--communityProfile {
-  background-color: $white;
-  padding-top: 1.75rem !important;
-  padding-left: 1.1rem !important;
-  padding-right: 1.1rem !important;
-}
-
 .ControlPanelShell {
-  --panel-width: 320px;
+  --panel-width: #{$control-panel-width};
   --toggle-width: 1.5rem;
   --toggle-height: 3.25rem;
   --header-offset: 60px;
@@ -271,7 +268,7 @@
   pointer-events: none;
 
   @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    --panel-width: 330px;
+    --panel-width: #{$control-panel-width-lg};
   }
 
   &__drawer {
@@ -321,93 +318,9 @@
     transition: left 0.22s ease, background-color 0.15s ease;
     pointer-events: auto;
 
-    .fas {
-      font-size: 0.75rem;
-      line-height: 1;
-    }
-
-    &:hover {
-      background: $light-grey;
-    }
-
-    &:focus-visible {
-      outline: 2px solid $dark-blue;
-      outline-offset: 2px;
-    }
-  }
-
-  &--closed &__toggle {
-    left: 0;
-    border-left: 1px solid $medium-grey;
-  }
-}
-
-.ControlPanelShell {
-  --panel-width: 290px;
-  --toggle-width: 1.5rem;
-  --toggle-height: 3.25rem;
-  --header-offset: 60px;
-
-  position: fixed;
-  top: var(--header-offset);
-  left: 0;
-  z-index: 6;
-  height: calc(100vh - var(--header-offset));
-  width: calc(var(--panel-width) + var(--toggle-width));
-  pointer-events: none;
-
-  @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    --panel-width: 300px;
-  }
-
-  &__drawer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: var(--panel-width);
-    height: 100%;
-    overflow: hidden;
-    transform: translateX(0);
-    transition: transform 0.22s ease;
-    pointer-events: auto;
-  }
-
-  &--closed &__drawer {
-    transform: translateX(calc(-1 * var(--panel-width)));
-    pointer-events: none;
-  }
-
-  &__drawer .ControlPanel {
-    top: 0;
-    left: 0;
-    width: var(--panel-width);
-    height: 100%;
-    box-shadow: rgba(0, 0, 0, 0.1) 0 0 10px 2px;
-  }
-
-  &__toggle {
-    position: absolute;
-    top: 50%;
-    left: var(--panel-width);
-    transform: translateY(-50%);
-    width: var(--toggle-width);
-    height: var(--toggle-height);
-    padding: 0;
-    border: 1px solid $medium-grey;
-    border-left: none;
-    background: $white;
-    color: $dark-grey;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0 10px 10px 0;
-    box-shadow: rgba(0, 0, 0, 0.12) 0 2px 8px;
-    transition: left 0.22s ease, background-color 0.15s ease;
-    pointer-events: auto;
-
+    .fas,
     .bi {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       line-height: 1;
     }
 

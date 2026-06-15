@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactMapGL, { NavigationControl, GeolocateControl, ScaleControl, Popup, Source, Layer } from "react-map-gl";
-import ControlPanelShell from "../ControlPanel/ControlPanelShell";
-import MapToolbar from "./MapToolbar";
+import BasemapPanel from "../BasemapPanel";
+import ControlPanel from "../ControlPanel";
+import Control from "./Control";
+import FilterIcon from "../../assets/icons/filter-icon.svg";
 import CommunityIdentify from "./tooltip/CommunityIdentify";
 import ProjectMetricsPanel from "./ProjectMetricsPanel";
+import GeocoderPanel from "../Geocoder/GeocoderPanel";
 import { LayerContext } from "../../App";
 import OtherRegionalTrailsLayer from "./layers/OtherRegionalTrailsLayer";
 import MajorTrailsLayer from "./layers/MajorTrailsLayer";
@@ -14,10 +17,11 @@ import EnvironmentalJusticePopupContent from "./tooltip/EnvironmentalJusticePopu
 import OpenSpacePopupContent from "./tooltip/OpenSpacePopupContent";
 import TrailPopupContent from "./tooltip/TrailPopupContent";
 import massachusettsData from "../../data/massachusetts.json";
-import { getMunicipalityName } from "./utils/municipalityUtils";
 import { queryFeatureAtPoint } from "./utils/arcgisPointQuery";
 import { getFeaturesAtPoint } from "./utils/mapQueryUtils";
-import { TRAIL_FACILITY_TYPE_LABELS, EJ2020_MAP_SERVER_URL } from "./constants/trailFacilityTypeLabels";
+import { EJ2020_MAP_SERVER_URL } from "./constants/trailFacilityTypeLabels";
+import { MAJOR_TRAILS } from "../ControlPanel/regionalTrailConfig";
+import { buildAllTrailMetrics } from "../../utils/regionalTrailMetrics";
 import bbox from "@turf/bbox";
 
 const legendBoxStyle = {
@@ -34,25 +38,67 @@ const legendBoxStyle = {
   minWidth: 180,
 };
 
-const TrailStatusLegend = () => (
-  <div style={legendBoxStyle}>
-    <div style={{ marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid rgba(0,0,0,0.1)", fontWeight: 600, fontSize: 13, color: "#333" }}>
-      Trail Status
-    </div>
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {[
-        { color: "#2774bd", label: "Existing" },
-        { color: "#6a1b9a", label: "Planned/Envisioned/Design" },
-        { color: "#FF0000", label: "Gap" },
-      ].map(({ color, label }) => (
-        <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 30, height: 3, backgroundColor: color, borderRadius: 2, flexShrink: 0 }} />
-          <span style={{ color: "#333" }}>{label}</span>
+const TrailStatusLegend = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  return (
+    <div style={legendBoxStyle}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+          marginBottom: isCollapsed ? 0 : 8,
+          paddingBottom: isCollapsed ? 0 : 6,
+          borderBottom: isCollapsed ? "none" : "1px solid rgba(0,0,0,0.1)",
+          fontWeight: 600,
+          fontSize: 13,
+          color: "#333",
+          cursor: "pointer",
+          userSelect: "none",
+        }}
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        <span>Trail Status</span>
+        <button
+          type="button"
+          title={isCollapsed ? "Expand" : "Collapse"}
+          aria-label={isCollapsed ? "Expand legend" : "Collapse legend"}
+          style={{
+            border: "none",
+            background: "transparent",
+            padding: 0,
+            fontSize: 11,
+            color: "#666",
+            cursor: "pointer",
+            lineHeight: 1,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsCollapsed(!isCollapsed);
+          }}
+        >
+          {isCollapsed ? "▲" : "▼"}
+        </button>
+      </div>
+      {!isCollapsed && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            { color: "#2774bd", label: "Existing" },
+            { color: "#6a1b9a", label: "Planned/Envisioned/Design" },
+            { color: "#FF0000", label: "Gap" },
+          ].map(({ color, label }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 30, height: 3, backgroundColor: color, borderRadius: 2, flexShrink: 0 }} />
+              <span style={{ color: "#333" }}>{label}</span>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 
@@ -97,12 +143,14 @@ const ProjectTrailsProfile = ({
   const [regNames, setRegNames] = useState([]);
   const [selectedRegNames, setSelectedRegNames] = useState(new Set()); // Track selected projects (Set for easy toggle)
   const [selectedMajorTrails, setSelectedMajorTrails] = useState([]); // Track selected major trails (array of grouped_reg_name values)
+  const [detailTrail, setDetailTrail] = useState(null);
 
   // Reset selected projects when entering Regional Trails Profile and show municipalities by default
   useEffect(() => {
     if (location.pathname === '/projectTrailsProfile') {
       setSelectedRegNames(new Set());
       setSelectedMajorTrails([]);
+      setDetailTrail(null);
       // Show municipalities by default
       toggleMunicipalities(true);
     }
@@ -117,7 +165,7 @@ const ProjectTrailsProfile = ({
   
   const [openSpaceClickInfo, setOpenSpaceClickInfo] = useState(null); // Store OpenSpace click info for popup
   
-  // Listen for OpenSpace toggle events (only for Regional Trails Profile)
+  // Listen for map context layer toggle events (Regional Trails Profile)
   useEffect(() => {
     const handleToggleOpenSpace = (event) => {
       if (location.pathname === '/projectTrailsProfile') {
@@ -135,20 +183,31 @@ const ProjectTrailsProfile = ({
       }
     };
 
+    const handleToggleEnvironmentalJustice = (event) => {
+      if (location.pathname === '/projectTrailsProfile') {
+        setShowEnvironmentalJustice(event.detail.show);
+      }
+    };
+
     window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
+    window.addEventListener(
+      'toggleEnvironmentalJustice',
+      handleToggleEnvironmentalJustice
+    );
     return () => {
       window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
+      window.removeEventListener(
+        'toggleEnvironmentalJustice',
+        handleToggleEnvironmentalJustice
+      );
     };
-  }, [location.pathname, setShowOpenSpaceFromContext, mapRef]);
+  }, [location.pathname, setShowOpenSpaceFromContext, setShowEnvironmentalJustice, mapRef]);
 
   const [environmentalJusticeClickInfo, setEnvironmentalJusticeClickInfo] = useState(null); // Store Environmental Justice click info for popup
   const [majorTrailClickInfo, setMajorTrailClickInfo] = useState(null); // Store Major Trail click info for popup
   const [regularTrailClickInfo, setRegularTrailClickInfo] = useState(null); // Store Regular Trail click info for popup
   const ejHoverTimeoutRef = useRef(null);
   const ejHoverQueryIdRef = useRef(0);
-
-  const getTrailTypeLabel = (segType, facStat) =>
-    TRAIL_FACILITY_TYPE_LABELS[`${segType},${facStat}`] 
 
   // Update reg_names in context when discovered
   useEffect(() => {
@@ -412,179 +471,16 @@ const ProjectTrailsProfile = ({
     setHoveredTrail(null);
   };
 
-  // Helper function to calculate metrics for a set of trails
-  const calculateTrailMetrics = (trails, name) => {
-    if (!trails || trails.length === 0) {
-      return {
-        totalLength: 0,
-        totalLengthMiles: 0,
-        municipalities: []
-      };
-    }
-
-    // Calculate total length and categorize by status and type
-    let totalLengthFeet = 0;
-    let completedLengthFeet = 0; // fac_stat = 1 means existing/completed
-    const lengthByTypeExisting = {}; // Track length by trail type for existing trails
-    const lengthByTypePlanned = {}; // Track length by trail type for planned/envisioned/design trails
-    const gaps = []; // Track gaps (seg_type = 9)
-    
-    trails.forEach(trail => {
-      const props = trail.properties || {};
-      const segType = props.seg_type;
-      const facStat = props.fac_stat;
-      const trailTypeLabel = getTrailTypeLabel(segType, facStat);
-      
-      const lengthFeet = Number(props.length_ft) || 0;
-      
-      totalLengthFeet += lengthFeet;
-      
-      // Track completed length (fac_stat = 1)
-      if (facStat === 1 || facStat === "1") {
-        completedLengthFeet += lengthFeet;
-      }
-      
-      // Track gaps (seg_type = 9) separately
-      if (segType === 9 || segType === "9") {
-        gaps.push({
-          type: trailTypeLabel,
-          length: lengthFeet,
-          geometry: trail.geometry
-        });
-      } else {
-        // Track length by type, separated into existing and planned
-        if (facStat === 1 || facStat === "1") {
-          // Existing trails
-          if (!lengthByTypeExisting[trailTypeLabel]) {
-            lengthByTypeExisting[trailTypeLabel] = 0;
-          }
-          lengthByTypeExisting[trailTypeLabel] += lengthFeet;
-        } else {
-          // Planned trails (fac_stat = 2 or other values)
-          if (!lengthByTypePlanned[trailTypeLabel]) {
-            lengthByTypePlanned[trailTypeLabel] = 0;
-          }
-          lengthByTypePlanned[trailTypeLabel] += lengthFeet;
-        }
-      }
-    });
-
-    const totalLengthMiles = totalLengthFeet / 5280;
-    const completedLengthMiles = completedLengthFeet / 5280;
-    const percentageComplete = totalLengthFeet > 0 
-      ? ((completedLengthFeet / totalLengthFeet) * 100).toFixed(1)
-      : 0;
-
-    // Determine which municipalities the trails are in using muni_id from feature properties
-    const municipalitySet = new Set();
-    
-    // Extract muni_id from trail properties and look up municipality name
-    trails.forEach(trail => {
-      const props = trail.properties || {};
-      // Try different possible field names for muni_id
-      const muniId = props.muni_id || null;
-                    
-      if (muniId) {
-        const muniName = getMunicipalityName(muniId);
-        if (muniName) {
-          municipalitySet.add(muniName);
-        }
-      }
-    });
-
-    // Parks intersection calculation removed - using VectorTileServer now
-    const parksSet = new Set();
-
-    // Get trail steward and website from first trail (assuming they're consistent for a project)
-    const firstTrail = trails[0];
-    const steward = firstTrail?.properties?.steward || 
-                   firstTrail?.properties?.Steward || 
-                   firstTrail?.properties?.STEWARD ||
-                   null;
-    const website = firstTrail?.properties?.website || 
-                   firstTrail?.properties?.Website || 
-                   firstTrail?.properties?.WEBSITE ||
-                   firstTrail?.properties?.url ||
-                   firstTrail?.properties?.URL ||
-                   null;
-
-    // Convert lengthByType to arrays with miles, separated by existing, planned, and gap
-    const lengthByTypeExistingArray = Object.entries(lengthByTypeExisting).map(([type, feet]) => ({
-      type,
-      miles: (feet / 5280).toFixed(2),
-      category: 'existing'
-    }));
-    
-    const lengthByTypePlannedArray = Object.entries(lengthByTypePlanned).map(([type, feet]) => ({
-      type,
-      miles: (feet / 5280).toFixed(2),
-      category: 'planned'
-    }));
-    
-    const lengthByTypeGapArray = gaps.map(gap => ({
-      type: gap.type,
-      miles: (gap.length / 5280).toFixed(2),
-      category: 'gap'
-    }));
-
-    // Combine all length by type into a single array with categories
-    const lengthByTypeArray = [
-      ...lengthByTypeExistingArray.map(item => ({ ...item, category: 'existing' })),
-      ...lengthByTypePlannedArray.map(item => ({ ...item, category: 'planned' })),
-      ...lengthByTypeGapArray.map(item => ({ ...item, category: 'gap' }))
-    ];
-
-    return {
-      totalLength: totalLengthFeet,
-      totalLengthMiles: totalLengthMiles.toFixed(2),
-      completedLengthMiles: completedLengthMiles.toFixed(2),
-      percentageComplete: percentageComplete,
-      municipalities: Array.from(municipalitySet).sort(),
-      parks: Array.from(parksSet).sort(),
-      steward: steward,
-      website: website,
-      lengthByType: lengthByTypeArray,
-      gaps: gaps.map(gap => ({
-        type: gap.type,
-        lengthMiles: (gap.length / 5280).toFixed(2)
-      }))
-    };
-  };
-
-  // Calculate metrics for selected projects and major trails (including hidden ones for metrics display)
-  const projectMetrics = useMemo(() => {
-    const metrics = {};
-    
-    // Process each selected regular project (include hidden ones for metrics)
-    if (allTrailsData && allTrailsData.features && selectedRegNames.size > 0) {
-      Array.from(selectedRegNames).forEach(regName => {
-        // Filter trails for this project
-        const projectTrails = allTrailsData.features.filter(
-          feature => (feature.properties?.reg_name || "").trim() === regName.trim()
-        );
-        
-        metrics[regName] = calculateTrailMetrics(projectTrails, regName);
-      });
-    }
-    
-    // Process each selected major trail
-    if (majorTrailsData && majorTrailsData.features && selectedMajorTrails.length > 0) {
-      selectedMajorTrails.forEach(majorTrailName => {
-        // Filter trails for this major trail by grouped_reg_name
-        const majorTrailTrails = majorTrailsData.features.filter(
-          feature => {
-            const groupedRegName = (feature.properties?.grouped_reg_name || "").trim();
-            return groupedRegName === majorTrailName.trim();
-          }
-        );
-        
-        metrics[majorTrailName] = calculateTrailMetrics(majorTrailTrails, majorTrailName);
-      });
-    }
-
-    return metrics;
-  }, [allTrailsData, selectedRegNames, majorTrailsData, selectedMajorTrails]);
-
+  const allTrailMetrics = useMemo(
+    () =>
+      buildAllTrailMetrics({
+        majorTrailNames: MAJOR_TRAILS,
+        otherTrailNames: regNames,
+        majorTrailsData,
+        allTrailsData,
+      }),
+    [regNames, majorTrailsData, allTrailsData]
+  );
 
   // Get all layer IDs for trails reg name sync (always include trail layers for click detection)
   const getTrailLayerIds = () => {
@@ -897,47 +793,58 @@ const ProjectTrailsProfile = ({
         {(selectedRegNames.size > 0 || selectedMajorTrails.length > 0) && (
           <TrailStatusLegend />
         )}
+        
+        {/* Control Panel Toggle Button */}
+        <Control
+          style={"Map_filter d-block position-absolute m-0 p-0"}
+          icon={FilterIcon}
+          alt={"Show Control Panel"}
+          clickHandler={() => toggleControlPanel(!showControlPanel)}
+        />
       </ReactMapGL>
 
-      <MapToolbar
-        showBasemapPanel={showBasemapPanel}
-        toggleBasemapPanel={toggleBasemapPanel}
-        showBoundariesPanel={false}
-        toggleBoundariesPanel={() => {}}
-        showBoundaries={false}
-      />
 
-      <ControlPanelShell
-        showControlPanel={showControlPanel}
-        toggleControlPanel={toggleControlPanel}
-        selectedRegNames={selectedRegNames}
-        selectedMajorTrails={selectedMajorTrails}
-        onToggleRegName={(regName) => {
-          const newSelected = new Set(selectedRegNames);
-          if (newSelected.has(regName)) {
-            newSelected.delete(regName);
-          } else {
-            newSelected.add(regName);
-          }
-          setSelectedRegNames(newSelected);
-        }}
-        onToggleMajorTrail={(majorTrailName) => {
-          const newSelected = [...selectedMajorTrails];
-          const index = newSelected.indexOf(majorTrailName);
-          if (index > -1) {
-            newSelected.splice(index, 1);
-          } else {
-            newSelected.push(majorTrailName);
-          }
-          setSelectedMajorTrails(newSelected);
-        }}
-      />
+      {/* Basemap Panel */}
+      {showBasemapPanel && (
+        <BasemapPanel
+          toggleBasemapPanel={toggleBasemapPanel}
+        />
+      )}
+
+      {/* Control Panel */}
+      {showControlPanel && (
+        <div>
+          <ControlPanel 
+            selectedRegNames={selectedRegNames}
+            selectedMajorTrails={selectedMajorTrails}
+            onToggleRegName={(regName) => {
+              const newSelected = new Set(selectedRegNames);
+              if (newSelected.has(regName)) {
+                newSelected.delete(regName);
+              } else {
+                newSelected.add(regName);
+              }
+              setSelectedRegNames(newSelected);
+            }}
+            onToggleMajorTrail={(majorTrailName) => {
+              const newSelected = [...selectedMajorTrails];
+              const index = newSelected.indexOf(majorTrailName);
+              if (index > -1) {
+                newSelected.splice(index, 1);
+              } else {
+                newSelected.push(majorTrailName);
+              }
+              setSelectedMajorTrails(newSelected);
+            }}
+          />
+        </div>
+      )}
 
       {/* Regional Trails Metrics Panel - separate window on the left */}
       <ProjectMetricsPanel 
         selectedRegNames={selectedRegNames}
         selectedMajorTrails={selectedMajorTrails}
-        projectMetrics={projectMetrics}
+        projectMetrics={allTrailMetrics}
         onZoomToProject={handleZoomToProject}
         allTrailsData={allTrailsData}
         majorTrailsData={majorTrailsData}

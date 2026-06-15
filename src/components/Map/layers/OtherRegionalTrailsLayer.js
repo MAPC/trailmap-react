@@ -1,5 +1,18 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Source, Layer } from "react-map-gl";
+import { ARCGIS_TOKEN, withArcGisToken } from "../constants/arcgisConfig";
+
+const extractRegNamesFromFeatures = (features = []) => {
+  const regNames = new Set();
+  features.forEach((feature) => {
+    const regName =
+      feature.properties?.reg_name ?? feature.attributes?.reg_name;
+    if (regName && String(regName).trim() !== "") {
+      regNames.add(String(regName).trim());
+    }
+  });
+  return Array.from(regNames).sort();
+};
 
 /**
  * Generates a color palette for different reg_name values
@@ -50,13 +63,17 @@ const OtherRegionalTrailsLayer = ({
   const updateTimeoutRef = useRef(null);
   const queryTimeoutRef = useRef(null);
   const accumulatedTrailsRef = useRef(new Map()); // Store trails by feature ID to avoid duplicates
+  const knownRegNamesRef = useRef(new Set());
 
   // Determine if layer should be shown
   const shouldShow = showTrailsRegNameSync && (showMunicipalityProfileMap || showRegionalTrailsProfile || showProjectTrailsProfile);
 
-  // ArcGIS token for authentication
-  const ARCGIS_TOKEN = "AAPTaucDi8_DdZbjNjhaAYvWCQA..A05LEOZ-QCx9bKC21Tsk1K0A7Yoql8kZNK3V7F7COkFiE0vn0bVYZti5Eaq_Db7r4UqKV1Y02-9ilPUWjj0barvUV7sdmMM2AgnBJEYMapTJKRzGHJBBGfQV_8KlE5scYMM4iNUNpj7TVvKklvCfr764dCKDmt6ubnI2rW9mRBj7dGZLwbmbKMJFiNx2wAiZoDFGClDOcsxt83kCFCjoGug-Jhqwb0xdl_9lpX38IIoKJ0JAcmgkF6MmiwY9Zgm4Z23T_sSUdSo.AT1_U0702ST1";
-  
+  const publishRegNames = (names) => {
+    if (!onRegNamesChange || !names?.length) return;
+    names.forEach((name) => knownRegNamesRef.current.add(name));
+    onRegNamesChange(Array.from(knownRegNamesRef.current).sort());
+  };
+
   // MapServer URL for tile display (tiles only, doesn't support queries)
   const MAP_SERVER_URL = "https://services.arcgis.com/c5WwApDsDjRhIVkH/arcgis/rest/services/export_other_trails_tiles/MapServer";
   
@@ -71,44 +88,35 @@ const OtherRegionalTrailsLayer = ({
 
     // Query for all reg_names - fetch all unique reg_names without geometry filter
     const fetchAllRegNames = async () => {
+      if (!ARCGIS_TOKEN) {
+        console.error("REACT_APP_ARCGIS_TOKEN is not configured");
+        return;
+      }
+
       try {
-        // Try querying without geometry first (faster and gets all reg_names)
-        // If that fails, fall back to geometry-based query with large bounds
-        let url = `${FEATURE_SERVER_URL}/query?where=reg_name IS NOT NULL&outFields=reg_name&returnGeometry=false&returnDistinctValues=true&f=geojson&maxRecordCount=10000&token=${ARCGIS_TOKEN}`;
-        
-        let response = await fetch(url);
+        const distinctUrl = `${FEATURE_SERVER_URL}/query?where=reg_name IS NOT NULL&outFields=reg_name&returnGeometry=false&returnDistinctValues=true&f=json&maxRecordCount=10000`;
+        let response = await fetch(withArcGisToken(distinctUrl));
         let data = await response.json();
-        
-        // If returnDistinctValues doesn't work, try without it
-        if (data.error || !data.features || data.features.length === 0) {
-          // Fallback: query with large bounds
-          const bbox = "-180,-90,180,90";
-          url = `${FEATURE_SERVER_URL}/query?where=reg_name IS NOT NULL&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=reg_name&returnGeometry=false&f=geojson&maxRecordCount=10000&token=${ARCGIS_TOKEN}`;
-          response = await fetch(url);
+
+        if (data.error || !data.features?.length) {
+          const bbox = "-73.5,41.0,-69.5,43.0";
+          const fallbackUrl = `${FEATURE_SERVER_URL}/query?where=reg_name IS NOT NULL&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=reg_name&returnGeometry=false&f=json&maxRecordCount=10000`;
+          response = await fetch(withArcGisToken(fallbackUrl));
           data = await response.json();
         }
-        
+
         if (data.error) {
           console.error("Error fetching reg_names from FeatureServer:", data.error);
           return;
         }
-        
-        if (data.features && data.features.length > 0) {
-          const regNames = new Set();
-          data.features.forEach(feature => {
-            const regName = feature.properties?.reg_name;
-            if (regName && regName.trim() !== "") {
-              regNames.add(regName);
-            }
-          });
-          const uniqueRegNames = Array.from(regNames).sort();
-          onRegNamesChange(uniqueRegNames);
-        }
+
+        publishRegNames(extractRegNamesFromFeatures(data.features));
       } catch (error) {
         console.error("Error fetching all reg_names from FeatureServer:", error);
       }
     };
 
+    knownRegNamesRef.current.clear();
     fetchAllRegNames();
   }, [shouldShow, onRegNamesChange]);
 
@@ -163,7 +171,9 @@ const OtherRegionalTrailsLayer = ({
         const whereClause = `(${whereConditions})`;
         
         // Query all trails for selected projects (no geometry filter)
-        url = `${FEATURE_SERVER_URL}/query?where=${encodeURIComponent(whereClause)}&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=10000&token=${ARCGIS_TOKEN}`;
+        url = withArcGisToken(
+          `${FEATURE_SERVER_URL}/query?where=${encodeURIComponent(whereClause)}&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=10000`
+        );
       } else {
         // No projects selected - use map bounds query for initial data loading
         const zoom = map.getZoom();
@@ -195,7 +205,9 @@ const OtherRegionalTrailsLayer = ({
         const bbox = `${xmin},${ymin},${xmax},${ymax}`;
 
         // Query GeoJSON from FeatureServer with token authentication (for data extraction)
-        url = `${FEATURE_SERVER_URL}/query?where=1=1&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=2000&token=${ARCGIS_TOKEN}`;
+        url = withArcGisToken(
+          `${FEATURE_SERVER_URL}/query?where=1=1&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=2000`
+        );
       }
 
       // Debounce queries
@@ -246,7 +258,8 @@ const OtherRegionalTrailsLayer = ({
                 accumulatedTrailsRef.current.set(featureId, feature);
               });
               setTrailsData(featureCollection);
-              
+              publishRegNames(extractRegNamesFromFeatures(data.features));
+
               // Notify parent component of trail data changes
               if (onTrailsDataChange) {
                 onTrailsDataChange(featureCollection);
@@ -268,7 +281,8 @@ const OtherRegionalTrailsLayer = ({
                 features: allFeatures
               };
               setTrailsData(featureCollection);
-              
+              publishRegNames(extractRegNamesFromFeatures(allFeatures));
+
               // Notify parent component of trail data changes
               if (onTrailsDataChange) {
                 onTrailsDataChange(featureCollection);
