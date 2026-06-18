@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useMemo, useRef, useEffect } from "react";
 import ReactMapGL, { NavigationControl, GeolocateControl, Source, Layer, ScaleControl, Popup } from "react-map-gl";
 import axios from "axios";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
@@ -9,6 +9,15 @@ import Identify from "./Identify";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
 import OriginalTrailsFilterLayers from "./layers/OriginalTrailsFilterLayers";
+import TrailsOverviewHighlightLayer from "./layers/TrailsOverviewHighlightLayer";
+import { getTrailFeatureAtEvent } from "./utils/mapQueryUtils";
+import { identifyTrailSegmentsAtPoint } from "./utils/trailSegmentIdentify";
+import {
+  buildTrailHighlightFromIdentify,
+  getActiveTrailLayerIds,
+  getVisibleEsriLayerIds,
+  pickIdentifyResultForLayer,
+} from "./utils/trailHighlightUtils";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
@@ -65,6 +74,131 @@ const OriginalTrailsMap = ({
   const [muniHoverFilterValue, setMuniHoverFilterValue] = useState(null);
   const [showOneLayerNotice, setShowOneLayerNotice] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
+  const [hoveredTrailHighlight, setHoveredTrailHighlight] = useState(null);
+  const [clickedTrailHighlight, setClickedTrailHighlight] = useState(null);
+  const trailHoverRafRef = useRef(null);
+  const hoverIdentifyTimerRef = useRef(null);
+  const hoverIdentifyRequestIdRef = useRef(0);
+
+  const activeTrailLayerIds = useMemo(
+    () => getActiveTrailLayerIds(trailLayers, proposedLayers),
+    [trailLayers, proposedLayers]
+  );
+
+  const visibleEsriLayerIds = useMemo(
+    () => getVisibleEsriLayerIds(trailLayers, proposedLayers, existingTrails, proposedTrails),
+    [trailLayers, proposedLayers, existingTrails, proposedTrails]
+  );
+
+  const interactiveLayerIds = useMemo(() => {
+    const ids = [];
+    if (showMaHouseDistricts) ids.push("ma-house-districts-fill");
+    if (showMaSenateDistricts) ids.push("ma-senate-districts-fill");
+    if (showMunicipalities) ids.push("municipalities-fill");
+    if (activeTrailLayerIds.length > 0) {
+      ids.push(...activeTrailLayerIds);
+    }
+    return ids;
+  }, [
+    showMaHouseDistricts,
+    showMaSenateDistricts,
+    showMunicipalities,
+    activeTrailLayerIds,
+  ]);
+
+  const clearHoverIdentifyTimer = () => {
+    if (hoverIdentifyTimerRef.current) {
+      clearTimeout(hoverIdentifyTimerRef.current);
+      hoverIdentifyTimerRef.current = null;
+    }
+  };
+
+  const scheduleHoverTrailIdentify = (map, event) => {
+    if (!activeTrailLayerIds.length || !map || !visibleEsriLayerIds.length) {
+      clearHoverIdentifyTimer();
+      setHoveredTrailHighlight(null);
+      return;
+    }
+
+    const trailFeature = getTrailFeatureAtEvent(map, event, activeTrailLayerIds);
+    if (!trailFeature) {
+      clearHoverIdentifyTimer();
+      hoverIdentifyRequestIdRef.current += 1;
+      setHoveredTrailHighlight(null);
+      return;
+    }
+
+    const mapLayerId = trailFeature.layer.id;
+    const { lng, lat } = event.lngLat;
+    clearHoverIdentifyTimer();
+
+    hoverIdentifyTimerRef.current = setTimeout(async () => {
+      const requestId = ++hoverIdentifyRequestIdRef.current;
+
+      try {
+        const results = await identifyTrailSegmentsAtPoint({
+          lng,
+          lat,
+          mapBounds: map.getBounds(),
+          visibleEsriLayerIds,
+          tolerance: 5,
+          returnGeometry: true,
+        });
+
+        if (requestId !== hoverIdentifyRequestIdRef.current) return;
+
+        const matchedResult = pickIdentifyResultForLayer(
+          results,
+          mapLayerId,
+          existingTrails,
+          proposedTrails
+        );
+        const highlight = buildTrailHighlightFromIdentify(
+          matchedResult,
+          existingTrails,
+          proposedTrails
+        );
+        setHoveredTrailHighlight(highlight);
+      } catch (err) {
+        if (requestId === hoverIdentifyRequestIdRef.current) {
+          console.error("Trail hover identify request failed:", err);
+          setHoveredTrailHighlight(null);
+        }
+      }
+    }, 120);
+  };
+
+  useEffect(() => {
+    if (activeTrailLayerIds.length === 0) {
+      setHoveredTrailHighlight(null);
+      setClickedTrailHighlight(null);
+    }
+  }, [activeTrailLayerIds]);
+
+  useEffect(
+    () => () => {
+      if (trailHoverRafRef.current) {
+        cancelAnimationFrame(trailHoverRafRef.current);
+      }
+      clearHoverIdentifyTimer();
+      hoverIdentifyRequestIdRef.current += 1;
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!showIdentifyPopup || !identifyInfo?.length) return;
+
+    const selectedResult = identifyInfo[pointIndex] || identifyInfo[0];
+    const identifyHighlight = buildTrailHighlightFromIdentify(
+      selectedResult,
+      existingTrails,
+      proposedTrails
+    );
+    if (identifyHighlight) {
+      setClickedTrailHighlight(identifyHighlight);
+    }
+  }, [showIdentifyPopup, identifyInfo, pointIndex, existingTrails, proposedTrails]);
 
   // Show notice when any one of the exclusive layers turns on
   React.useEffect(() => {
@@ -96,6 +230,9 @@ const OriginalTrailsMap = ({
         setMuniHoverPoint(null);
         setMuniHoverFilterKey(null);
         setMuniHoverFilterValue(null);
+        clearHoverIdentifyTimer();
+        hoverIdentifyRequestIdRef.current += 1;
+        setHoveredTrailHighlight(null);
         setIsZooming(false);
       }, 1100);
       return () => clearTimeout(timer);
@@ -117,6 +254,7 @@ const OriginalTrailsMap = ({
       setMuniHoverPoint(null);
       setMuniHoverFilterKey(null);
       setMuniHoverFilterValue(null);
+      setClickedTrailHighlight(null);
     }
   }, [showIdentifyPopup]);
 
@@ -281,11 +419,8 @@ const OriginalTrailsMap = ({
       {...viewport}
       width="100%"
       height="100%"
-      interactiveLayerIds={[
-        "ma-house-districts-fill", 
-        "ma-senate-districts-fill", 
-        "municipalities-fill"
-      ]}
+      interactiveLayerIds={interactiveLayerIds}
+      cursor={hoveredTrailHighlight || clickedTrailHighlight ? "pointer" : "default"}
       onMove={(event) => {
         const newViewport = event.viewState;
         if (Math.abs(newViewport.zoom - viewport.zoom) > 0.01) {
@@ -312,15 +447,12 @@ const OriginalTrailsMap = ({
         }
         
         // Handle identify popup for trails
-        const allLayers = [
-          ...existingTrails.filter((et) => trailLayers.includes(et.id)).map((et) => et["esri-id"]),
-          ...proposedTrails.filter((et) => proposedLayers.includes(et.id)).map((et) => et["esri-id"]),
-        ].join(",");
-        if (!allLayers) return;
+        if (!visibleEsriLayerIds.length) return;
 
         if (trailLayers.length > 0 || proposedLayers.length > 0) {
           const currentMap = mapRef.current?.getMap?.();
           if (!currentMap) return;
+
           const currentMapBounds = currentMap.getBounds();
           axios
             .get(TRAILMAP_IDENTIFY_SOURCE, {
@@ -328,11 +460,11 @@ const OriginalTrailsMap = ({
                 geometry: `${event.lngLat.lng},${event.lngLat.lat}`,
                 geometryType: "esriGeometryPoint",
                 sr: 4326,
-                layers: "visible:" + allLayers,
+                layers: "visible:" + visibleEsriLayerIds.join(","),
                 tolerance: 3,
                 mapExtent: `${currentMapBounds._sw.lng},${currentMapBounds._sw.lat},${currentMapBounds._ne.lng},${currentMapBounds._ne.lat}`,
                 imageDisplay: `600,550,96`,
-                returnGeometry: false,
+                returnGeometry: true,
                 f: "pjson",
               },
             })
@@ -347,9 +479,19 @@ const OriginalTrailsMap = ({
                 for (let i = 0; i < Math.min(5, results.length); i++) {
                   identifyResult.push(results[i]);
                 }
+                const identifyHighlight = buildTrailHighlightFromIdentify(
+                  identifyResult[0],
+                  existingTrails,
+                  proposedTrails
+                );
+                if (identifyHighlight) {
+                  setClickedTrailHighlight(identifyHighlight);
+                }
                 setIdentifyInfo(identifyResult);
                 toggleIdentifyPopup(true);
                 setIdentifyPoint(event.lngLat);
+              } else {
+                setClickedTrailHighlight(null);
               }
             })
             .catch((err) => {
@@ -360,6 +502,7 @@ const OriginalTrailsMap = ({
       onMouseMove={(event) => {
         const map = mapRef.current && mapRef.current.getMap ? mapRef.current.getMap() : null;
         const features = event.features || [];
+        let boundaryHovered = false;
 
         // Handle MA House Districts hover
         if (showMaHouseDistricts) {
@@ -377,6 +520,7 @@ const OriginalTrailsMap = ({
           }
           
           if (districtFeature) {
+            boundaryHovered = true;
             setHoverFeature(districtFeature);
             setHoverPoint(event.lngLat);
             const props = districtFeature.properties || {};
@@ -412,6 +556,7 @@ const OriginalTrailsMap = ({
           }
           
           if (senateFeature) {
+            boundaryHovered = true;
             setSenateHoverFeature(senateFeature);
             setSenateHoverPoint(event.lngLat);
             const props = senateFeature.properties || {};
@@ -446,6 +591,7 @@ const OriginalTrailsMap = ({
           }
           
           if (muniFeature) {
+            boundaryHovered = true;
             setMuniHoverFeature(muniFeature);
             setMuniHoverPoint(event.lngLat);
             const props = muniFeature.properties || {};
@@ -464,8 +610,30 @@ const OriginalTrailsMap = ({
             setMuniHoverFilterValue(null);
           }
         }
+
+        if (boundaryHovered) {
+          clearHoverIdentifyTimer();
+          hoverIdentifyRequestIdRef.current += 1;
+          setHoveredTrailHighlight(null);
+          return;
+        }
+
+        if (trailHoverRafRef.current) {
+          cancelAnimationFrame(trailHoverRafRef.current);
+        }
+
+        trailHoverRafRef.current = requestAnimationFrame(() => {
+          scheduleHoverTrailIdentify(map, event);
+        });
       }}
       onMouseLeave={() => {
+        if (trailHoverRafRef.current) {
+          cancelAnimationFrame(trailHoverRafRef.current);
+          trailHoverRafRef.current = null;
+        }
+        clearHoverIdentifyTimer();
+        hoverIdentifyRequestIdRef.current += 1;
+        setHoveredTrailHighlight(null);
         setHoverFeature(null);
         setHoverPoint(null);
         setHoverFilterKey(null);
@@ -516,6 +684,11 @@ const OriginalTrailsMap = ({
           proposedTrails={proposedTrails}
         />
       </Source>
+
+      <TrailsOverviewHighlightLayer
+        hovered={hoveredTrailHighlight}
+        clicked={clickedTrailHighlight}
+      />
       
       <Source id="MAPC landline vector tiles" type="vector" tiles={[LANDLINE_SOURCE]}>
         {landlineLayers()}
