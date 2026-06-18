@@ -12,15 +12,35 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
 
   // Function to get municipality name by muni_id
   const getMunicipalityName = (muniId) => {
-    if (!muniId || muniId === "Null" || muniId === "") return "";
-    
-    // Handle both string and numeric muni_id
-    const municipality = muniKeys.find(muni => 
-      muni.muni_id === parseInt(muniId) || 
-      muni.muni_id === muniId ||
-      muni.muni_id.toString() === muniId.toString()
+    if (muniId == null || muniId === "" || muniId === "Null") return "";
+
+    const municipality = muniKeys.find(
+      (muni) => String(muni.muni_id) === String(muniId)
     );
     return municipality ? municipality.muni_name : "";
+  };
+
+  const getAttributeValue = (attributes, keys) => {
+    for (const key of keys) {
+      const value = attributes[key];
+      if (value != null && value !== "" && value !== "Null" && value !== " ") {
+        return value;
+      }
+    }
+    return "";
+  };
+
+  const getTrailName = (attributes) =>
+    getAttributeValue(attributes, ["local_name", "Local Name"]) ||
+    getAttributeValue(attributes, ["reg_name", "Regional Name"]) ||
+    getAttributeValue(attributes, ["prop_name", "Property Name"]);
+
+  const getLengthFeet = (attributes) => {
+    const raw = getAttributeValue(attributes, ["length_ft", "Facility Length in Feet"]);
+    if (raw === "") return "";
+
+    const parsed = parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed.toFixed(2) : "";
   };
 
   const identifyLayer = [];
@@ -33,30 +53,16 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
   identifyResult.forEach((element) => {
     identifyLayer.push(element.layerName);
     identifyAttributes.push(element.attributes);
-    identifyTrailName.push(
-      element.attributes["Local Name"] !== "Null" && element.attributes["Local Name"] !== " "
-        ? element.attributes["Local Name"]
-        : element.attributes["Regional Name"] !== "Null" && element.attributes["Regional Name"] !== " "
-        ? element.attributes["Regional Name"]
-        : element.attributes["Property Name"] !== "Null" && element.attributes["Property Name"] !== " "
-        ? element.attributes["Property Name"]
-        : ""
-    );
+    identifyTrailName.push(getTrailName(element.attributes));
     identifyMunicipality.push(
-      getMunicipalityName(element.attributes["muni_id"] || element.attributes["Municipal ID"])
-      
+      getMunicipalityName(
+        element.attributes["muni_id"] || element.attributes["Municipal ID"] || null
+      ) ?? ""
     );
     identifyDate.push(
-      element.attributes["Facility Opening Date"] !== "Null" ? element.attributes["Facility Opening Date"] : ""
+      getAttributeValue(element.attributes, ["open_date", "Facility Opening Date"])
     );
-    const rawLengthFeet =
-      element.attributes["Facility Length in Feet"] ?? element.attributes["length_ft"];
-    const normalizedLengthFeet =
-      rawLengthFeet !== undefined && rawLengthFeet !== null && rawLengthFeet !== "Null" && rawLengthFeet !== " "
-        ? rawLengthFeet
-        : "";
-    identifyLength.push(normalizedLengthFeet);
-    
+    identifyLength.push(getLengthFeet(element.attributes));
   });
 
   const carouselItems = [];
@@ -67,10 +73,7 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
           (!identifyTrailName[i] && <span className="Popup__name">Name: N/A</span>)}
         {(identifyLayer[i] && (
           <span className="Popup__layer Popup__section">
-            Type:{" "}
-            {identifyLayer[i].split(" ")[0] != "Existing"
-              ? identifyLayer[i]
-              : identifyLayer[i].split(" ").slice(1, identifyLayer[i].split(" ").length).join(" ")}
+            Type: {identifyLayer[i]}
           </span>
         )) ||
           (!identifyLayer[i] && <span className="Popup__layer Popup__section">Type: N/A</span>)}
@@ -78,7 +81,7 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
           (!identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: N/A</span>)}
         {(identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
           (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)}
-        {(identifyLength[i] && <span className="Popup__info Popup__section">Length: {parseFloat(identifyLength[i]).toFixed(2)} ft</span>) ||
+        {(identifyLength[i] && <span className="Popup__info Popup__section">Length: {identifyLength[i]} ft</span>) ||
            (!identifyLength[i] && <span className="Popup__info Popup__section">Length: N/A</span>)}
       </Carousel.Item>
     );
