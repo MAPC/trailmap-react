@@ -2,7 +2,6 @@ import React, { useContext, useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 import { ModalContext } from "../../App";
-import { LayerContext } from "../../App";
 import { usePrimaryNavigation } from "../../hooks/usePrimaryNavigation";
 
 const INTRO_DISMISSED_KEY = "trailmap-intro-dismissed";
@@ -47,18 +46,11 @@ const INTRO_CARDS = [
 const IntroModal = () => {
   const { showIntroModal, toggleIntroModal, toggleContributeModal } = useContext(ModalContext);
   const {
-    basemaps,
-    setBaseLayer,
-    setTrailLayers,
-    setProposedLayers,
-    setSelectedMunicipality,
-    setShowMunicipalityProfileMap,
-    setShowMunicipalityView,
-    setShowProjectTrailsProfileMap,
-    setShowProjectTrailsView,
-  } = useContext(LayerContext);
-  const { enterCommunityProfile, enterRegionalProfile, goToTrailsOverview, goToDashboard } =
-    usePrimaryNavigation();
+    enterCommunityProfile,
+    enterRegionalProfile,
+    enterTrailsOverviewWithAllLayers,
+    goToDashboard,
+  } = usePrimaryNavigation();
 
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
@@ -84,32 +76,12 @@ const IntroModal = () => {
   };
 
   const enterDashboard = () => {
-    setShowMunicipalityView(false);
-    setShowMunicipalityProfileMap(false);
-    setShowProjectTrailsView(false);
-    setShowProjectTrailsProfileMap(false);
-    setSelectedMunicipality(null);
     goToDashboard();
     closeIntro();
   };
 
   const enterFullMap = () => {
-    setShowMunicipalityView(false);
-    setShowMunicipalityProfileMap(false);
-    setShowProjectTrailsView(false);
-    setShowProjectTrailsProfileMap(false);
-    setSelectedMunicipality(null);
-    setBaseLayer(basemaps.find((bm) => bm.id === "terrain"));
-    setTrailLayers([
-      "pavedPaths",
-      "bikeLane",
-      "pavedFootway",
-      "naturalSurfaceFootway",
-      "protectedBikeLane",
-      "unimprovedPaths",
-    ]);
-    setProposedLayers([]);
-    goToTrailsOverview();
+    enterTrailsOverviewWithAllLayers();
     closeIntro();
   };
 

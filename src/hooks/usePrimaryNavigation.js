@@ -1,58 +1,65 @@
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { LayerContext } from "../App";
+import { resetSharedNavigationState } from "../utils/navigationReset";
 
 export const usePrimaryNavigation = () => {
   const navigate = useNavigate();
-  const {
-    setTrailLayers,
-    setProposedLayers,
-    setSelectedMunicipality,
-    setShowMunicipalityProfileMap,
-    setShowMunicipalityView,
-    setShowProjectTrailsProfileMap,
-    setShowProjectTrailsView,
-    showMaHouseDistricts,
-    toggleMaHouseDistricts,
-    showMaSenateDistricts,
-    toggleMaSenateDistricts,
-    showMunicipalities,
-    toggleMunicipalities,
-  } = useContext(LayerContext);
+  const layerContext = useContext(LayerContext);
+
+  const resetAll = () => {
+    resetSharedNavigationState(layerContext);
+  };
 
   const enterCommunityProfile = () => {
-    setTrailLayers([]);
-    setProposedLayers([]);
-    if (showMaHouseDistricts) toggleMaHouseDistricts(false);
-    if (showMaSenateDistricts) toggleMaSenateDistricts(false);
-    if (showMunicipalities) toggleMunicipalities(false);
-    setShowMunicipalityProfileMap(true);
-    setSelectedMunicipality(null);
-    setShowMunicipalityView(true);
+    resetAll();
+    layerContext.setShowProjectTrailsProfileMap(false);
+    layerContext.setShowProjectTrailsView(false);
+    layerContext.setShowMunicipalityProfileMap(true);
+    layerContext.setShowMunicipalityView(true);
     navigate("/communityTrailsProfile");
   };
 
   const enterRegionalProfile = () => {
-    setTrailLayers([]);
-    setProposedLayers([]);
-    if (showMaHouseDistricts) toggleMaHouseDistricts(false);
-    if (showMaSenateDistricts) toggleMaSenateDistricts(false);
-    toggleMunicipalities(false);
-    setShowProjectTrailsProfileMap(true);
-    setShowProjectTrailsView(true);
+    resetAll();
+    layerContext.toggleMunicipalities(true);
+    layerContext.setShowMunicipalityProfileMap(false);
+    layerContext.setShowMunicipalityView(false);
+    layerContext.setShowProjectTrailsProfileMap(true);
+    layerContext.setShowProjectTrailsView(true);
     navigate("/projectTrailsProfile");
   };
 
   const goToTrailsOverview = () => {
-    setShowMunicipalityProfileMap(false);
-    setShowMunicipalityView(false);
-    setShowProjectTrailsProfileMap(false);
-    setShowProjectTrailsView(false);
-    setSelectedMunicipality(null);
+    resetAll();
+    layerContext.setShowMunicipalityProfileMap(false);
+    layerContext.setShowMunicipalityView(false);
+    layerContext.setShowProjectTrailsProfileMap(false);
+    layerContext.setShowProjectTrailsView(false);
+    navigate("/");
+  };
+
+  const enterTrailsOverviewWithAllLayers = () => {
+    resetAll();
+    layerContext.setShowMunicipalityProfileMap(false);
+    layerContext.setShowMunicipalityView(false);
+    layerContext.setShowProjectTrailsProfileMap(false);
+    layerContext.setShowProjectTrailsView(false);
+    const terrain = layerContext.basemaps.find((bm) => bm.id === "terrain");
+    if (terrain) {
+      layerContext.setBaseLayer(terrain);
+    }
+    layerContext.setTrailLayers(layerContext.existingTrails.map((trail) => trail.id));
+    layerContext.setProposedLayers(layerContext.proposedTrails.map((trail) => trail.id));
     navigate("/");
   };
 
   const goToDashboard = () => {
+    resetAll();
+    layerContext.setShowMunicipalityProfileMap(false);
+    layerContext.setShowMunicipalityView(false);
+    layerContext.setShowProjectTrailsProfileMap(false);
+    layerContext.setShowProjectTrailsView(false);
     navigate("/dashboard");
   };
 
@@ -61,5 +68,6 @@ export const usePrimaryNavigation = () => {
     goToDashboard,
     enterCommunityProfile,
     enterRegionalProfile,
+    enterTrailsOverviewWithAllLayers,
   };
 };

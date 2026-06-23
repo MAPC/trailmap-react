@@ -126,8 +126,6 @@ const ProjectTrailsProfile = ({
     basemaps,
     setProjectRegNames,
     setSelectedProjectRegName,
-    showMunicipalities,
-    toggleMunicipalities,
     showOpenSpace: showOpenSpaceFromContext,
     setShowOpenSpace: setShowOpenSpaceFromContext,
     showEnvironmentalJustice,
@@ -142,17 +140,6 @@ const ProjectTrailsProfile = ({
   const [selectedRegNames, setSelectedRegNames] = useState(new Set()); // Track selected projects (Set for easy toggle)
   const [selectedMajorTrails, setSelectedMajorTrails] = useState([]); // Track selected major trails (array of grouped_reg_name values)
   const [detailTrail, setDetailTrail] = useState(null);
-
-  // Reset selected projects when entering Regional Trails Profile and show municipalities by default
-  useEffect(() => {
-    if (location.pathname === '/projectTrailsProfile') {
-      setSelectedRegNames(new Set());
-      setSelectedMajorTrails([]);
-      setDetailTrail(null);
-      // Show municipalities by default
-      toggleMunicipalities(true);
-    }
-  }, [location.pathname, toggleMunicipalities]);
   const [hoveredTrail, setHoveredTrail] = useState(null);
   const allRegNamesRef = useRef(new Set()); // Track all unique reg_names seen using ref
   const [allTrailsData, setAllTrailsData] = useState(null); // Store all trail data from OtherRegionalTrailsLayer
@@ -206,6 +193,28 @@ const ProjectTrailsProfile = ({
   const [regularTrailClickInfo, setRegularTrailClickInfo] = useState(null); // Store Regular Trail click info for popup
   const ejHoverTimeoutRef = useRef(null);
   const ejHoverQueryIdRef = useRef(0);
+
+  useEffect(() => {
+    const handleResetRegionalProfile = () => {
+      setSelectedRegNames(new Set());
+      setSelectedMajorTrails([]);
+      setDetailTrail(null);
+      setHoveredTrail(null);
+      setOpenSpaceClickInfo(null);
+      setEnvironmentalJusticeClickInfo(null);
+      setMajorTrailClickInfo(null);
+      setRegularTrailClickInfo(null);
+      toggleIdentifyPopup(false);
+      setIdentifyInfo(null);
+      setIdentifyPoint(null);
+      allRegNamesRef.current = new Set();
+    };
+
+    window.addEventListener("resetRegionalProfile", handleResetRegionalProfile);
+    return () => {
+      window.removeEventListener("resetRegionalProfile", handleResetRegionalProfile);
+    };
+  }, [toggleIdentifyPopup]);
 
   // Update reg_names in context when discovered
   useEffect(() => {

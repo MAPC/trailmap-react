@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import ProjectTrailsProfile from "./ProjectTrailsProfile";
 import { LayerContext } from "../../App";
 import { useLocation } from "react-router-dom";
@@ -35,8 +35,6 @@ const RegionalTrailsControlPanel = ({
     projectRegNames,
   } = useContext(LayerContext);
 
-  const [savedTrailLayers, setSavedTrailLayers] = useState([]);
-  const [savedProposedLayers, setSavedProposedLayers] = useState([]);
   const isNavigatingRef = useRef(false);
 
   useEffect(() => {
@@ -49,18 +47,14 @@ const RegionalTrailsControlPanel = ({
     const isRegionalPath = currentPath === "/projectTrailsProfile";
 
     if (isRegionalPath && !showProjectTrailsView) {
-      setSavedTrailLayers([...trailLayers]);
-      setSavedProposedLayers([...proposedLayers]);
       setTrailLayers([]);
       setProposedLayers([]);
       if (showMaHouseDistricts) toggleMaHouseDistricts(false);
       if (showMaSenateDistricts) toggleMaSenateDistricts(false);
-      toggleMunicipalities(false);
+      toggleMunicipalities(true);
       setShowProjectTrailsProfileMap(true);
       setShowProjectTrailsView(true);
     } else if (!isRegionalPath && showProjectTrailsView) {
-      setTrailLayers(savedTrailLayers);
-      setProposedLayers(savedProposedLayers);
       setShowProjectTrailsProfileMap(false);
       setShowProjectTrailsView(false);
     }

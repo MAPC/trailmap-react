@@ -216,6 +216,14 @@ const CommunityTrailsProfile = ({
     const handleResetMunicipalityProfile = () => {
       setIntersectedTrails([]);
       setHoveredTrail(null);
+      setHoveredBlueBikeStation(null);
+      setHoveredCommuterRailStation(null);
+      setHoveredSubwayStation(null);
+      setHoveredTransitStop(null);
+      setOpenSpaceHoverInfo(null);
+      setOpenSpaceClickInfo(null);
+      setEjHoverPoint(null);
+      setEjHoverInfo(null);
       setShowCommuterRail(false);
       setShowStationLabels(false);
       setShowBlueBikeStations(false);
@@ -371,7 +379,7 @@ const CommunityTrailsProfile = ({
         {...viewport}
         width="100%"
         height="100%"
-        cursor={isBufferActive ? "crosshair" : "default"}
+        cursor={isBufferActive ? "crosshair" : hoveredTrail ? "pointer" : "default"}
         transformRequest={(url, resourceType) => {
           // Use transformRequest to add API key header for Transit.land tiles
           // This is recommended by Transit.land documentation
@@ -391,7 +399,10 @@ const CommunityTrailsProfile = ({
           ...(showOpenSpace ? ['openspace-layer', 'openspace-outline'] : []),
           ...(showTransitLandStops ? ['transit-land-stops'] : []),
           "municipality-profile-base",
-          ...geojsonTrailLayers.map(layer => `geojson-trail-${layer.id}`)
+          ...geojsonTrailLayers.flatMap((layer) => [
+            `geojson-trail-${layer.id}`,
+            `geojson-trail-hover-${layer.id}`,
+          ])
         ]}
         onMove={(event) => {
           setViewport(event.viewState);
@@ -687,12 +698,17 @@ const CommunityTrailsProfile = ({
 
           // Handle trail hover
           if (features.length > 0) {
-            const trailFeature = features.find((f) => 
-              f.layer && f.layer.id.startsWith("geojson-trail-") && !f.layer.id.includes("hover")
-            );
-            
+            const trailFeature = features.find((f) => {
+              const layerId = f.layer?.id;
+              return (
+                layerId?.startsWith("geojson-trail-") && layerId !== "highlighted-trail"
+              );
+            });
+
             if (trailFeature) {
-              const layerId = trailFeature.layer.id.replace("geojson-trail-", "");
+              const layerId = trailFeature.layer.id
+                .replace("geojson-trail-hover-", "")
+                .replace("geojson-trail-", "");
               const clickedObjectId = trailFeature.properties?.objectid || trailFeature.properties?.OBJECTID;
               
               const trailData = intersectedTrails.find(trail => {
