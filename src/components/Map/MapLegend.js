@@ -16,40 +16,42 @@ const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
     proposedTrails,
   } = useContext(LayerContext);
 
-  const legendItems = useMemo(() => {
-    const items = [];
+  const { existingItems, plannedItems, landlineItem } = useMemo(() => {
+    const existing = [];
+    const planned = [];
 
     TRAIL_LAYER_CATEGORIES.forEach((category) => {
       category.items.forEach((item) => {
         if (trailLayers.includes(item.existingId)) {
-          items.push({
+          existing.push({
             key: item.existingId,
             label: item.label,
             color: getLayerColor(existingTrails, item.existingId),
-            dashed: false,
           });
         }
         if (proposedLayers.includes(item.proposedId)) {
-          items.push({
+          planned.push({
             key: item.proposedId,
             label: item.label,
             color: getLayerColor(proposedTrails, item.proposedId),
-            dashed: true,
           });
         }
       });
     });
 
-    if (showLandlineLayer) {
-      items.push({
-        key: "landline",
-        label: "LandLine Regional Greenway",
-        color: LANDLINE_SWATCH_COLOR,
-        dashed: false,
-      });
-    }
+    const landline = showLandlineLayer
+      ? {
+          key: "landline",
+          label: "LandLine Regional Greenway",
+          color: LANDLINE_SWATCH_COLOR,
+        }
+      : null;
 
-    return items;
+    return {
+      existingItems: existing,
+      plannedItems: planned,
+      landlineItem: landline,
+    };
   }, [
     trailLayers,
     proposedLayers,
@@ -58,29 +60,53 @@ const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
     proposedTrails,
   ]);
 
-  if (legendItems.length === 0) {
+  const hasLegendContent =
+    existingItems.length > 0 || plannedItems.length > 0 || landlineItem;
+
+  if (!hasLegendContent) {
     return null;
   }
 
+  const renderItem = (item, dashed = false) => (
+    <li key={item.key} className="MapTrailLegend__item">
+      <span
+        className={`MapTrailLegend__swatch${
+          dashed ? " MapTrailLegend__swatch--dashed" : ""
+        }`}
+        style={{ "--swatch-color": item.color }}
+        aria-hidden="true"
+      />
+      <span className="MapTrailLegend__label">{item.label}</span>
+    </li>
+  );
+
+  const renderSection = (title, items, dashed = false) => {
+    if (items.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="MapTrailLegend__section">
+        <h4 className="MapTrailLegend__section-title">{title}</h4>
+        <ul className="MapTrailLegend__list">{items.map((item) => renderItem(item, dashed))}</ul>
+      </div>
+    );
+  };
+
   return (
     <CollapsibleTrailLegend
+      label="Legend"
       controlPanelOpen={controlPanelOpen}
       defaultOpen={defaultOpen}
     >
-      <ul className="MapTrailLegend__list">
-        {legendItems.map((item) => (
-          <li key={item.key} className="MapTrailLegend__item">
-            <span
-              className={`MapTrailLegend__swatch${
-                item.dashed ? " MapTrailLegend__swatch--dashed" : ""
-              }`}
-              style={{ "--swatch-color": item.color }}
-              aria-hidden="true"
-            />
-            <span className="MapTrailLegend__label">{item.label}</span>
-          </li>
-        ))}
-      </ul>
+      {renderSection("Existing", existingItems)}
+      {renderSection("Planned", plannedItems, true)}
+      {landlineItem && (
+        <div className="MapTrailLegend__section">
+          <h4 className="MapTrailLegend__section-title">Other</h4>
+          <ul className="MapTrailLegend__list">{renderItem(landlineItem)}</ul>
+        </div>
+      )}
     </CollapsibleTrailLegend>
   );
 };

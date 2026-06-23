@@ -1,4 +1,6 @@
 import React from 'react';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import Tooltip from 'react-bootstrap/Tooltip';
 import '../../styles/TrailLegend.scss';
 import { geojsonTrailLayers } from './constants/geojsonTrailLayers';
 
@@ -46,25 +48,34 @@ const TrailLegend = ({
         }}
       >
         {!readOnly && (
-          <div 
-            className="TrailLegend__icon"
-            style={{
-              width: '20px',
-              height: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              cursor: 'pointer',
-              color: visible ? '#666' : '#999'
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClick(layer.id);
-            }}
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id={`trail-legend-eye-${layer.id}`}>
+                {visible ? "Hide on map" : "Show on map"}
+              </Tooltip>
+            }
           >
-            <i className={visible ? "fas fa-eye" : "fas fa-eye-slash"}></i>
-          </div>
+            <div 
+              className="TrailLegend__icon"
+              style={{
+                width: '20px',
+                height: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                cursor: 'pointer',
+                color: visible ? '#666' : '#999'
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick(layer.id);
+              }}
+            >
+              <i className={visible ? "fas fa-eye" : "fas fa-eye-slash"} aria-hidden="true" />
+            </div>
+          </OverlayTrigger>
         )}
         <div className="TrailLegend__line-container">
           <svg width="40" height="3" className="TrailLegend__line">

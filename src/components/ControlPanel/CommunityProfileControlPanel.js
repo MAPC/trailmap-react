@@ -42,8 +42,6 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
     setShowTransitLandStops,
   } = useContext(LayerContext);
 
-  const [savedTrailLayers, setSavedTrailLayers] = useState([]);
-  const [savedProposedLayers, setSavedProposedLayers] = useState([]);
   const isNavigatingRef = useRef(false);
   const prevMunicipalityNameRef = useRef(null);
 
@@ -60,8 +58,6 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
       sharedView === "municipality" || currentPath === "/communityTrailsProfile";
 
     if (isCommunityPath && !showMunicipalityView) {
-      setSavedTrailLayers([...trailLayers]);
-      setSavedProposedLayers([...proposedLayers]);
       setTrailLayers([]);
       setProposedLayers([]);
       if (showMaHouseDistricts) toggleMaHouseDistricts(false);
@@ -71,16 +67,9 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
       setSelectedMunicipality(null);
       setShowMunicipalityView(true);
     } else if (!isCommunityPath && showMunicipalityView) {
-      setTrailLayers(savedTrailLayers);
-      setProposedLayers(savedProposedLayers);
       setShowMunicipalityProfileMap(false);
       setSelectedMunicipality(null);
       setShowMunicipalityView(false);
-      setShowCommuterRail(false);
-      setShowStationLabels(false);
-      setShowBlueBikeStations(false);
-      setShowSubwayStations(false);
-      window.dispatchEvent(new CustomEvent("resetMunicipalityProfile"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);

@@ -422,9 +422,6 @@ const MunicipalityProfile = ({
         onChange={(e) => {
           setCommunitySearch(e.target.value);
           setPickerOpen(true);
-          if (!e.target.value.trim()) {
-            selectMunicipality(null);
-          }
         }}
         onFocus={() => setPickerOpen(true)}
       />
