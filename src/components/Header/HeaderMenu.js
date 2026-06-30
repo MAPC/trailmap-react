@@ -2,12 +2,15 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { ModalContext } from "../../App";
 import HeaderNav from "./HeaderNav";
 import HeaderActions from "./HeaderActions";
-import { HEADER_ACTION_ITEMS, HEADER_NAV_ITEMS } from "./headerMenuConfig";
+import { HEADER_ACTION_ITEMS, getHeaderNavItems } from "./headerMenuConfig";
 import { useHeaderNavigation } from "./useHeaderNavigation";
+import { useIsMobileNav } from "../../hooks/useIsMobileNav";
 
 const HeaderMenu = () => {
   const { toggleHeaderModal } = useContext(ModalContext);
   const { isActive, handleNavClick } = useHeaderNavigation();
+  const isMobile = useIsMobileNav();
+  const navItems = getHeaderNavItems(isMobile);
   const regionRef = useRef(null);
   const probeRef = useRef(null);
   const menuRef = useRef(null);
@@ -110,7 +113,7 @@ const HeaderMenu = () => {
           {menuOpen && (
             <div className="Header__hamburgerPanel" role="menu">
               <ul className="Header__hamburgerList">
-                {HEADER_NAV_ITEMS.map((item) => (
+                {navItems.map((item) => (
                   <li key={item.id} role="none">
                     <button
                       type="button"
