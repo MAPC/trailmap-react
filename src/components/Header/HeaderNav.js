@@ -1,9 +1,12 @@
 import React from "react";
-import { HEADER_NAV_ITEMS } from "./headerMenuConfig";
+import { getHeaderNavItems } from "./headerMenuConfig";
 import { useHeaderNavigation } from "./useHeaderNavigation";
+import { useIsMobileNav } from "../../hooks/useIsMobileNav";
 
 const HeaderNav = () => {
   const { isActive, handleNavClick } = useHeaderNavigation();
+  const isMobile = useIsMobileNav();
+  const navItems = getHeaderNavItems(isMobile);
 
   const navItemClass = (path) =>
     `Header__nav-item${isActive(path) ? " Header__nav-item--active" : ""}`;
@@ -11,7 +14,7 @@ const HeaderNav = () => {
   return (
     <nav className="Header__nav" aria-label="Primary">
       <ul className="Header__nav-list">
-        {HEADER_NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <li key={item.id}>
             <button
               type="button"

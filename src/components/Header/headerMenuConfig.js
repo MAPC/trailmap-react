@@ -1,3 +1,5 @@
+export const MOBILE_NAV_MAX_WIDTH = 680;
+
 export const HEADER_NAV_ITEMS = [
   {
     id: "trails",
@@ -10,20 +12,26 @@ export const HEADER_NAV_ITEMS = [
     label: "Dashboard",
     path: "/dashboard",
     icon: "bi-grid-fill",
+    hideOnMobile: true,
   },
   {
     id: "community",
     label: "Community Profiles",
     path: "/communityTrailsProfile",
     icon: "bi-person-fill",
+    hideOnMobile: true,
   },
   {
     id: "regional",
     label: "Regional Trails Profiles",
     path: "/projectTrailsProfile",
     icon: "bi-graph-up",
+    hideOnMobile: true,
   },
 ];
+
+export const getHeaderNavItems = (isMobile) =>
+  HEADER_NAV_ITEMS.filter((item) => !isMobile || !item.hideOnMobile);
 
 export const HEADER_ACTION_ITEMS = [
   {
