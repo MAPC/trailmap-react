@@ -1,0 +1,72 @@
+[
+  {
+    "rpa": "BRPC",
+    "contactName": "Mark Maloy",
+    "email": "MMaloy@berkshireplanning.org"
+  },
+  {
+    "rpa": "CCC",
+    "contactName": "Anne Reynolds",
+    "email": "areynolds@capecodcommission.org"
+  },
+  {
+    "rpa": "CMRPC",
+    "contactName": "Matt Franz",
+    "email": "Mfranz@cmrpc.org"
+  },
+  {
+    "rpa": "FRCOG",
+    "contactName": "Ryan Clary",
+    "email": "gis@frcog.org"
+  },
+  {
+    "rpa": "MAPC",
+    "contactName": "Guy Hydrick",
+    "email": "ghydrick@mapc.org"
+  },
+  {
+    "rpa": "MassGIS",
+    "contactName": "Michael Trust",
+    "email": "michael.trust@mass.gov"
+  },
+  {
+    "rpa": "MRPC",
+    "contactName": "Jason Stanton",
+    "email": "jstanton@mrpc.org"
+  },
+  {
+    "rpa": "MVC",
+    "contactName": "Chris Seidel",
+    "email": "seidel@mvcommission.org"
+  },
+  {
+    "rpa": "MVPC",
+    "contactName": "Stephen Lopez",
+    "email": "slopez@mvpc.org"
+  },
+  {
+    "rpa": "NMCOG",
+    "contactName": "Carlin Andrus",
+    "email": "candrus@nmcog.org"
+  },
+  {
+    "rpa": "NPEDC",
+    "contactName": "Nathan Porter",
+    "email": "nporter@nantucket-ma.gov"
+  },
+  {
+    "rpa": "OCPC",
+    "contactName": "Andrew Vidal",
+    "email": "avidal@ocpcrpa.org"
+  },
+  {
+    "rpa": "PVPC",
+    "contactName": "Jacob Dolinger",
+    "email": "sortiz@pvpc.org"
+  },
+  {
+    "rpa": "SRPEDD",
+    "contactName": "Karen Porter",
+    "email": "kporter@srpedd.org"
+  }
+]

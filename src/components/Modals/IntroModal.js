@@ -28,7 +28,7 @@ const INTRO_CARDS = [
   },
   {
     id: "map",
-    title: "View All Trails",
+    title: "Trails Overview",
     description: "Jump straight to the full interactive map and toggle every trail type yourself.",
     iconClass: "bi-map-fill",
     accent: "map",
