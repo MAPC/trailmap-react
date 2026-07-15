@@ -162,6 +162,12 @@ const MunicipalityProfile = ({
         setShowShareMenu(false);
         setShowTrailsInventoryModal(false);
         setOpenSpaceSiteNames([]);
+
+        // Close Overview "Show on map" for open space by default
+        if (onToggleMuniOpenSpace) onToggleMuniOpenSpace(false);
+        window.dispatchEvent(
+          new CustomEvent("toggleMuniOpenSpace", { detail: { show: false } })
+        );
         
         // Reset buffer analysis when selecting a new municipality
         window.dispatchEvent(new CustomEvent('resetBufferAnalysis'));
@@ -177,10 +183,14 @@ const MunicipalityProfile = ({
       setShowShareMenu(false);
       setShowTrailsInventoryModal(false);
       setOpenSpaceSiteNames([]);
+      if (onToggleMuniOpenSpace) onToggleMuniOpenSpace(false);
+      window.dispatchEvent(
+        new CustomEvent("toggleMuniOpenSpace", { detail: { show: false } })
+      );
       window.dispatchEvent(new CustomEvent('resetBufferAnalysis'));
       prevMunicipalityRef.current = null;
     }
-  }, [selectedMunicipality]);
+  }, [selectedMunicipality, onToggleMuniOpenSpace]);
 
   // Fetch open space SITE_NAMEs when a municipality is selected
   useEffect(() => {
@@ -723,18 +733,19 @@ const MunicipalityProfile = ({
     return (
       <div className="MunicipalityProfile__openSpaceCard">
         <div className="MunicipalityProfile__openSpaceHeader">
-          <div className="MunicipalityProfile__openSpaceHeaderMain">
-            <span className="MunicipalityProfile__trailOverviewEyebrow">
-              Protected open space
-            </span>
-            <div className="MunicipalityProfile__openSpaceCount">
-              {isLoadingOpenSpace
-                ? "…"
-                : openSpaceError
-                  ? "—"
-                  : openSpaceSiteNames.length}
-            </div>
+          <span className="MunicipalityProfile__trailOverviewEyebrow">
+            Protected and recreational open space
+          </span>
+          <div className="MunicipalityProfile__openSpaceCount">
+            {isLoadingOpenSpace
+              ? "…"
+              : openSpaceError
+                ? "—"
+                : openSpaceSiteNames.length}
           </div>
+        </div>
+
+        <div className="MunicipalityProfile__openSpaceSwitchRow">
           <Form.Check
             type="switch"
             id="overview-muni-open-space-map-switch"
@@ -746,7 +757,7 @@ const MunicipalityProfile = ({
               !!openSpaceError ||
               openSpaceSiteNames.length === 0
             }
-            aria-label="Show municipality protected open space on map"
+            aria-label="Show municipality protected and recreational open space on map"
             label="Show on map"
           />
         </div>
@@ -765,7 +776,7 @@ const MunicipalityProfile = ({
 
         {!isLoadingOpenSpace && !openSpaceError && openSpaceSiteNames.length === 0 && (
           <div className="MunicipalityProfile__openSpaceStatus">
-            No protected open space sites found.
+            No protected and recreational open space sites found.
           </div>
         )}
 
@@ -860,7 +871,7 @@ const MunicipalityProfile = ({
 
           {renderMapLayerRow(
             "open-space",
-            "Protected open space",
+            "Protected and recreational open space",
             showOpenSpace,
             (checked) => {
               if (onToggleOpenSpace) onToggleOpenSpace(checked);
