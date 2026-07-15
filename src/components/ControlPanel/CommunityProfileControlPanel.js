@@ -36,6 +36,8 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
     setShowEnvironmentalJustice,
     showOpenSpace,
     setShowOpenSpace,
+    showMuniOpenSpace,
+    setShowMuniOpenSpace,
     showTrailsRegNameSync,
     setShowTrailsRegNameSync,
     showTransitLandStops,
@@ -131,6 +133,8 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
         onToggleEnvironmentalJustice={setShowEnvironmentalJustice}
         showOpenSpace={showOpenSpace}
         onToggleOpenSpace={setShowOpenSpace}
+        showMuniOpenSpace={showMuniOpenSpace}
+        onToggleMuniOpenSpace={setShowMuniOpenSpace}
         showTransitLandStops={showTransitLandStops}
         onToggleTransitLandStops={setShowTransitLandStops}
         showTrailsRegNameSync={showTrailsRegNameSync}

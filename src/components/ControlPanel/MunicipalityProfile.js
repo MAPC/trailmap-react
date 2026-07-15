@@ -12,6 +12,7 @@ import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
 import { useNavigate, useLocation } from "react-router-dom";
 import TrailsInventoryModal from "../Modals/TrailsInventoryModal";
+import { fetchOpenSpaceByTownId } from "../../utils/fetchOpenSpace";
 
 const Skeleton = ({ className = "", style = {} }) => (
   <span
@@ -39,6 +40,8 @@ const MunicipalityProfile = ({
   onToggleEnvironmentalJustice,
   showOpenSpace,
   onToggleOpenSpace,
+  showMuniOpenSpace,
+  onToggleMuniOpenSpace,
   showTransitLandStops,
   onToggleTransitLandStops,
 }) => {
@@ -55,6 +58,9 @@ const MunicipalityProfile = ({
   const [communitySearch, setCommunitySearch] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [openSpaceSiteNames, setOpenSpaceSiteNames] = useState([]);
+  const [isLoadingOpenSpace, setIsLoadingOpenSpace] = useState(false);
+  const [openSpaceError, setOpenSpaceError] = useState(null);
   const densityRankCacheRef = useRef(new Map());
 
   // Reset component states when switching back to trail filters
@@ -65,6 +71,9 @@ const MunicipalityProfile = ({
       setShowCompletionModal(false);
       setShowShareMenu(false);
       setShowTrailsInventoryModal(false);
+      setOpenSpaceSiteNames([]);
+      setIsLoadingOpenSpace(false);
+      setOpenSpaceError(null);
     };
     
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
@@ -152,6 +161,7 @@ const MunicipalityProfile = ({
         setShowCompletionModal(false);
         setShowShareMenu(false);
         setShowTrailsInventoryModal(false);
+        setOpenSpaceSiteNames([]);
         
         // Reset buffer analysis when selecting a new municipality
         window.dispatchEvent(new CustomEvent('resetBufferAnalysis'));
@@ -166,10 +176,49 @@ const MunicipalityProfile = ({
       setShowCompletionModal(false);
       setShowShareMenu(false);
       setShowTrailsInventoryModal(false);
+      setOpenSpaceSiteNames([]);
       window.dispatchEvent(new CustomEvent('resetBufferAnalysis'));
       prevMunicipalityRef.current = null;
     }
   }, [selectedMunicipality]);
+
+  // Fetch open space SITE_NAMEs when a municipality is selected
+  useEffect(() => {
+    const townId = selectedMunicipality?.properties?.town_id;
+    if (townId == null) {
+      setOpenSpaceSiteNames([]);
+      setIsLoadingOpenSpace(false);
+      setOpenSpaceError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingOpenSpace(true);
+    setOpenSpaceError(null);
+
+    fetchOpenSpaceByTownId(townId)
+      .then(({ siteNames }) => {
+        if (!cancelled) {
+          setOpenSpaceSiteNames(siteNames);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching open space for municipality:", err);
+        if (!cancelled) {
+          setOpenSpaceSiteNames([]);
+          setOpenSpaceError("Could not load open space data.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingOpenSpace(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedMunicipality?.properties?.town_id]);
 
   // Calculate trail statistics when municipality or trails change
   useEffect(() => {
@@ -665,6 +714,72 @@ const MunicipalityProfile = ({
     );
   };
 
+  const renderOpenSpaceOverview = () => {
+    const handleToggle = (checked) => {
+      if (onToggleMuniOpenSpace) onToggleMuniOpenSpace(checked);
+      dispatchLayerToggle("toggleMuniOpenSpace", checked);
+    };
+
+    return (
+      <div className="MunicipalityProfile__openSpaceCard">
+        <div className="MunicipalityProfile__openSpaceHeader">
+          <div className="MunicipalityProfile__openSpaceHeaderMain">
+            <span className="MunicipalityProfile__trailOverviewEyebrow">
+              Protected open space
+            </span>
+            <div className="MunicipalityProfile__openSpaceCount">
+              {isLoadingOpenSpace
+                ? "…"
+                : openSpaceError
+                  ? "—"
+                  : openSpaceSiteNames.length}
+            </div>
+          </div>
+          <Form.Check
+            type="switch"
+            id="overview-muni-open-space-map-switch"
+            className="MunicipalityProfile__openSpaceSwitch"
+            checked={!!showMuniOpenSpace}
+            onChange={(e) => handleToggle(e.target.checked)}
+            disabled={
+              isLoadingOpenSpace ||
+              !!openSpaceError ||
+              openSpaceSiteNames.length === 0
+            }
+            aria-label="Show municipality protected open space on map"
+            label="Show on map"
+          />
+        </div>
+
+        {isLoadingOpenSpace && (
+          <div className="MunicipalityProfile__openSpaceStatus">
+            Loading open space sites…
+          </div>
+        )}
+
+        {!isLoadingOpenSpace && openSpaceError && (
+          <div className="MunicipalityProfile__openSpaceStatus MunicipalityProfile__openSpaceStatus--error">
+            {openSpaceError}
+          </div>
+        )}
+
+        {!isLoadingOpenSpace && !openSpaceError && openSpaceSiteNames.length === 0 && (
+          <div className="MunicipalityProfile__openSpaceStatus">
+            No protected open space sites found.
+          </div>
+        )}
+
+        {!isLoadingOpenSpace && openSpaceSiteNames.length > 0 && (
+          <ul className="MunicipalityProfile__openSpaceList">
+            {openSpaceSiteNames.map((siteName) => (
+              <li key={siteName}>{siteName}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  };
+
   const dispatchLayerToggle = (eventName, show) => {
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent(eventName, { detail: { show } }));
@@ -1093,6 +1208,7 @@ const MunicipalityProfile = ({
                 ) : (
                   <>
                     {trailStats && renderOverviewTrailStats(trailStats)}
+                    {renderOpenSpaceOverview()}
 
                     {municipalityTrails && municipalityTrails.length > 0 && (
                       <>

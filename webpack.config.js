@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const DotEnv = require('dotenv-webpack');
 
@@ -11,7 +12,10 @@ module.exports = {
     publicPath: '/'
   },
   resolve: {
-    modules: ["node_modules"]
+    modules: ["node_modules"],
+    fallback: {
+      buffer: require.resolve("buffer/"),
+    },
   },
   module: {
     rules: [
@@ -59,7 +63,11 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({ template: './src/index.html', favicon: './src/favicon.png' }),
-    new DotEnv()
+    new DotEnv(),
+    // Required by wkx: it references global Buffer without importing it
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+    }),
   ],
   devServer: {
     historyApiFallback: {
@@ -69,6 +77,13 @@ module.exports = {
     port: 8080,
     hot: true,
     open: false,
+    proxy: [
+      {
+        context: ['/get-open-space'],
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    ],
     client: {
       overlay: {
         errors: true,
