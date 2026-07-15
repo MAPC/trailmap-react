@@ -205,6 +205,10 @@ const CommunityTrailsProfile = ({
 
   // Query trails when municipality is selected
   useEffect(() => {
+    setOpenSpaceHoverInfo(null);
+    setOpenSpaceClickInfo(null);
+    setShowMuniOpenSpace(false);
+
     if (selectedMunicipality) {
       handleQueryMunicipalityTrails(selectedMunicipality);
     } else {
@@ -413,13 +417,14 @@ const CommunityTrailsProfile = ({
           return { url };
         }}
         interactiveLayerIds={[
-          ...openSpaceInteractiveLayerIds,
           ...(showTransitLandStops ? ['transit-land-stops'] : []),
           "municipality-profile-base",
           ...geojsonTrailLayers.flatMap((layer) => [
             `geojson-trail-${layer.id}`,
             `geojson-trail-hover-${layer.id}`,
-          ])
+          ]),
+          // Open space after trails so trail segments stay interactive on top
+          ...openSpaceInteractiveLayerIds,
         ]}
         onMove={(event) => {
           setViewport(event.viewState);
@@ -610,8 +615,17 @@ const CommunityTrailsProfile = ({
               }
             }
             
-            // Check for OpenSpace clicks
-            if (isAnyOpenSpaceVisible) {
+            // Prefer trails over open space when both are under the cursor
+            const clickedTrailFeature = event.features.find((f) => {
+              const layerId = f.layer?.id;
+              return (
+                layerId?.startsWith("geojson-trail-") &&
+                layerId !== "highlighted-trail"
+              );
+            });
+
+            // Check for OpenSpace clicks (only when not clicking a trail)
+            if (isAnyOpenSpaceVisible && !clickedTrailFeature) {
               const openSpaceFeature = event.features.find((f) =>
                 f.layer && isOpenSpaceLayerId(f.layer.id)
               );
@@ -678,11 +692,18 @@ const CommunityTrailsProfile = ({
             setBufferPreviewCenter(null);
           }
 
-          // Handle OpenSpace layer hover FIRST (before other features)
-          if (isAnyOpenSpaceVisible && event.lngLat && openSpaceInteractiveLayerIds.length > 0) {
+          // Prefer trail hover over open space (trails render above open space)
+          const trailHoverFeature = features.find((f) => {
+            const layerId = f.layer?.id;
+            return (
+              layerId?.startsWith("geojson-trail-") &&
+              layerId !== "highlighted-trail"
+            );
+          });
+
+          if (isAnyOpenSpaceVisible && event.lngLat && openSpaceInteractiveLayerIds.length > 0 && !trailHoverFeature) {
             const map = mapRef.current?.getMap();
             if (map) {
-              // First check event.features
               const openSpaceFeature = features.find(f =>
                 f.layer && isOpenSpaceLayerId(f.layer.id)
               );
@@ -693,7 +714,6 @@ const CommunityTrailsProfile = ({
                   feature: openSpaceFeature
                 });
               } else {
-                // If not in event.features, query the map directly
                 const queriedFeatures = map.queryRenderedFeatures(event.point, {
                   layers: openSpaceInteractiveLayerIds
                 });
@@ -716,7 +736,7 @@ const CommunityTrailsProfile = ({
 
           // Handle trail hover
           if (features.length > 0) {
-            const trailFeature = features.find((f) => {
+            const trailFeature = trailHoverFeature || features.find((f) => {
               const layerId = f.layer?.id;
               return (
                 layerId?.startsWith("geojson-trail-") && layerId !== "highlighted-trail"
@@ -991,7 +1011,44 @@ const CommunityTrailsProfile = ({
           </Popup>
         )}
         
-        {/* Render GeoJSON sources for community trails profile */}
+        {/* Open space beneath trail segments */}
+        {showOpenSpace && (
+          <OpenSpaceLayer
+            showOpenSpace={showOpenSpace}
+            showMunicipalityProfileMap={true}
+            idPrefix="openspace"
+            beforeId={
+              intersectedTrails[0]
+                ? `geojson-trail-${intersectedTrails[0].layerId}`
+                : undefined
+            }
+            mapRef={mapRef}
+          />
+        )}
+
+        {showMuniOpenSpace && selectedMunicipality && (
+          <OpenSpaceLayer
+            showOpenSpace={showMuniOpenSpace}
+            showMunicipalityProfileMap={true}
+            townId={selectedMunicipality.properties?.town_id}
+            idPrefix="muni-openspace"
+            beforeId={
+              intersectedTrails[0]
+                ? `geojson-trail-${intersectedTrails[0].layerId}`
+                : undefined
+            }
+            mapRef={mapRef}
+          />
+        )}
+
+        {/* Environmental Justice 2020 Layer */}
+        <EnvironmentalJusticeLayer
+          showEnvironmentalJustice={showEnvironmentalJustice}
+          showMunicipalityProfileMap={true}
+          mapRef={mapRef}
+        />
+
+        {/* Trail segments on top of open space */}
         <CommunityTrailsProfileLayers
           showMunicipalityProfileMap={true}
           intersectedTrails={intersectedTrails}
@@ -1025,34 +1082,6 @@ const CommunityTrailsProfile = ({
           subwayStationsData={subwayStationsData}
           hoveredSubwayStation={hoveredSubwayStation}
         />
-        
-        {/* Environmental Justice 2020 Layer */}
-        <EnvironmentalJusticeLayer
-          showEnvironmentalJustice={showEnvironmentalJustice}
-          showMunicipalityProfileMap={true}
-          mapRef={mapRef}
-        />
-
-        {/* Map layers: MassGIS Protected open space */}
-        {showOpenSpace && (
-          <OpenSpaceLayer
-            showOpenSpace={showOpenSpace}
-            showMunicipalityProfileMap={true}
-            idPrefix="openspace"
-            mapRef={mapRef}
-          />
-        )}
-
-        {/* Overview: municipality open space from local API by town_id */}
-        {showMuniOpenSpace && selectedMunicipality && (
-          <OpenSpaceLayer
-            showOpenSpace={showMuniOpenSpace}
-            showMunicipalityProfileMap={true}
-            townId={selectedMunicipality.properties?.town_id}
-            idPrefix="muni-openspace"
-            mapRef={mapRef}
-          />
-        )}
 
         {/* Landlines Feature Service Layer */}
         {showLandlinesFeatureService && (

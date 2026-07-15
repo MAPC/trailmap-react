@@ -502,24 +502,30 @@
 
   &__openSpaceHeader {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin-bottom: 0.45rem;
+  }
+
+  &__openSpaceSwitchRow {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
     margin-bottom: 0.6rem;
   }
 
-  &__openSpaceHeaderMain {
-    min-width: 0;
-    flex: 1;
-  }
-
   &__openSpaceSwitch {
-    flex-shrink: 0;
     margin: 0;
-    padding-top: 0.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-left: 0;
 
     .form-check-input {
       cursor: pointer;
+      float: none;
+      margin-left: 0;
+      margin-top: 0;
     }
 
     .form-check-label {

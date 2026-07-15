@@ -18,6 +18,8 @@ const OpenSpaceLayer = ({
   mapRef,
   townId,
   idPrefix = "openspace",
+  /** Place fill/outline below this layer id (e.g. first trail layer). */
+  beforeId,
   onDataChange,
 }) => {
   const [openSpaceData, setOpenSpaceData] = useState(null);
@@ -31,6 +33,53 @@ const OpenSpaceLayer = ({
   const isActive =
     showOpenSpace && (showMunicipalityProfileMap || showProjectTrailsProfile);
   const useTownApi = townId != null;
+
+  // Keep open space beneath trail line layers even when toggled on late
+  useEffect(() => {
+    if (!isActive || !openSpaceData || !mapRef?.current) return undefined;
+
+    const map = mapRef.current.getMap();
+    if (!map) return undefined;
+
+    const moveBelowTrails = () => {
+      if (!map.getLayer(fillLayerId)) return;
+
+      const styleLayers = map.getStyle()?.layers || [];
+      const trailLayer = styleLayers.find(
+        (layer) =>
+          layer.id.startsWith("geojson-trail-") &&
+          !layer.id.includes("hover") &&
+          !layer.id.includes("highlight")
+      );
+      const targetBeforeId =
+        (trailLayer && map.getLayer(trailLayer.id) && trailLayer.id) ||
+        (beforeId && map.getLayer(beforeId) && beforeId) ||
+        null;
+
+      if (!targetBeforeId) return;
+
+      try {
+        map.moveLayer(fillLayerId, targetBeforeId);
+        if (map.getLayer(outlineLayerId)) {
+          map.moveLayer(outlineLayerId, targetBeforeId);
+        }
+      } catch (err) {
+        // Layer may not be ready yet; ignore and retry via timeout below
+      }
+    };
+
+    moveBelowTrails();
+    const timeoutId = setTimeout(moveBelowTrails, 50);
+    return () => clearTimeout(timeoutId);
+  }, [
+    isActive,
+    openSpaceData,
+    mapRef,
+    fillLayerId,
+    outlineLayerId,
+    beforeId,
+  ]);
+
 
   // Community Overview: fetch open space for selected municipality by town_id
   useEffect(() => {
@@ -154,6 +203,7 @@ const OpenSpaceLayer = ({
       <Layer
         id={fillLayerId}
         type="fill"
+        beforeId={beforeId}
         paint={{
           "fill-color": "#73B273",
           "fill-opacity": 0.3,
@@ -163,6 +213,7 @@ const OpenSpaceLayer = ({
       <Layer
         id={outlineLayerId}
         type="line"
+        beforeId={beforeId}
         paint={{
           "line-color": "#458A45",
           "line-width": 1,
