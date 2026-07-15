@@ -1,25 +1,91 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Source, Layer } from "react-map-gl";
+import { fetchOpenSpaceByTownId } from "../../../utils/fetchOpenSpace";
+
+const MASSGIS_OPENSPACE_URL =
+  "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/openspace/FeatureServer/0";
 
 /**
- * Renders OpenSpace (Protected and Recreational OpenSpace) layer
- * Data source: https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/openspace/FeatureServer/0
- * 
- * Uses ArcGIS FeatureServer query endpoint to fetch GeoJSON features within current map bounds.
+ * Protected / recreational open space layer.
+ *
+ * When townId is provided (Overview "Show on map"): fetch by town from local API.
+ * Otherwise (Map layers toggle / Project Profile): MassGIS viewport query.
  */
-const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef, onDataChange }) => {
+const OpenSpaceLayer = ({
+  showOpenSpace,
+  showMunicipalityProfileMap,
+  showProjectTrailsProfile,
+  mapRef,
+  townId,
+  idPrefix = "openspace",
+  onDataChange,
+}) => {
   const [openSpaceData, setOpenSpaceData] = useState(null);
-  const [bounds, setBounds] = useState(null);
   const updateTimeoutRef = useRef(null);
   const queryTimeoutRef = useRef(null);
 
+  const sourceId = `${idPrefix}-source`;
+  const fillLayerId = `${idPrefix}-layer`;
+  const outlineLayerId = `${idPrefix}-outline`;
+
+  const isActive =
+    showOpenSpace && (showMunicipalityProfileMap || showProjectTrailsProfile);
+  const useTownApi = townId != null;
+
+  // Community Overview: fetch open space for selected municipality by town_id
   useEffect(() => {
-    if (!showOpenSpace || (!showMunicipalityProfileMap && !showProjectTrailsProfile) || !mapRef?.current) {
-      setOpenSpaceData(null);
-      setBounds(null);
-      if (onDataChange) onDataChange(null);
+    if (!isActive || !useTownApi) {
+      if (useTownApi) {
+        setOpenSpaceData(null);
+        if (onDataChange) onDataChange(null);
+      }
       return;
     }
+
+    let cancelled = false;
+
+    const fetchByTown = async () => {
+      try {
+        const { featureCollection } = await fetchOpenSpaceByTownId(townId);
+        if (cancelled) return;
+
+        setOpenSpaceData(
+          featureCollection.features.length > 0 ? featureCollection : null
+        );
+        if (onDataChange) onDataChange(featureCollection);
+      } catch (error) {
+        console.error("Error fetching open space by town:", error);
+        if (!cancelled) {
+          setOpenSpaceData(null);
+          if (onDataChange) onDataChange(null);
+        }
+      }
+    };
+
+    fetchByTown();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isActive, useTownApi, townId, onDataChange]);
+
+  // MassGIS viewport-based fetch (Map layers / Project Profile)
+  useEffect(() => {
+    if (!isActive || useTownApi || !mapRef?.current) {
+      if (!useTownApi && !isActive) {
+        setOpenSpaceData(null);
+        if (onDataChange) onDataChange(null);
+      }
+      return;
+    }
+
+    const toWebMercator = (lon, lat) => {
+      const x = (lon * 20037508.34) / 180;
+      let y =
+        Math.log(Math.tan(((90 + lat) * Math.PI) / 360)) / (Math.PI / 180);
+      y = (y * 20037508.34) / 180;
+      return { x, y };
+    };
 
     const updateLayer = () => {
       const map = mapRef.current?.getMap();
@@ -28,44 +94,24 @@ const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, showProject
       const mapBounds = map.getBounds();
       const sw = mapBounds.getSouthWest();
       const ne = mapBounds.getNorthEast();
-
-      // Convert lat/lon to Web Mercator (EPSG:3857) for ArcGIS query
-      const toWebMercator = (lon, lat) => {
-        const x = lon * 20037508.34 / 180;
-        let y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180);
-        y = y * 20037508.34 / 180;
-        return { x, y };
-      };
-
       const swMerc = toWebMercator(sw.lng, sw.lat);
       const neMerc = toWebMercator(ne.lng, ne.lat);
-
-      const OPENSPACE_SERVICE_URL = "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/openspace/FeatureServer/0";
       const bbox = `${swMerc.x},${swMerc.y},${neMerc.x},${neMerc.y}`;
+      const url = `${MASSGIS_OPENSPACE_URL}/query?where=1=1&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=3857&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=1000`;
 
-      // Query GeoJSON from FeatureServer
-      const url = `${OPENSPACE_SERVICE_URL}/query?where=1=1&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=3857&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=1000`;
-
-      // Debounce queries
-      if (queryTimeoutRef.current) {
-        clearTimeout(queryTimeoutRef.current);
-      }
+      if (queryTimeoutRef.current) clearTimeout(queryTimeoutRef.current);
 
       queryTimeoutRef.current = setTimeout(async () => {
         try {
           const response = await fetch(url);
           const data = await response.json();
-          
+
           if (data.features && data.features.length > 0) {
             const featureCollection = {
               type: "FeatureCollection",
-              features: data.features
+              features: data.features,
             };
             setOpenSpaceData(featureCollection);
-            setBounds([
-              [sw.lng, sw.lat],
-              [ne.lng, ne.lat]
-            ]);
             if (onDataChange) onDataChange(featureCollection);
           } else {
             setOpenSpaceData(null);
@@ -78,63 +124,49 @@ const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, showProject
       }, 300);
     };
 
-    // Initial update
     updateLayer();
 
-    // Update on map move (with debounce)
     const map = mapRef.current?.getMap();
-    if (map) {
-      const handleMoveEnd = () => {
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-        updateTimeoutRef.current = setTimeout(updateLayer, 300);
-      };
+    if (!map) return undefined;
 
-      map.on('moveend', handleMoveEnd);
-      map.on('zoomend', handleMoveEnd);
+    const handleMoveEnd = () => {
+      if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
+      updateTimeoutRef.current = setTimeout(updateLayer, 300);
+    };
 
-      return () => {
-        map.off('moveend', handleMoveEnd);
-        map.off('zoomend', handleMoveEnd);
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-        if (queryTimeoutRef.current) {
-          clearTimeout(queryTimeoutRef.current);
-        }
-      };
-    }
-  }, [showOpenSpace, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef, onDataChange]);
+    map.on("moveend", handleMoveEnd);
+    map.on("zoomend", handleMoveEnd);
 
-  // Handle hover events - removed, will be handled in parent component's onMouseMove
+    return () => {
+      map.off("moveend", handleMoveEnd);
+      map.off("zoomend", handleMoveEnd);
+      if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
+      if (queryTimeoutRef.current) clearTimeout(queryTimeoutRef.current);
+    };
+  }, [isActive, useTownApi, mapRef, onDataChange]);
 
-  if (!showOpenSpace || (!showMunicipalityProfileMap && !showProjectTrailsProfile) || !openSpaceData) {
+  if (!isActive || !openSpaceData) {
     return null;
   }
 
   return (
-    <Source
-      id="openspace-source"
-      type="geojson"
-      data={openSpaceData}
-    >
+    <Source id={sourceId} type="geojson" data={openSpaceData}>
       <Layer
-        id="openspace-layer"
+        id={fillLayerId}
         type="fill"
         paint={{
           "fill-color": "#73B273",
-          "fill-opacity": 0.3
+          "fill-opacity": 0.3,
         }}
         interactive={true}
       />
       <Layer
-        id="openspace-outline"
+        id={outlineLayerId}
         type="line"
         paint={{
           "line-color": "#458A45",
           "line-width": 1,
-          "line-opacity": 0.6
+          "line-opacity": 0.6,
         }}
         interactive={true}
       />
@@ -143,4 +175,3 @@ const OpenSpaceLayer = ({ showOpenSpace, showMunicipalityProfileMap, showProject
 };
 
 export default OpenSpaceLayer;
-
