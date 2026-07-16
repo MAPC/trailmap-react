@@ -8,8 +8,9 @@ const MASSGIS_OPENSPACE_URL =
 /**
  * Protected / recreational open space layer.
  *
- * When townId is provided (Overview "Show on map"): fetch by town from local API.
- * Otherwise (Map layers toggle / Project Profile): MassGIS viewport query.
+ * When townId is provided (Overview "Show on map" or Regional Profile communities):
+ *   fetch by town_id from local API (single id or comma-separated, e.g. "1,3,4,5").
+ * Otherwise (Map layers toggle without town ids): MassGIS viewport query.
  */
 const OpenSpaceLayer = ({
   showOpenSpace,
@@ -32,7 +33,7 @@ const OpenSpaceLayer = ({
 
   const isActive =
     showOpenSpace && (showMunicipalityProfileMap || showProjectTrailsProfile);
-  const useTownApi = townId != null;
+  const useTownApi = townId != null && townId !== "";
 
   // Keep open space beneath trail line layers even when toggled on late
   useEffect(() => {
@@ -47,13 +48,17 @@ const OpenSpaceLayer = ({
       const styleLayers = map.getStyle()?.layers || [];
       const trailLayer = styleLayers.find(
         (layer) =>
-          layer.id.startsWith("geojson-trail-") &&
+          (layer.id.startsWith("geojson-trail-") ||
+            layer.id === "other-regional-trails-layer" ||
+            layer.id === "gaps-other-regional-trails-layer" ||
+            layer.id === "major-trails-layer") &&
           !layer.id.includes("hover") &&
-          !layer.id.includes("highlight")
+          !layer.id.includes("highlight") &&
+          !layer.id.includes("click")
       );
       const targetBeforeId =
-        (trailLayer && map.getLayer(trailLayer.id) && trailLayer.id) ||
         (beforeId && map.getLayer(beforeId) && beforeId) ||
+        (trailLayer && map.getLayer(trailLayer.id) && trailLayer.id) ||
         null;
 
       if (!targetBeforeId) return;
@@ -198,12 +203,31 @@ const OpenSpaceLayer = ({
     return null;
   }
 
+  // Only pass beforeId when the target layer exists — Mapbox throws if it doesn't
+  // (e.g. major-trail-only mode has no "other-regional-trails-layer").
+  const map = mapRef?.current?.getMap?.();
+  const styleLayers = map?.getStyle?.()?.layers || [];
+  const trailLayerId = styleLayers.find(
+    (layer) =>
+      (layer.id.startsWith("geojson-trail-") ||
+        layer.id === "other-regional-trails-layer" ||
+        layer.id === "gaps-other-regional-trails-layer" ||
+        layer.id === "major-trails-layer") &&
+      !layer.id.includes("hover") &&
+      !layer.id.includes("highlight") &&
+      !layer.id.includes("click")
+  )?.id;
+  const safeBeforeId =
+    (beforeId && map?.getLayer?.(beforeId) && beforeId) ||
+    trailLayerId ||
+    undefined;
+
   return (
     <Source id={sourceId} type="geojson" data={openSpaceData}>
       <Layer
         id={fillLayerId}
         type="fill"
-        beforeId={beforeId}
+        beforeId={safeBeforeId}
         paint={{
           "fill-color": "#73B273",
           "fill-opacity": 0.3,
@@ -213,7 +237,7 @@ const OpenSpaceLayer = ({
       <Layer
         id={outlineLayerId}
         type="line"
-        beforeId={beforeId}
+        beforeId={safeBeforeId}
         paint={{
           "line-color": "#458A45",
           "line-width": 1,

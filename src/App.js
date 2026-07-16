@@ -95,6 +95,7 @@ const App = () => {
   const [showEnvironmentalJustice, setShowEnvironmentalJustice] = useState(false);
   const [showOpenSpace, setShowOpenSpace] = useState(false);
   const [showMuniOpenSpace, setShowMuniOpenSpace] = useState(false);
+  const [showProjectOpenSpace, setShowProjectOpenSpace] = useState(false);
   const [showLandlinesFeatureService, setShowLandlinesFeatureService] = useState(false);
   const [showTrailsRegNameSync, setShowTrailsRegNameSync] = useState(false);
   const [showTransitLandStops, setShowTransitLandStops] = useState(false);
@@ -208,6 +209,8 @@ const App = () => {
               setShowOpenSpace,
               showMuniOpenSpace,
               setShowMuniOpenSpace,
+              showProjectOpenSpace,
+              setShowProjectOpenSpace,
               showLandlinesFeatureService,
               setShowLandlinesFeatureService,
               showTrailsRegNameSync,
