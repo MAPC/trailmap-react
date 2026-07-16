@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import {
@@ -7,7 +7,9 @@ import {
   getTrailColor,
   isMajorTrail,
 } from "./regionalTrailConfig";
+import { LayerContext } from "../../App";
 import { downloadTrailGeoJSON } from "../../utils/regionalTrailMetrics";
+import { fetchOpenSpaceByTownId } from "../../utils/fetchOpenSpace";
 import { sortLengthByTypeItems } from "../Map/constants/trailFacilityTypeLabels";
 
 const VIEW_DETAILS_TOOLTIP = "Click to view details";
@@ -99,9 +101,74 @@ const ProjectTrailsProfile = ({
   allTrailsData = null,
   majorTrailsData = null,
 }) => {
+  const { showProjectOpenSpace, setShowProjectOpenSpace } = useContext(LayerContext);
   const [searchQuery, setSearchQuery] = useState("");
   const [listTab, setListTab] = useState("major");
   const [detailTab, setDetailTab] = useState("overview");
+  const [openSpaceSiteNames, setOpenSpaceSiteNames] = useState([]);
+  const [isLoadingOpenSpace, setIsLoadingOpenSpace] = useState(false);
+  const [openSpaceError, setOpenSpaceError] = useState(null);
+
+  const detailTownIds = useMemo(() => {
+    if (!detailTrail) return "";
+    const metrics = allTrailMetrics[detailTrail.name] || {};
+    const ids = metrics.municipalityIds || [];
+    return ids.length ? ids.join(",") : "";
+  }, [detailTrail, allTrailMetrics]);
+
+  useEffect(() => {
+    if (!detailTownIds) {
+      setOpenSpaceSiteNames([]);
+      setIsLoadingOpenSpace(false);
+      setOpenSpaceError(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setIsLoadingOpenSpace(true);
+    setOpenSpaceError(null);
+
+    fetchOpenSpaceByTownId(detailTownIds)
+      .then(({ siteNames }) => {
+        if (!cancelled) {
+          setOpenSpaceSiteNames(siteNames);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching open space for regional trail:", err);
+        if (!cancelled) {
+          setOpenSpaceSiteNames([]);
+          setOpenSpaceError("Could not load open space data.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingOpenSpace(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detailTownIds]);
+
+  useEffect(() => {
+    setShowProjectOpenSpace(false);
+    window.dispatchEvent(
+      new CustomEvent("toggleProjectOpenSpace", { detail: { show: false } })
+    );
+  }, [detailTrail?.name, setShowProjectOpenSpace]);
+
+  const dispatchLayerToggle = (eventName, show) => {
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(eventName, { detail: { show } }));
+    }, 10);
+  };
+
+  const handleToggleProjectOpenSpace = (checked) => {
+    setShowProjectOpenSpace(checked);
+    dispatchLayerToggle("toggleProjectOpenSpace", checked);
+  };
 
   const selectedNames = useMemo(() => {
     const names = [...selectedMajorTrails, ...Array.from(selectedRegNames)];
@@ -773,6 +840,34 @@ const ProjectTrailsProfile = ({
                   <Skeleton
                     style={{ width: "100%", height: "2.5rem", marginTop: "0.65rem", borderRadius: "8px" }}
                   />
+                  <div className="ProjectTrailsProfile__openSpaceCard">
+                    <div
+                      className="ProjectTrailsProfile__openSpaceTitleSkeleton"
+                      aria-hidden="true"
+                    >
+                      <Skeleton
+                        style={{ width: "92%", height: "0.85rem", marginBottom: "0.4rem" }}
+                      />
+                      <Skeleton style={{ width: "68%", height: "0.85rem" }} />
+                    </div>
+                    <div className="ProjectTrailsProfile__openSpaceSwitchRow">
+                      <Skeleton
+                        style={{ width: "6.5rem", height: "1.4rem", borderRadius: "999px" }}
+                      />
+                    </div>
+                    <ul className="ProjectTrailsProfile__openSpaceList">
+                      {Array.from({ length: 4 }, (_, idx) => (
+                        <li key={`os-sk-${idx}`}>
+                          <Skeleton
+                            style={{
+                              width: `${70 + (idx % 3) * 8}%`,
+                              height: "0.72rem",
+                            }}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </>
               ) : (
                 <>
@@ -792,6 +887,99 @@ const ProjectTrailsProfile = ({
                       Towns of {communitySummary}
                     </div>
                   )}
+
+                  <div className="ProjectTrailsProfile__openSpaceCard">
+                    {isLoadingOpenSpace ? (
+                      <>
+                        <div
+                          className="ProjectTrailsProfile__openSpaceTitleSkeleton"
+                          aria-busy="true"
+                          aria-label="Loading protected and recreational open space"
+                        >
+                          <Skeleton
+                            style={{
+                              width: "92%",
+                              height: "0.85rem",
+                              marginBottom: "0.4rem",
+                            }}
+                          />
+                          <Skeleton style={{ width: "68%", height: "0.85rem" }} />
+                        </div>
+                        <div className="ProjectTrailsProfile__openSpaceSwitchRow">
+                          <Skeleton
+                            style={{
+                              width: "6.5rem",
+                              height: "1.4rem",
+                              borderRadius: "999px",
+                            }}
+                          />
+                        </div>
+                        <ul className="ProjectTrailsProfile__openSpaceList">
+                          {Array.from({ length: 4 }, (_, idx) => (
+                            <li key={`os-load-sk-${idx}`}>
+                              <Skeleton
+                                style={{
+                                  width: `${70 + (idx % 3) * 8}%`,
+                                  height: "0.72rem",
+                                }}
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="ProjectTrailsProfile__sectionTitle">
+                          {openSpaceError ? (
+                            "Protected and recreational open space"
+                          ) : (
+                            <>
+                              {openSpaceSiteNames.length} protected and
+                              recreational open space{" "}
+                              {openSpaceSiteNames.length === 1
+                                ? "site"
+                                : "sites"}{" "}
+                              across {communities.length} communit
+                              {communities.length === 1 ? "y" : "ies"}
+                            </>
+                          )}
+                        </h3>
+
+                        <div className="ProjectTrailsProfile__openSpaceSwitchRow">
+                          <Form.Check
+                            type="switch"
+                            id="project-open-space-map-switch"
+                            className="ProjectTrailsProfile__openSpaceSwitch"
+                            checked={!!showProjectOpenSpace}
+                            onChange={(e) =>
+                              handleToggleProjectOpenSpace(e.target.checked)
+                            }
+                            disabled={
+                              !!openSpaceError ||
+                              openSpaceSiteNames.length === 0 ||
+                              !detailTownIds
+                            }
+                            aria-label="Show protected and recreational open space on map"
+                            label="Show on map"
+                          />
+                        </div>
+
+                        {openSpaceError && (
+                          <div className="ProjectTrailsProfile__openSpaceStatus ProjectTrailsProfile__openSpaceStatus--error">
+                            {openSpaceError}
+                          </div>
+                        )}
+
+                        {!openSpaceError && openSpaceSiteNames.length > 0 && (
+                          <ul className="ProjectTrailsProfile__openSpaceList">
+                            {openSpaceSiteNames.map((siteName) => (
+                              <li key={siteName}>{siteName}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </>
               )}
             </div>

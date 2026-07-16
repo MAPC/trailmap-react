@@ -104,8 +104,10 @@ const INTERACTIVE_LAYER_IDS = [
   "major-trails-layer",
   "other-regional-trails-layer",
   "gaps-other-regional-trails-layer",
-  "openspace-layer",
-  "openspace-outline"
+  "openspace-regional-layer",
+  "openspace-regional-outline",
+  "project-openspace-layer",
+  "project-openspace-outline",
 ];
 
 const ProjectTrailsProfile = ({ 
@@ -128,6 +130,8 @@ const ProjectTrailsProfile = ({
     setSelectedProjectRegName,
     showOpenSpace: showOpenSpaceFromContext,
     setShowOpenSpace: setShowOpenSpaceFromContext,
+    showProjectOpenSpace,
+    setShowProjectOpenSpace,
     showEnvironmentalJustice,
     setShowEnvironmentalJustice,
   } = useContext(LayerContext);
@@ -138,6 +142,10 @@ const ProjectTrailsProfile = ({
   const [pointIndex, setPointIndex] = useState(0);
   const [regNames, setRegNames] = useState([]);
   const [selectedRegNames, setSelectedRegNames] = useState(new Set()); // Track selected projects (Set for easy toggle)
+  const selectedRegNamesArray = useMemo(
+    () => Array.from(selectedRegNames),
+    [selectedRegNames]
+  );
   const [selectedMajorTrails, setSelectedMajorTrails] = useState([]); // Track selected major trails (array of grouped_reg_name values)
   const [detailTrail, setDetailTrail] = useState(null);
   const [hoveredTrail, setHoveredTrail] = useState(null);
@@ -147,9 +155,26 @@ const ProjectTrailsProfile = ({
   
   // Use global OpenSpace state instead of local state to persist across profile switches
   const showOpenSpace = showOpenSpaceFromContext;
+  const isAnyOpenSpaceVisible = showOpenSpace || showProjectOpenSpace;
   
-  const [openSpaceClickInfo, setOpenSpaceClickInfo] = useState(null); // Store OpenSpace click info for popup
-  
+  const [openSpaceHoverInfo, setOpenSpaceHoverInfo] = useState(null);
+
+  const isOpenSpaceLayerId = (layerId) =>
+    layerId === "openspace-regional-layer" ||
+    layerId === "openspace-regional-outline" ||
+    layerId === "project-openspace-layer" ||
+    layerId === "project-openspace-outline";
+
+  const getOpenSpaceInteractiveLayerIds = () => {
+    const ids = [];
+    if (showOpenSpace) {
+      ids.push("openspace-regional-layer", "openspace-regional-outline");
+    }
+    if (showProjectOpenSpace) {
+      ids.push("project-openspace-layer", "project-openspace-outline");
+    }
+    return ids;
+  };  
   // Listen for map context layer toggle events (Regional Trails Profile)
   useEffect(() => {
     const handleToggleOpenSpace = (event) => {
@@ -174,19 +199,36 @@ const ProjectTrailsProfile = ({
       }
     };
 
+    const handleToggleProjectOpenSpace = (event) => {
+      if (location.pathname === "/projectTrailsProfile") {
+        setShowProjectOpenSpace(event.detail.show);
+        if (event.detail.show && mapRef?.current) {
+          const map = mapRef.current.getMap();
+          if (map && map.getZoom() < 11) {
+            map.easeTo({
+              zoom: 11,
+              duration: 1000,
+            });
+          }
+        }
+      }
+    };
+
     window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
+    window.addEventListener('toggleProjectOpenSpace', handleToggleProjectOpenSpace);
     window.addEventListener(
       'toggleEnvironmentalJustice',
       handleToggleEnvironmentalJustice
     );
     return () => {
       window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
+      window.removeEventListener('toggleProjectOpenSpace', handleToggleProjectOpenSpace);
       window.removeEventListener(
         'toggleEnvironmentalJustice',
         handleToggleEnvironmentalJustice
       );
     };
-  }, [location.pathname, setShowOpenSpaceFromContext, setShowEnvironmentalJustice, mapRef]);
+  }, [location.pathname, setShowOpenSpaceFromContext, setShowProjectOpenSpace, setShowEnvironmentalJustice, mapRef]);
 
   const [environmentalJusticeClickInfo, setEnvironmentalJusticeClickInfo] = useState(null); // Store Environmental Justice click info for popup
   const [majorTrailClickInfo, setMajorTrailClickInfo] = useState(null); // Store Major Trail click info for popup
@@ -199,8 +241,9 @@ const ProjectTrailsProfile = ({
       setSelectedRegNames(new Set());
       setSelectedMajorTrails([]);
       setDetailTrail(null);
+      setShowProjectOpenSpace(false);
       setHoveredTrail(null);
-      setOpenSpaceClickInfo(null);
+      setOpenSpaceHoverInfo(null);
       setEnvironmentalJusticeClickInfo(null);
       setMajorTrailClickInfo(null);
       setRegularTrailClickInfo(null);
@@ -341,7 +384,7 @@ const ProjectTrailsProfile = ({
 
   const clearAllPopups = () => {
     toggleIdentifyPopup(false);
-    setOpenSpaceClickInfo(null);
+    setOpenSpaceHoverInfo(null);
     setEnvironmentalJusticeClickInfo(null);
     setMajorTrailClickInfo(null);
     setRegularTrailClickInfo(null);
@@ -355,8 +398,8 @@ const ProjectTrailsProfile = ({
   const pt = (e) => ({ lng: e.lngLat.lng, lat: e.lngLat.lat });
 
   /**
-   * Handle map click: show popup for clicked feature (OpenSpace, trails, EJ) or clear all.
-   * Order: OpenSpace > major trails > regular trails > EJ (raster, needs server query).
+   * Handle map click: show popup for trail/EJ features or clear all.
+   * Open space is hover-only — no click tooltip.
    */
   const handleTrailClick = async (event) => {
     const map = mapRef.current?.getMap();
@@ -365,40 +408,60 @@ const ProjectTrailsProfile = ({
       return;
     }
 
-    // 1. OpenSpace (vector)
-    if (showOpenSpace) {
-      const feature = getFeaturesAtPoint(map, event, ["openspace-layer-regional", "openspace-outline-regional"]);
-      if (feature) {
-        const isSame = openSpaceClickInfo?.feature?.properties?.OBJECTID === feature.properties?.OBJECTID;
-        if (isSame) setOpenSpaceClickInfo(null);
-        else showPopup(setOpenSpaceClickInfo, { point: pt(event), feature });
-        return;
-      }
-    }
-
-    // 2. Major trails (vector)
+    // 1. Major trails (vector)
     if (selectedMajorTrails?.length) {
       const feature = getFeaturesAtPoint(map, event, ["major-trails-layer"]);
       if (feature) {
+        setOpenSpaceHoverInfo(null);
         showPopup(setMajorTrailClickInfo, { point: pt(event), feature });
         return;
       }
     }
 
-    // 3. Regular trails (vector)
-    const trailFeatures = getFeaturesAtPoint(map, event, ["other-regional-trails-layer", "gaps-other-regional-trails-layer"], { returnAll: true });
+    // 2. Regular trails (vector)
+    const trailFeatures = getFeaturesAtPoint(
+      map,
+      event,
+      ["other-regional-trails-layer", "gaps-other-regional-trails-layer"],
+      { returnAll: true }
+    );
     if (trailFeatures.length) {
-      showPopup(setRegularTrailClickInfo, { point: pt(event), feature: trailFeatures[0] });
+      setOpenSpaceHoverInfo(null);
+      showPopup(setRegularTrailClickInfo, {
+        point: pt(event),
+        feature: trailFeatures[0],
+      });
       return;
+    }
+
+    // 3. Open space — hover only; ignore click so hover tooltip can remain
+    if (isAnyOpenSpaceVisible) {
+      const feature = getFeaturesAtPoint(
+        map,
+        event,
+        getOpenSpaceInteractiveLayerIds()
+      );
+      if (feature) {
+        return;
+      }
     }
 
     // 4. EJ (raster - query server)
     if (showEnvironmentalJustice) {
-      const ejFeature = await queryEnvironmentalJusticeAtPoint(event.lngLat.lng, event.lngLat.lat);
+      const ejFeature = await queryEnvironmentalJusticeAtPoint(
+        event.lngLat.lng,
+        event.lngLat.lat
+      );
       if (ejFeature) {
-        const isSame = environmentalJusticeClickInfo?.feature?.properties?.OBJECTID === ejFeature.properties?.OBJECTID;
+        const isSame =
+          environmentalJusticeClickInfo?.feature?.properties?.OBJECTID ===
+          ejFeature.properties?.OBJECTID;
         if (isSame) setEnvironmentalJusticeClickInfo(null);
-        else showPopup(setEnvironmentalJusticeClickInfo, { point: pt(event), feature: ejFeature });
+        else
+          showPopup(setEnvironmentalJusticeClickInfo, {
+            point: pt(event),
+            feature: ejFeature,
+          });
         return;
       }
     }
@@ -420,43 +483,83 @@ const ProjectTrailsProfile = ({
     const map = mapRef.current?.getMap();
     if (!map || !event.lngLat) {
       setHoveredTrail(null);
+      setOpenSpaceHoverInfo(null);
       return;
     }
 
-    const point = [event.lngLat.lng, event.lngLat.lat];
     let features = event.features;
     if (!features) {
       try {
-        features = map.queryRenderedFeatures(point);
+        features = map.queryRenderedFeatures(event.point);
       } catch (err) {
         setHoveredTrail(null);
+        setOpenSpaceHoverInfo(null);
         return;
       }
     }
 
-    // Vector layers: any feature from our layers = pointer (MajorTrailsLayer/OtherRegionalTrailsLayer need featureId for hover highlight)
-    const feature = features.find((f) => f.layer?.id && INTERACTIVE_LAYER_IDS.includes(f.layer.id));
-    if (feature) {
-      const layerId = feature.layer.id;
+    // Prefer trail hover over open space (trails render above open space)
+    const trailFeature = features.find((f) => {
+      const layerId = f.layer?.id;
+      return (
+        layerId === "major-trails-layer" ||
+        layerId === "other-regional-trails-layer" ||
+        layerId === "gaps-other-regional-trails-layer"
+      );
+    });
+
+    if (trailFeature) {
+      setOpenSpaceHoverInfo(null);
+      const layerId = trailFeature.layer.id;
       if (layerId === "major-trails-layer") {
         setHoveredTrail({
-          properties: feature.properties,
+          properties: trailFeature.properties,
           lngLat: event.lngLat,
-          featureId: feature.properties?.OBJECTID ?? null,
-          isMajorTrail: true
-        });
-      } else if (layerId === "other-regional-trails-layer" || layerId === "gaps-other-regional-trails-layer") {
-        setHoveredTrail({
-          properties: feature.properties,
-          lngLat: event.lngLat,
-          featureId: feature.properties?.OBJECTID ?? null,
-          isRegularTrail: true
+          featureId: trailFeature.properties?.OBJECTID ?? null,
+          isMajorTrail: true,
         });
       } else {
-        setHoveredTrail({ isOpenSpace: true });
+        setHoveredTrail({
+          properties: trailFeature.properties,
+          lngLat: event.lngLat,
+          featureId: trailFeature.properties?.OBJECTID ?? null,
+          isRegularTrail: true,
+        });
       }
       return;
     }
+
+    if (isAnyOpenSpaceVisible) {
+      const openSpaceLayerIds = getOpenSpaceInteractiveLayerIds().filter(
+        (id) => map.getLayer(id)
+      );
+      let openSpaceFeature = features.find(
+        (f) => f.layer?.id && isOpenSpaceLayerId(f.layer.id)
+      );
+
+      if (!openSpaceFeature && openSpaceLayerIds.length > 0) {
+        try {
+          const queried = map.queryRenderedFeatures(event.point, {
+            layers: openSpaceLayerIds,
+          });
+          openSpaceFeature =
+            queried.find((f) => f.layer.id.endsWith("-layer")) || queried[0];
+        } catch (err) {
+          openSpaceFeature = null;
+        }
+      }
+
+      if (openSpaceFeature) {
+        setHoveredTrail({ isOpenSpace: true });
+        setOpenSpaceHoverInfo({
+          point: event.lngLat,
+          feature: openSpaceFeature,
+        });
+        return;
+      }
+    }
+
+    setOpenSpaceHoverInfo(null);
 
     // EJ: raster layer - must query server (no vector data on client)
     if (showEnvironmentalJustice) {
@@ -489,6 +592,44 @@ const ProjectTrailsProfile = ({
     [regNames, majorTrailsData, allTrailsData]
   );
 
+  const projectOpenSpaceTownIds = useMemo(() => {
+    const idSet = new Set();
+
+    if (detailTrail) {
+      const metrics = allTrailMetrics[detailTrail.name] || {};
+      (metrics.municipalityIds || []).forEach((id) => idSet.add(String(id)));
+    } else {
+      selectedMajorTrails.forEach((name) => {
+        (allTrailMetrics[name]?.municipalityIds || []).forEach((id) =>
+          idSet.add(String(id))
+        );
+      });
+      selectedRegNamesArray.forEach((name) => {
+        (allTrailMetrics[name]?.municipalityIds || []).forEach((id) =>
+          idSet.add(String(id))
+        );
+      });
+    }
+
+    if (idSet.size === 0) return null;
+
+    return Array.from(idSet)
+      .sort((a, b) => Number(a) - Number(b))
+      .join(",");
+  }, [
+    detailTrail,
+    allTrailMetrics,
+    selectedMajorTrails,
+    selectedRegNamesArray,
+  ]);
+
+  const detailOpenSpaceTownIds = useMemo(() => {
+    if (!detailTrail) return null;
+    const metrics = allTrailMetrics[detailTrail.name] || {};
+    const ids = metrics.municipalityIds || [];
+    return ids.length ? ids.join(",") : null;
+  }, [detailTrail, allTrailMetrics]);
+
   // Get all layer IDs for trails reg name sync (always include trail layers for click detection)
   const getTrailLayerIds = () => {
     const layerIds = [];
@@ -501,8 +642,12 @@ const ProjectTrailsProfile = ({
     }
     // Add OpenSpace layers if OpenSpace is shown
     if (showOpenSpace) {
-      layerIds.push("openspace-layer-regional");
-      layerIds.push("openspace-outline-regional");
+      layerIds.push("openspace-regional-layer");
+      layerIds.push("openspace-regional-outline");
+    }
+    if (showProjectOpenSpace) {
+      layerIds.push("project-openspace-layer");
+      layerIds.push("project-openspace-outline");
     }
     // Add Environmental Justice layer if shown
     if (showEnvironmentalJustice) {
@@ -611,7 +756,7 @@ const ProjectTrailsProfile = ({
         map.off('zoomend', ensureTrailsOnTop);
       }
     };
-  }, [mapRef, selectedRegNames, selectedMajorTrails, showOpenSpace, showEnvironmentalJustice]);
+  }, [mapRef, selectedRegNames, selectedMajorTrails, showOpenSpace, showProjectOpenSpace, showEnvironmentalJustice]);
 
   // Ensure baseLayer and MAPBOX_TOKEN exist before rendering
   if (!baseLayer || !baseLayer.url || !MAPBOX_TOKEN) {
@@ -638,6 +783,7 @@ const ProjectTrailsProfile = ({
             ejHoverTimeoutRef.current = null;
           }
           setHoveredTrail(null);
+          setOpenSpaceHoverInfo(null);
         }}
         mapboxAccessToken={MAPBOX_TOKEN}
         mapStyle={baseLayer.url}
@@ -670,6 +816,33 @@ const ProjectTrailsProfile = ({
             showMunicipalityProfileMap={false}
             showProjectTrailsProfile={true}
             mapRef={mapRef}
+            townId={projectOpenSpaceTownIds}
+            idPrefix="openspace-regional"
+            beforeId={
+              selectedRegNames.size > 0
+                ? "other-regional-trails-layer"
+                : selectedMajorTrails.length > 0
+                  ? "major-trails-layer"
+                  : undefined
+            }
+          />
+        )}
+
+        {showProjectOpenSpace && detailOpenSpaceTownIds && (
+          <OpenSpaceLayer
+            showOpenSpace={showProjectOpenSpace}
+            showMunicipalityProfileMap={false}
+            showProjectTrailsProfile={true}
+            mapRef={mapRef}
+            townId={detailOpenSpaceTownIds}
+            idPrefix="project-openspace"
+            beforeId={
+              selectedRegNames.size > 0
+                ? "other-regional-trails-layer"
+                : selectedMajorTrails.length > 0
+                  ? "major-trails-layer"
+                  : undefined
+            }
           />
         )}
 
@@ -708,7 +881,7 @@ const ProjectTrailsProfile = ({
           mapRef={mapRef}
           useColorCoding={false}
           onRegNamesChange={setRegNames}
-          selectedRegNames={Array.from(selectedRegNames)}
+          selectedRegNames={selectedRegNamesArray}
           onTrailsDataChange={setAllTrailsData}
           hoveredTrail={hoveredTrail}
           clickedTrail={regularTrailClickInfo ? {
@@ -777,19 +950,23 @@ const ProjectTrailsProfile = ({
           </Popup>
         )}
 
-        {/* OpenSpace Click Popup */}
-        {showOpenSpace && openSpaceClickInfo?.point && openSpaceClickInfo?.feature && (
-          <Popup
-            longitude={openSpaceClickInfo.point.lng}
-            latitude={openSpaceClickInfo.point.lat}
-            closeButton={true}
-            onClose={() => setOpenSpaceClickInfo(null)}
-            anchor="top"
-            offset={12}
-          >
-            <OpenSpacePopupContent properties={openSpaceClickInfo.feature.properties} />
-          </Popup>
-        )}
+        {/* OpenSpace Hover Tooltip (hover only — no click popup) */}
+        {isAnyOpenSpaceVisible &&
+          openSpaceHoverInfo?.point &&
+          openSpaceHoverInfo?.feature && (
+            <Popup
+              longitude={openSpaceHoverInfo.point.lng}
+              latitude={openSpaceHoverInfo.point.lat}
+              closeButton={false}
+              closeOnMove={true}
+              anchor="top"
+              offset={12}
+            >
+              <OpenSpacePopupContent
+                properties={openSpaceHoverInfo.feature.properties}
+              />
+            </Popup>
+          )}
 
         {/* Map controls */}
         <NavigationControl position="bottom-right" />
