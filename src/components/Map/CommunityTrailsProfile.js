@@ -80,6 +80,7 @@ const CommunityTrailsProfile = ({
   const [isQueryingTrails, setIsQueryingTrails] = useState(false);
   const lastQueriedMunicipality = useRef(null);
   const prevSelectedMunicipalityRef = useRef(null);
+  const lastOpenSpaceMuniKeyRef = useRef(null);
 
   const COMMUNITY_PROFILE_DEFAULT_VIEWPORT = {
     latitude: 42.3772,
@@ -203,11 +204,21 @@ const CommunityTrailsProfile = ({
     }
   };
 
-  // Query trails when municipality is selected
+  // Query trails when municipality is selected.
+  // Only clear Overview open-space map toggle when the municipality actually changes.
   useEffect(() => {
     setOpenSpaceHoverInfo(null);
     setOpenSpaceClickInfo(null);
-    setShowMuniOpenSpace(false);
+
+    const nextKey =
+      selectedMunicipality?.name ??
+      selectedMunicipality?.properties?.town_id ??
+      null;
+
+    if (lastOpenSpaceMuniKeyRef.current !== nextKey) {
+      setShowMuniOpenSpace(false);
+      lastOpenSpaceMuniKeyRef.current = nextKey;
+    }
 
     if (selectedMunicipality) {
       handleQueryMunicipalityTrails(selectedMunicipality);
