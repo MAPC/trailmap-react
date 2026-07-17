@@ -179,7 +179,7 @@ const buildTrackedMunicipalitiesTooltip = (missingMunicipalities) => (
 );
 
 const existingTrailsTooltip = (
-  <Tooltip id="dashboard-existing-trails-tooltip" className="Dashboard__summaryTooltip">
+  <Tooltip id="dashboard-existing-trails-tooltip" className="Dashboard__summaryTooltip Dashboard__summaryTooltip--compact">
     <p className="Dashboard__summaryTooltipText">
       Total existing trail mileage aggregated across shared-use paths, footways, and bike
       facilities.
@@ -188,16 +188,16 @@ const existingTrailsTooltip = (
 );
 
 const plannedTrailsTooltip = (
-  <Tooltip id="dashboard-planned-trails-tooltip" className="Dashboard__summaryTooltip">
+  <Tooltip id="dashboard-planned-trails-tooltip" className="Dashboard__summaryTooltip Dashboard__summaryTooltip--compact">
     <p className="Dashboard__summaryTooltipText">
-      Total planned trail mileage for protected bike lanes in design, construction, or
-      envisioned status.
+      Total planned trail mileage aggregated across shared-use paths, footways, and bike
+      lanes.
     </p>
   </Tooltip>
 );
 
 const proposedTrailsTooltip = (
-  <Tooltip id="dashboard-proposed-trails-tooltip" className="Dashboard__summaryTooltip">
+  <Tooltip id="dashboard-proposed-trails-tooltip" className="Dashboard__summaryTooltip Dashboard__summaryTooltip--compact">
     <p className="Dashboard__summaryTooltipText">
       Total proposed trail mileage aggregated across shared-use paths, footways, and bike
       lanes.
@@ -394,35 +394,42 @@ const TypeBreakdown = ({ items }) => {
               >
                 <div
                   className="Dashboard__typeBarSegment Dashboard__typeBarSegment--existing"
-                  style={{
-                    width: `${share * (existingShare / 100)}%`,
-                    backgroundColor: item.color,
-                  }}
+                  style={{ width: `${share * (existingShare / 100)}%` }}
                   title={`Existing: ${formatMiles(item.existing)} mi`}
                 />
                 <div
                   className="Dashboard__typeBarSegment Dashboard__typeBarSegment--planned"
-                  style={{
-                    width: `${share * (plannedShare / 100)}%`,
-                    backgroundColor: item.color,
-                    opacity: 0.65,
-                  }}
+                  style={{ width: `${share * (plannedShare / 100)}%` }}
                   title={`Planned: ${formatMiles(item.planned)} mi`}
                 />
                 <div
                   className="Dashboard__typeBarSegment Dashboard__typeBarSegment--proposed"
-                  style={{
-                    width: `${share * (proposedShare / 100)}%`,
-                    backgroundColor: item.color,
-                    opacity: 0.35,
-                  }}
+                  style={{ width: `${share * (proposedShare / 100)}%` }}
                   title={`Proposed: ${formatMiles(item.proposed)} mi`}
                 />
               </div>
-              <div className="Dashboard__typeMeta">
-                <span>{formatMiles(item.existing)} mi existing</span>
-                <span>{formatMiles(item.planned)} mi planned</span>
-                <span>{formatMiles(item.proposed)} mi proposed</span>
+              <div className="Dashboard__typeMeta" role="list">
+                <span className="Dashboard__typeMetaItem" role="listitem">
+                  <span
+                    className="Dashboard__typeMetaSwatch Dashboard__typeMetaSwatch--existing"
+                    aria-hidden="true"
+                  />
+                  {formatMiles(item.existing)} mi existing
+                </span>
+                <span className="Dashboard__typeMetaItem" role="listitem">
+                  <span
+                    className="Dashboard__typeMetaSwatch Dashboard__typeMetaSwatch--planned"
+                    aria-hidden="true"
+                  />
+                  {formatMiles(item.planned)} mi planned
+                </span>
+                <span className="Dashboard__typeMetaItem" role="listitem">
+                  <span
+                    className="Dashboard__typeMetaSwatch Dashboard__typeMetaSwatch--proposed"
+                    aria-hidden="true"
+                  />
+                  {formatMiles(item.proposed)} mi proposed
+                </span>
               </div>
             </div>
           );

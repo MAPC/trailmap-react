@@ -3,6 +3,12 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const DotEnv = require('dotenv-webpack');
 
+// Hardcode fallback: dotenv-webpack only injects env into the client bundle,
+// so process.env.REACT_APP_BACKEND_URL is often undefined here.
+const BACKEND_URL =
+  process.env.REACT_APP_BACKEND_URL ||
+  'https://trailmap-backend-d66ee5db7604.herokuapp.com';
+
 module.exports = {
   mode: process.env.NODE_ENV || 'development' || 'production',
   entry: './src/index.js',
@@ -79,9 +85,10 @@ module.exports = {
     open: false,
     proxy: [
       {
-        context: ['/get-open-space'],
-        target: 'http://localhost:3001',
+        context: ['/api'],
+        target: BACKEND_URL,
         changeOrigin: true,
+        secure: true,
       },
     ],
     client: {
@@ -91,13 +98,5 @@ module.exports = {
         runtimeErrors: true,
       },
     },
-    proxy: [
-      {
-        context: ["/api"],
-        target: "http://localhost:3001",
-        changeOrigin: true,
-        pathRewrite: { "^/api": "" },
-      },
-    ],
   }
 };
