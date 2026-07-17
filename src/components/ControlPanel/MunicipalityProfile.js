@@ -551,14 +551,7 @@ const MunicipalityProfile = ({
   ].filter(Boolean).length;
 
   const densityTooltip = (
-    <Tooltip
-      id="density-overview-tooltip"
-      style={{
-        backgroundColor: "rgba(59, 131, 199, 0.75)",
-        color: "white",
-        borderRadius: "5px",
-      }}
-    >
+    <Tooltip id="density-overview-tooltip" className="MunicipalityProfile__tooltip">
       Trail Density = Existing Trails Length (miles) / Municipality Area (sq miles)
     </Tooltip>
   );
@@ -871,7 +864,7 @@ const MunicipalityProfile = ({
           <OverlayTrigger
             placement="top"
             overlay={
-              <Tooltip id="map-context-layers-tooltip">
+              <Tooltip id="map-context-layers-tooltip" className="MunicipalityProfile__tooltip">
                 Context layers help you understand trails in relation to transit,
                 open space, and environmental justice areas.
               </Tooltip>
@@ -1438,7 +1431,7 @@ const MunicipalityProfile = ({
                       <OverlayTrigger
                         placement="top"
                         overlay={
-                          <Tooltip id="density-modal-tooltip" style={{ backgroundColor: 'rgba(59, 131, 199, 0.75)', color: 'white', borderRadius: '5px' }}>
+                          <Tooltip id="density-modal-tooltip" className="MunicipalityProfile__tooltip">
                             Trail Density = Existing Trails Length (miles) / Municipality Area (sq miles)
                           </Tooltip>
                         }

@@ -247,15 +247,15 @@
     height: 100%;
 
     &--existing {
-      background: $dark-blue;
+      background: #2774bd;
     }
 
     &--planned {
-      background: lighten($dark-blue, 18%);
+      background: #f0ad4e;
     }
 
     &--proposed {
-      background: lighten($dark-blue, 32%);
+      background: #c5c9cc;
     }
   }
 
@@ -268,6 +268,31 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem 1.25rem;
+  }
+
+  &__typeMetaItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  &__typeMetaSwatch {
+    flex-shrink: 0;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 2px;
+
+    &--existing {
+      background: #2774bd;
+    }
+
+    &--planned {
+      background: #f0ad4e;
+    }
+
+    &--proposed {
+      background: #c5c9cc;
+    }
   }
 
   &__insightList {
@@ -639,15 +664,38 @@
     text-align: left;
     padding: 0.65rem 0.75rem;
     background-color: rgba(59, 131, 199, 0.92);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
     overflow: visible;
+    box-shadow: 0 4px 12px rgba(15, 40, 70, 0.18);
   }
 
   .tooltip-arrow::before {
+    border-top-color: rgba(59, 131, 199, 0.92);
+    border-bottom-color: rgba(59, 131, 199, 0.92);
+    border-left-color: rgba(59, 131, 199, 0.92);
     border-right-color: rgba(59, 131, 199, 0.92);
+  }
+
+  &[data-popper-placement^="top"] .tooltip-arrow::before {
+    border-top-color: rgba(59, 131, 199, 0.92);
+  }
+
+  &[data-popper-placement^="bottom"] .tooltip-arrow::before {
+    border-bottom-color: rgba(59, 131, 199, 0.92);
+  }
+
+  &[data-popper-placement^="left"] .tooltip-arrow::before {
+    border-left-color: rgba(59, 131, 199, 0.92);
   }
 
   &[data-popper-placement^="right"] .tooltip-arrow::before {
     border-right-color: rgba(59, 131, 199, 0.92);
+  }
+
+  &.Dashboard__summaryTooltip--compact .tooltip-inner {
+    max-width: 12.5rem;
   }
 }
 

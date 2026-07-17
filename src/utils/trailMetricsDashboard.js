@@ -1,9 +1,14 @@
 import massachusettsData from "../data/massachusetts.json";
 import maMuniKeys from "../data/ma_muni_keys.json";
 
+const BACKEND_URL = (
+  process.env.REACT_APP_BACKEND_URL ||
+  "https://trailmap-backend-d66ee5db7604.herokuapp.com"
+).replace(/\/$/, "");
+
 const TRAIL_METRICS_API_URL =
   process.env.REACT_APP_TRAIL_METRICS_API_URL ||
-  "/api/trail-metrics?token=trailmap";
+  `${BACKEND_URL}/api/trail-metrics?token=trailmap`;
 
 const SPECIAL_MUNI_NAMES = {
   "-1": "Outside municipalities",

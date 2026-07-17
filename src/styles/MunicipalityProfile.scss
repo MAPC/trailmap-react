@@ -1506,40 +1506,43 @@
   }
 }
 
-// Custom tooltip styles to match website theme
-.tooltip {
+// Scoped so dashboard / other tooltips keep their own styles
+.tooltip.MunicipalityProfile__tooltip {
   &.show {
     opacity: 1;
   }
-  
+
   .tooltip-inner {
-    background-color: rgba(59, 131, 199, 0.75) !important;
-    color: white !important;
-    font-size: 0.875rem;
-    padding: 8px 12px;
-    border-radius: 5px;
-    max-width: 300px;
-    border: none !important;
+    background-color: rgba(59, 131, 199, 0.92);
+    color: #fff;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    max-width: 12.5rem;
+    text-align: left;
+    border: none;
+    box-shadow: 0 4px 12px rgba(15, 40, 70, 0.18);
   }
-  
+
   .tooltip-arrow::before {
-    border-top-color: rgba(59, 131, 199, 0.75) !important;
+    border-top-color: rgba(59, 131, 199, 0.92);
   }
-  
+
   &[data-popper-placement^="top"] .tooltip-arrow::before {
-    border-top-color: rgba(59, 131, 199, 0.75) !important;
+    border-top-color: rgba(59, 131, 199, 0.92);
   }
-  
+
   &[data-popper-placement^="bottom"] .tooltip-arrow::before {
-    border-bottom-color: rgba(59, 131, 199, 0.75) !important;
+    border-bottom-color: rgba(59, 131, 199, 0.92);
   }
-  
+
   &[data-popper-placement^="left"] .tooltip-arrow::before {
-    border-left-color: rgba(59, 131, 199, 0.75) !important;
+    border-left-color: rgba(59, 131, 199, 0.92);
   }
-  
+
   &[data-popper-placement^="right"] .tooltip-arrow::before {
-    border-right-color: rgba(59, 131, 199, 0.75) !important;
+    border-right-color: rgba(59, 131, 199, 0.92);
   }
 }
 
