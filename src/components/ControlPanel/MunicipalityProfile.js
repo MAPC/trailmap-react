@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
@@ -8,10 +8,15 @@ import ButtonGroup from "react-bootstrap/ButtonGroup";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Tooltip from "react-bootstrap/Tooltip";
 import * as turf from '@turf/turf';
-import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
 import { useNavigate, useLocation } from "react-router-dom";
 import TrailsInventoryModal from "../Modals/TrailsInventoryModal";
+import {
+  geojsonTrailLayers,
+  getTrailStatus,
+  trailFacilityTypePairs,
+  TRAIL_STATUS,
+} from "../Map/constants/geojsonTrailLayers";
 
 const Skeleton = ({ className = "", style = {} }) => (
   <span
@@ -44,7 +49,6 @@ const MunicipalityProfile = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { existingTrails, proposedTrails } = useContext(LayerContext);
   const [municipalities, setMunicipalities] = useState([]);
   const [trailStats, setTrailStats] = useState(null);
   const [selectedTrailIndex, setSelectedTrailIndex] = useState(null);
@@ -186,6 +190,7 @@ const MunicipalityProfile = ({
         totalLength: 0,
         existingLength: 0,
         plannedLength: 0,
+        proposedLength: 0,
         byType: {},
         completionRates: {},
         density: 0,
@@ -199,6 +204,7 @@ const MunicipalityProfile = ({
       totalLength: 0,
       existingLength: 0,
       plannedLength: 0,
+      proposedLength: 0,
       byType: {},
       completionRates: {},
       density: 0,
@@ -225,80 +231,98 @@ const MunicipalityProfile = ({
       }
     }
 
-    // Initialize counts for all trail types
-    [...existingTrails, ...proposedTrails].forEach(trailType => {
-     
-      stats.byType[trailType.label] = {
+    // Initialize counts for all MapServer trail layers
+    geojsonTrailLayers.forEach((layer) => {
+      stats.byType[layer.name] = {
         count: 0,
         length: 0,
-        color: trailType.paint['line-color']
+        color: layer.color,
+        status: layer.status,
+        layerId: layer.id,
       };
     });
 
-    // Count trails by type
-    let existingTrailsLength = 0; // Track length of existing trails only for density calculation
-    
-    municipalityTrails.forEach(trail => {
-      const layerName = trail.layerName || 'Unknown';
-      
-      // Get length from various possible attribute names (in feet) and convert to number
-      // Use the same logic as Identify component
-      const rawLengthFeet = trail.attributes?.['Facility Length in Feet'] ?? trail.attributes?.length_ft;
-      const lengthValue = 
-        (rawLengthFeet !== undefined && rawLengthFeet !== null && rawLengthFeet !== "Null" && rawLengthFeet !== " ")
+    let existingTrailsLength = 0;
+    let plannedTrailsLength = 0;
+    let proposedTrailsLength = 0;
+
+    municipalityTrails.forEach((trail) => {
+      const layerName = trail.layerName || "Unknown";
+      const status = getTrailStatus(trail) || TRAIL_STATUS.EXISTING;
+
+      const rawLengthFeet =
+        trail.attributes?.["Facility Length in Feet"] ??
+        trail.attributes?.length_ft;
+      const lengthValue =
+        rawLengthFeet !== undefined &&
+        rawLengthFeet !== null &&
+        rawLengthFeet !== "Null" &&
+        rawLengthFeet !== " "
           ? rawLengthFeet
           : trail.attributes?.Shape_Length || 0;
-      
-      // Ensure it's a number, not a string
+
       const lengthInFeet = Number(lengthValue) || 0;
-      
-      
+
       if (stats.byType[layerName]) {
         stats.byType[layerName].count += 1;
         stats.byType[layerName].length += lengthInFeet;
+      } else {
+        stats.byType[layerName] = {
+          count: 1,
+          length: lengthInFeet,
+          color: trail.color || "#888",
+          status,
+          layerId: trail.layerId,
+        };
       }
-      
+
       stats.totalLength += lengthInFeet;
-      
-      // Track existing trails length separately (exclude "Planned" trails)
-      if (!layerName.startsWith('Planned')) {
+
+      if (status === TRAIL_STATUS.EXISTING) {
         existingTrailsLength += lengthInFeet;
+      } else if (status === TRAIL_STATUS.PLANNED) {
+        plannedTrailsLength += lengthInFeet;
+      } else {
+        proposedTrailsLength += lengthInFeet;
       }
     });
 
     stats.existingLength = existingTrailsLength;
-    stats.plannedLength = stats.totalLength - existingTrailsLength;
+    stats.plannedLength = plannedTrailsLength;
+    stats.proposedLength = proposedTrailsLength;
 
-    // Calculate trail density (miles per square mile) - only for existing trails
+    // Trail density uses existing only (includes Paved/Natural Surface Footways)
     if (stats.area > 0) {
-      const areaInSqMiles = stats.area / 27878400; // Convert sq feet to sq miles
-      const existingTrailsLengthInMiles = existingTrailsLength / 5280; // Convert feet to miles
-      stats.density = areaInSqMiles > 0 ? parseFloat((existingTrailsLengthInMiles / areaInSqMiles).toFixed(2)) : 0;
+      const areaInSqMiles = stats.area / 27878400;
+      const existingTrailsLengthInMiles = existingTrailsLength / 5280;
+      stats.density =
+        areaInSqMiles > 0
+          ? parseFloat((existingTrailsLengthInMiles / areaInSqMiles).toFixed(2))
+          : 0;
     }
 
-    // Calculate completion rates for trail type pairs
-    // Map planned types to their existing counterparts
-    const typeMapping = {
-      'Planned Protected Bike Lanes': 'Protected Bike Lanes',
-      'Planned Bike Lanes': 'Bike Lanes',
-      'Planned Paved Foot Path': 'Paved Foot Path',
-      'Planned Natural Surface Path': 'Natural Surface Path',
-      'Planned Paved Shared Use': 'Paved Shared Use',
-      'Planned Unimproved Shared Use': 'Unimproved Shared Use'
-    };
+    // Completion rates: existing / (existing + planned + proposed) per facility type
+    trailFacilityTypePairs.forEach(({ existingId, otherIds, label }) => {
+      const existingLayer = geojsonTrailLayers.find((l) => l.id === existingId);
+      const existingLength = existingLayer
+        ? stats.byType[existingLayer.name]?.length || 0
+        : 0;
 
-    Object.entries(typeMapping).forEach(([plannedType, existingType]) => {
-      const existingLength = stats.byType[existingType]?.length || 0;
-      const plannedLength = stats.byType[plannedType]?.length || 0;
-      const totalPlanned = existingLength + plannedLength;
-      
-      if (totalPlanned > 0) {
-        const completionRate = (existingLength / totalPlanned) * 100;
-        stats.completionRates[existingType] = {
+      let otherLength = 0;
+      otherIds.forEach((id) => {
+        const otherLayer = geojsonTrailLayers.find((l) => l.id === id);
+        if (otherLayer) {
+          otherLength += stats.byType[otherLayer.name]?.length || 0;
+        }
+      });
+
+      const total = existingLength + otherLength;
+      if (total > 0) {
+        stats.completionRates[label] = {
           existing: existingLength,
-          planned: plannedLength,
-          total: totalPlanned,
-          rate: completionRate
+          planned: otherLength,
+          total,
+          rate: (existingLength / total) * 100,
         };
       }
     });
@@ -558,9 +582,14 @@ const MunicipalityProfile = ({
   const renderOverviewTrailStats = (stats) => {
     const existingLength = Number(stats.existingLength) || 0;
     const plannedLength = Number(stats.plannedLength) || 0;
-    const totalLength = existingLength + plannedLength;
-    const existingShare = totalLength > 0 ? (existingLength / totalLength) * 100 : 0;
-    const plannedShare = totalLength > 0 ? (plannedLength / totalLength) * 100 : 0;
+    const proposedLength = Number(stats.proposedLength) || 0;
+    const totalLength = existingLength + plannedLength + proposedLength;
+    const existingShare =
+      totalLength > 0 ? (existingLength / totalLength) * 100 : 0;
+    const plannedShare =
+      totalLength > 0 ? (plannedLength / totalLength) * 100 : 0;
+    const proposedShare =
+      totalLength > 0 ? (proposedLength / totalLength) * 100 : 0;
 
     return (
       <div className="MunicipalityProfile__summaryCard">
@@ -574,14 +603,14 @@ const MunicipalityProfile = ({
                 {formatLength(stats.totalLength)} mi
               </span>
               <span className="MunicipalityProfile__trailOverviewHint">
-                existing + planned
+                existing + planned + proposed
               </span>
             </div>
 
             <div
               className="MunicipalityProfile__trailBar"
               role="img"
-              aria-label={`Existing trails ${formatLength(existingLength)} miles, planned trails ${formatLength(plannedLength)} miles`}
+              aria-label={`Existing trails ${formatLength(existingLength)} miles, planned trails ${formatLength(plannedLength)} miles, proposed trails ${formatLength(proposedLength)} miles`}
             >
               {totalLength > 0 ? (
                 <>
@@ -593,13 +622,17 @@ const MunicipalityProfile = ({
                     className="MunicipalityProfile__trailBarSegment MunicipalityProfile__trailBarSegment--planned"
                     style={{ width: `${plannedShare}%` }}
                   />
+                  <div
+                    className="MunicipalityProfile__trailBarSegment MunicipalityProfile__trailBarSegment--proposed"
+                    style={{ width: `${proposedShare}%` }}
+                  />
                 </>
               ) : (
                 <div className="MunicipalityProfile__trailBarSegment MunicipalityProfile__trailBarSegment--empty" />
               )}
             </div>
 
-            <div className="MunicipalityProfile__trailBreakdown">
+            <div className="MunicipalityProfile__trailBreakdown MunicipalityProfile__trailBreakdown--three">
               <div className="MunicipalityProfile__trailBreakdownItem">
                 <span
                   className="MunicipalityProfile__trailBreakdownSwatch MunicipalityProfile__trailBreakdownSwatch--existing"
@@ -621,6 +654,18 @@ const MunicipalityProfile = ({
                   <span className="MunicipalityProfile__trailBreakdownLabel">Planned</span>
                   <span className="MunicipalityProfile__trailBreakdownValue">
                     {formatLength(plannedLength)} mi
+                  </span>
+                </div>
+              </div>
+              <div className="MunicipalityProfile__trailBreakdownItem">
+                <span
+                  className="MunicipalityProfile__trailBreakdownSwatch MunicipalityProfile__trailBreakdownSwatch--proposed"
+                  aria-hidden="true"
+                />
+                <div className="MunicipalityProfile__trailBreakdownCopy">
+                  <span className="MunicipalityProfile__trailBreakdownLabel">Proposed</span>
+                  <span className="MunicipalityProfile__trailBreakdownValue">
+                    {formatLength(proposedLength)} mi
                   </span>
                 </div>
               </div>
@@ -810,21 +855,68 @@ const MunicipalityProfile = ({
     });
   };
 
+  const getTrailTypeStatusRows = (stats) => {
+    if (!stats?.byType) return [];
+
+    return trailFacilityTypePairs
+      .map(({ existingId, otherIds, label }) => {
+        const layerIds = [existingId, ...otherIds];
+        const lengths = {
+          [TRAIL_STATUS.EXISTING]: 0,
+          [TRAIL_STATUS.PLANNED]: 0,
+          [TRAIL_STATUS.PROPOSED]: 0,
+        };
+        let color = "#888";
+
+        layerIds.forEach((layerId) => {
+          const layer = geojsonTrailLayers.find((l) => l.id === layerId);
+          if (!layer) return;
+
+          const length = stats.byType[layer.name]?.length || 0;
+          lengths[layer.status] += length;
+          if (layer.status === TRAIL_STATUS.EXISTING || color === "#888") {
+            color = layer.color;
+          }
+        });
+
+        const total =
+          lengths[TRAIL_STATUS.EXISTING] +
+          lengths[TRAIL_STATUS.PLANNED] +
+          lengths[TRAIL_STATUS.PROPOSED];
+
+        return {
+          label,
+          color,
+          total,
+          existing: lengths[TRAIL_STATUS.EXISTING],
+          planned: lengths[TRAIL_STATUS.PLANNED],
+          proposed: lengths[TRAIL_STATUS.PROPOSED],
+        };
+      })
+      .filter((row) => row.total > 0)
+      .sort((a, b) => b.total - a.total);
+  };
+
   const runTrailGeoJSONDownloads = (trails, option = 'both', filenameSuffix = '') => {
     if (!selectedMunicipality || !trails || trails.length === 0) {
       return;
     }
 
-    const existingTrails = trails.filter(trail =>
-      !trail.layerName || !trail.layerName.startsWith('Planned')
+    const existingOnly = trails.filter(
+      (trail) => getTrailStatus(trail) === TRAIL_STATUS.EXISTING
     );
-    const plannedTrails = trails.filter(trail =>
-      trail.layerName && trail.layerName.startsWith('Planned')
+    const plannedOnly = trails.filter(
+      (trail) => getTrailStatus(trail) === TRAIL_STATUS.PLANNED
     );
+    const proposedOnly = trails.filter(
+      (trail) => getTrailStatus(trail) === TRAIL_STATUS.PROPOSED
+    );
+    // "planned" download option historically meant all non-existing; keep both planned + proposed
+    const nonExisting = [...plannedOnly, ...proposedOnly];
 
     const existingGeoJSON = {
       type: "FeatureCollection",
-      features: existingTrails.map(trail => trail.feature || {
+      features: existingOnly.map(trail => trail.feature || {
         type: "Feature",
         geometry: trail.geometry,
         properties: trail.attributes || {}
@@ -833,7 +925,7 @@ const MunicipalityProfile = ({
 
     const plannedGeoJSON = {
       type: "FeatureCollection",
-      features: plannedTrails.map(trail => trail.feature || {
+      features: nonExisting.map(trail => trail.feature || {
         type: "Feature",
         geometry: trail.geometry,
         properties: trail.attributes || {}
@@ -882,7 +974,7 @@ const MunicipalityProfile = ({
         ? 'Trail data downloaded successfully!'
         : option === 'existing'
         ? 'Existing trails downloaded successfully!'
-        : 'Planned trails downloaded successfully!';
+        : 'Planned/Proposed trails downloaded successfully!';
 
       toast.innerHTML = `
         <div style="
@@ -1130,9 +1222,9 @@ const MunicipalityProfile = ({
                             onChange={(e) => setDownloadOption(e.target.value)}
                             className="mb-2"
                           >
-                            <option value="both">Both (Existing + Planned)</option>
+                            <option value="both">Both (Existing + Planned/Proposed)</option>
                             <option value="existing">Existing Trails Only</option>
-                            <option value="planned">Planned Trails Only</option>
+                            <option value="planned">Planned/Proposed Trails Only</option>
                           </Form.Select>
                           <Button
                             variant="outline-success"
@@ -1146,7 +1238,7 @@ const MunicipalityProfile = ({
                               ? "Trail Data"
                               : downloadOption === "existing"
                                 ? "Existing Trails"
-                                : "Planned Trails"}{" "}
+                                : "Planned/Proposed Trails"}{" "}
                             (GeoJSON)
                           </Button>
                         </div>
@@ -1195,7 +1287,7 @@ const MunicipalityProfile = ({
             <div className="alert alert-info mb-4">
               <div className="d-flex align-items-start">
                 <div className="small">
-                  <strong>Completion Rate</strong> shows the percentage of existing trails compared to the total planned network (existing + planned).
+                  <strong>Completion Rate</strong> shows the percentage of existing trails compared to the total network (existing + planned + proposed).
                   Higher percentages indicate more trail infrastructure is already built.
                 </div>
               </div>
@@ -1208,7 +1300,7 @@ const MunicipalityProfile = ({
               <div className="row g-3">
                 <div className="col-md-6">
                   <div className="text-center">
-                    <div className="text-muted small">Total Length (existing + planned)</div>
+                    <div className="text-muted small">Total Length (existing + planned + proposed)</div>
                     <div className="fw-bold fs-5">{formatLength(trailStats.totalLength)} mi</div>
                   </div>
                 </div>
@@ -1247,39 +1339,41 @@ const MunicipalityProfile = ({
               <h6 className="fw-bold mb-3 d-flex align-items-center">
                 All Trail Types in {selectedMunicipality && capitalizeWords(selectedMunicipality.name)}
               </h6>
-              <div className="row g-2">
-                {Object.entries(trailStats.byType)
-                  .filter(([_, data]) => data.length > 0)
-                  .sort(([, a], [, b]) => b.length - a.length)
-                  .map(([type, data]) => (
-                    <div key={type} className="col-12 col-md-6">
-                      <div className="card border shadow-sm h-100">
-                        <div className="card-body p-3">
-                          <div className="d-flex align-items-start mb-2">
-                            <div 
-                              style={{
-                                width: '4px',
-                                height: '100%',
-                                backgroundColor: data.color,
-                                marginRight: '12px',
-                                borderRadius: '2px',
-                                minHeight: '40px'
-                              }}
-                            />
-                            <div className="flex-grow-1">
-                              <h6 className="mb-1 fw-semibold" style={{ fontSize: '0.9rem' }}>
-                                {type}
-                              </h6>
-                              <div className="mt-1">
-                                <div className="text-muted small" style={{ fontSize: '0.7rem' }}>LENGTH</div>
-                                <div className="fw-bold">{formatLength(data.length)} mi</div>
-                              </div>
+              <div className="row g-3">
+                {getTrailTypeStatusRows(trailStats).map((row) => (
+                  <div key={row.label} className="col-12 col-md-6">
+                    <div className="card border shadow-sm h-100">
+                      <div className="card-body p-3">
+                        <div className="d-flex align-items-start">
+                          <div
+                            style={{
+                              width: "4px",
+                              backgroundColor: row.color,
+                              marginRight: "12px",
+                              borderRadius: "2px",
+                              minHeight: "48px",
+                              alignSelf: "stretch",
+                            }}
+                          />
+                          <div className="flex-grow-1">
+                            <h6
+                              className="mb-2 fw-semibold"
+                              style={{ fontSize: "0.9rem", lineHeight: 1.3 }}
+                            >
+                              {row.label}
+                            </h6>
+                            <div className="text-muted small" style={{ fontSize: "0.7rem" }}>
+                              TOTAL LENGTH
+                            </div>
+                            <div className="fw-bold" style={{ fontSize: "1.1rem" }}>
+                              {formatLength(row.total)} mi
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -1305,7 +1399,7 @@ const MunicipalityProfile = ({
                           <div className="flex-grow-1 pe-3" style={{ minWidth: 0 }}>
                             <div className="d-flex align-items-center mb-2">
                               <h6 className="mb-0 fw-semibold text-truncate" style={{ fontSize: '0.85rem' }}>
-                                {type}
+                                {type.replace(/^Existing\s+/, "")}
                               </h6>
                             </div>
                             <div className="progress mb-2" style={{ height: '8px', borderRadius: '4px' }}>
@@ -1330,7 +1424,7 @@ const MunicipalityProfile = ({
                                 <strong>Existing:</strong> {formatLength(data.existing)} mi
                               </span>
                               <span className="text-warning me-3">
-                                <strong>Planned:</strong> {formatLength(data.planned)} mi
+                                <strong>Planned/Proposed:</strong> {formatLength(data.planned)} mi
                               </span>
                               <span className="text-muted">
                                 <strong>Total:</strong> {formatLength(data.total)} mi
