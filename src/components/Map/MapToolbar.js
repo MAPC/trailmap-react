@@ -18,12 +18,16 @@ const MapToolbar = ({
   const {
     baseLayer,
     showMunicipalities,
+    showMapcBoundary,
     showMaHouseDistricts,
     showMaSenateDistricts,
   } = useContext(LayerContext);
 
   const anyBoundaryActive =
-    showMunicipalities || showMaHouseDistricts || showMaSenateDistricts;
+    showMunicipalities ||
+    showMapcBoundary ||
+    showMaHouseDistricts ||
+    showMaSenateDistricts;
 
   const openBasemapPanel = () => {
     toggleBoundariesPanel(false);
@@ -49,7 +53,7 @@ const MapToolbar = ({
               role="status"
               onClick={onDismissOneLayerNotice}
             >
-              For clarity, only one map (Municipalities, MA Senate, or MA House) is shown at a time
+              For clarity, only one map (Municipalities, MAPC Region, MA Senate, or MA House) is shown at a time
             </div>
           )}
           <MapToolbarButton
