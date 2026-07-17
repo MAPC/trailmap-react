@@ -16,6 +16,7 @@ import ShareModal from "../Modals/ShareModal";
 import { LayerContext } from "../../App";
 import EditModal from "../Modals/EditModal";
 import massachusettsData from "../../data/massachusetts.json";
+import { MAPC_OVERVIEW_VIEWPORT } from "../../utils/mapcBoundary";
 // Commuter rail and bike station data will be fetched when needed
 import SuccessModal from "../Modals/SuccessModal";
 import FailModal from "../Modals/FailModal";
@@ -71,10 +72,7 @@ const Map = () => {
   } = useContext(LayerContext);
 
   const [viewport, setViewport] = useState({
-    latitude: 42.3772,
-    longitude: -71.0244,
-    zoom: 10,
-    transitionDuration: 1000,
+    ...MAPC_OVERVIEW_VIEWPORT,
   });
   const [showBasemapPanel, toggleBasemapPanel] = useState(false);
   const [showBoundariesPanel, toggleBoundariesPanel] = useState(false);

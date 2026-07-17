@@ -16,8 +16,8 @@
   &__notice {
     position: absolute;
     right: calc(100% + 3.5rem);
-    top: calc(50% + 0.4rem);
-    transform: translateY(-50%);
+    top: 0;
+    transform: none;
     width: max-content;
     max-width: 12rem;
     background: rgba(255, 255, 255, 0.97);

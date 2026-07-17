@@ -1,23 +1,37 @@
 import React, { useContext } from "react";
 import { LayerContext } from "../../App";
 
+const turnOffOtherBoundaries = (ctx, keep) => {
+  if (keep !== "municipalities" && ctx.showMunicipalities) ctx.toggleMunicipalities(false);
+  if (keep !== "house" && ctx.showMaHouseDistricts) ctx.toggleMaHouseDistricts(false);
+  if (keep !== "senate" && ctx.showMaSenateDistricts) ctx.toggleMaSenateDistricts(false);
+  if (keep !== "mapc" && ctx.showMapcBoundary) ctx.toggleMapcBoundary(false);
+};
+
 const BOUNDARY_CONFIG = {
   municipalities: {
     label: "Municipalities Map",
     isOn: (ctx) => ctx.showMunicipalities,
     turnOn: (ctx) => {
-      if (ctx.showMaHouseDistricts) ctx.toggleMaHouseDistricts(false);
-      if (ctx.showMaSenateDistricts) ctx.toggleMaSenateDistricts(false);
+      turnOffOtherBoundaries(ctx, "municipalities");
       ctx.toggleMunicipalities(true);
     },
     turnOff: (ctx) => ctx.toggleMunicipalities(false),
+  },
+  mapc: {
+    label: "MAPC Region",
+    isOn: (ctx) => ctx.showMapcBoundary,
+    turnOn: (ctx) => {
+      turnOffOtherBoundaries(ctx, "mapc");
+      ctx.toggleMapcBoundary(true);
+    },
+    turnOff: (ctx) => ctx.toggleMapcBoundary(false),
   },
   house: {
     label: "MA House Districts",
     isOn: (ctx) => ctx.showMaHouseDistricts,
     turnOn: (ctx) => {
-      if (ctx.showMunicipalities) ctx.toggleMunicipalities(false);
-      if (ctx.showMaSenateDistricts) ctx.toggleMaSenateDistricts(false);
+      turnOffOtherBoundaries(ctx, "house");
       ctx.toggleMaHouseDistricts(true);
     },
     turnOff: (ctx) => ctx.toggleMaHouseDistricts(false),
@@ -26,8 +40,7 @@ const BOUNDARY_CONFIG = {
     label: "MA Senate Districts",
     isOn: (ctx) => ctx.showMaSenateDistricts,
     turnOn: (ctx) => {
-      if (ctx.showMaHouseDistricts) ctx.toggleMaHouseDistricts(false);
-      if (ctx.showMunicipalities) ctx.toggleMunicipalities(false);
+      turnOffOtherBoundaries(ctx, "senate");
       ctx.toggleMaSenateDistricts(true);
     },
     turnOff: (ctx) => ctx.toggleMaSenateDistricts(false),

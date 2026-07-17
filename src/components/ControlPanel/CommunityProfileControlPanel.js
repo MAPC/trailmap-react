@@ -17,6 +17,8 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
     setProposedLayers,
     showMunicipalities,
     toggleMunicipalities,
+    showMapcBoundary,
+    toggleMapcBoundary,
     showMaHouseDistricts,
     toggleMaHouseDistricts,
     showMaSenateDistricts,
@@ -65,6 +67,7 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
       if (showMaHouseDistricts) toggleMaHouseDistricts(false);
       if (showMaSenateDistricts) toggleMaSenateDistricts(false);
       if (showMunicipalities) toggleMunicipalities(false);
+      if (showMapcBoundary) toggleMapcBoundary(false);
       setShowMunicipalityProfileMap(true);
       setSelectedMunicipality(null);
       setShowMunicipalityView(true);

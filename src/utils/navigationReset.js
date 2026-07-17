@@ -9,6 +9,7 @@ export const resetSharedNavigationState = ({
   toggleMaHouseDistricts,
   toggleMaSenateDistricts,
   toggleMunicipalities,
+  toggleMapcBoundary,
   setShowCommuterRail,
   setShowStationLabels,
   setShowBlueBikeStations,
@@ -26,6 +27,7 @@ export const resetSharedNavigationState = ({
   showMaHouseDistricts,
   showMaSenateDistricts,
   showMunicipalities,
+  showMapcBoundary,
   showLandlineLayer,
   showLegislativeDistricts,
 }) => {
@@ -42,6 +44,7 @@ export const resetSharedNavigationState = ({
   if (showMaHouseDistricts) toggleMaHouseDistricts(false);
   if (showMaSenateDistricts) toggleMaSenateDistricts(false);
   if (showMunicipalities) toggleMunicipalities(false);
+  if (showMapcBoundary && toggleMapcBoundary) toggleMapcBoundary(false);
 
   setShowCommuterRail(false);
   setShowStationLabels(false);

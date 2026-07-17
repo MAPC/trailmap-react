@@ -1,7 +1,7 @@
 import React from "react";
 import BoundariesPanelButton from "./BoundariesPanelButton";
 
-const BOUNDARY_IDS = ["municipalities", "house", "senate"];
+const BOUNDARY_IDS = ["municipalities", "mapc", "house", "senate"];
 
 const BoundariesPanel = ({ onLayerToggle }) => {
   return (

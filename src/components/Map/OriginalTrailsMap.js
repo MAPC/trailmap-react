@@ -8,6 +8,7 @@ import MapLegend from "./MapLegend";
 import Identify from "./Identify";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
+import { mapcBoundaryData } from "../../utils/mapcBoundary";
 import OriginalTrailsFilterLayers from "./layers/OriginalTrailsFilterLayers";
 import TrailsOverviewHighlightLayer from "./layers/TrailsOverviewHighlightLayer";
 import { getTrailFeatureAtEvent } from "./utils/mapQueryUtils";
@@ -50,6 +51,7 @@ const OriginalTrailsMap = ({
     showMaHouseDistricts,
     showMaSenateDistricts,
     showMunicipalities,
+    showMapcBoundary,
     landlines,
     selectedMunicipality,
     setSelectedMunicipality,
@@ -95,6 +97,7 @@ const OriginalTrailsMap = ({
     if (showMaHouseDistricts) ids.push("ma-house-districts-fill");
     if (showMaSenateDistricts) ids.push("ma-senate-districts-fill");
     if (showMunicipalities) ids.push("municipalities-fill");
+    if (showMapcBoundary) ids.push("mapc-boundary-fill");
     if (activeTrailLayerIds.length > 0) {
       ids.push(...activeTrailLayerIds);
     }
@@ -103,6 +106,7 @@ const OriginalTrailsMap = ({
     showMaHouseDistricts,
     showMaSenateDistricts,
     showMunicipalities,
+    showMapcBoundary,
     activeTrailLayerIds,
   ]);
 
@@ -202,10 +206,10 @@ const OriginalTrailsMap = ({
 
   // Show notice when any one of the exclusive layers turns on
   React.useEffect(() => {
-    if (showMunicipalities || showMaHouseDistricts || showMaSenateDistricts) {
+    if (showMunicipalities || showMapcBoundary || showMaHouseDistricts || showMaSenateDistricts) {
       setShowOneLayerNotice(true);
     }
-  }, [showMunicipalities, showMaHouseDistricts, showMaSenateDistricts]);
+  }, [showMunicipalities, showMapcBoundary, showMaHouseDistricts, showMaSenateDistricts]);
 
   // Auto-hide the one-layer notice after 2 seconds
   React.useEffect(() => {
@@ -412,6 +416,42 @@ const OriginalTrailsMap = ({
     return visibleMunicipalitiesLayers;
   };
 
+  const mapcBoundaryLayers = () => {
+    const layers = [];
+    if (showMapcBoundary) {
+      layers.push(
+        <Layer
+          key="mapc-boundary-fill"
+          id="mapc-boundary-fill"
+          type="fill"
+          source="mapc-boundary"
+          paint={{
+            "fill-color": "transparent",
+            "fill-outline-color": "black",
+          }}
+        />
+      );
+      layers.push(
+        <Layer
+          key="mapc-boundary-hover"
+          id="mapc-boundary-hover"
+          type="fill"
+          source="mapc-boundary"
+          paint={{
+            "fill-color": "rgba(255, 166, 0, 0.25)",
+            "fill-outline-color": "black",
+          }}
+          filter={
+            muniHoverFilterKey && muniHoverFilterValue !== null
+              ? ["==", ["get", muniHoverFilterKey], muniHoverFilterValue]
+              : ["==", ["get", "__none__"], "__no_match__"]
+          }
+        />
+      );
+    }
+    return layers;
+  };
+
   return (
     <>
     <ReactMapGL
@@ -429,9 +469,13 @@ const OriginalTrailsMap = ({
         setViewport(newViewport);
       }}
       onClick={(event) => {
-        // Check if clicking on a municipality when municipalities layer is visible
-        if (showMunicipalities && event.features) {
-          const muniFeature = event.features.find((f) => f.layer && f.layer.id === "municipalities-fill");
+        // Check if clicking on a municipality when municipalities or MAPC layer is visible
+        if ((showMunicipalities || showMapcBoundary) && event.features) {
+          const muniFeature = event.features.find(
+            (f) =>
+              f.layer &&
+              (f.layer.id === "municipalities-fill" || f.layer.id === "mapc-boundary-fill")
+          );
           if (muniFeature) {
             const townName = muniFeature.properties.town || muniFeature.properties.NAME;
             if (townName) {
@@ -575,15 +619,16 @@ const OriginalTrailsMap = ({
           }
         }
 
-        // Handle Municipalities hover
-        if (showMunicipalities) {
-          let muniFeature = features.find((f) => f.layer && f.layer.id === "municipalities-fill");
+        // Handle Municipalities / MAPC Region hover
+        if (showMunicipalities || showMapcBoundary) {
+          const fillLayerId = showMunicipalities ? "municipalities-fill" : "mapc-boundary-fill";
+          let muniFeature = features.find((f) => f.layer && f.layer.id === fillLayerId);
           
           if (!muniFeature && map) {
             const x = event.point.x;
             const y = event.point.y;
             const queried = map.queryRenderedFeatures([[x - 8, y - 8], [x + 8, y + 8]], {
-              layers: ["municipalities-fill"],
+              layers: [fillLayerId],
             });
             if (queried && queried.length > 0) {
               muniFeature = queried[0];
@@ -734,6 +779,14 @@ const OriginalTrailsMap = ({
         {municipalitiesLayers()}
       </Source>
 
+      <Source
+        id="mapc-boundary"
+        type="geojson"
+        data={mapcBoundaryData}
+      >
+        {mapcBoundaryLayers()}
+      </Source>
+
       <MapLegend controlPanelOpen={showControlPanel} />
 
       {showMaHouseDistricts && hoverFeature && hoverPoint && (
@@ -786,7 +839,7 @@ const OriginalTrailsMap = ({
         </Popup>
       )}
       
-      {showMunicipalities && muniHoverFeature && muniHoverPoint && (
+      {(showMunicipalities || showMapcBoundary) && muniHoverFeature && muniHoverPoint && (
         <Popup
           longitude={muniHoverPoint.lng}
           latitude={muniHoverPoint.lat}

@@ -28,6 +28,8 @@ const RegionalTrailsControlPanel = ({
     toggleMaHouseDistricts,
     showMaSenateDistricts,
     toggleMaSenateDistricts,
+    showMapcBoundary,
+    toggleMapcBoundary,
     toggleMunicipalities,
     showProjectTrailsView,
     setShowProjectTrailsView,
@@ -51,6 +53,7 @@ const RegionalTrailsControlPanel = ({
       setProposedLayers([]);
       if (showMaHouseDistricts) toggleMaHouseDistricts(false);
       if (showMaSenateDistricts) toggleMaSenateDistricts(false);
+      if (showMapcBoundary) toggleMapcBoundary(false);
       toggleMunicipalities(true);
       setShowProjectTrailsProfileMap(true);
       setShowProjectTrailsView(true);

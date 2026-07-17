@@ -54,6 +54,7 @@ const App = () => {
   const [showMaHouseDistricts, toggleMaHouseDistricts] = useState(false);
   const [showMaSenateDistricts, toggleMaSenateDistricts] = useState(false);
   const [showMunicipalities, toggleMunicipalities] = useState(false);
+  const [showMapcBoundary, toggleMapcBoundary] = useState(false);
   
   const [selectedMunicipality, setSelectedMunicipality] = useState(null);
   const [municipalityTrails, setMunicipalityTrails] = useState([]);
@@ -182,6 +183,8 @@ const App = () => {
               toggleMaSenateDistricts,
               showMunicipalities,
               toggleMunicipalities,
+              showMapcBoundary,
+              toggleMapcBoundary,
               selectedMunicipality,
               setSelectedMunicipality,
               municipalityTrails,
