@@ -12,6 +12,7 @@ export const calculateTrailMetrics = (trails) => {
       completedLengthMiles: "0.00",
       percentageComplete: "0",
       municipalities: [],
+      municipalityIds: [],
       parks: [],
       lengthByType: [],
       gaps: [],
@@ -34,6 +35,7 @@ export const calculateTrailMetrics = (trails) => {
   const lengthByTypeGapSegments = [];
   const gaps = [];
   const municipalitySet = new Set();
+  const municipalityIdSet = new Set();
 
   trails.forEach((trail) => {
     const props = trail.properties || {};
@@ -76,6 +78,7 @@ export const calculateTrailMetrics = (trails) => {
 
     const muniId = props.muni_id || null;
     if (muniId) {
+      municipalityIdSet.add(String(muniId));
       const muniName = getMunicipalityName(muniId);
       if (muniName) municipalitySet.add(muniName);
     }
@@ -119,6 +122,9 @@ export const calculateTrailMetrics = (trails) => {
     gapLengthMiles: (gapLengthFeet / 5280).toFixed(1),
     percentageComplete,
     municipalities: Array.from(municipalitySet).sort(),
+    municipalityIds: Array.from(municipalityIdSet).sort(
+      (a, b) => Number(a) - Number(b)
+    ),
     parks: [],
     lengthByType: lengthByTypeArray,
     gaps: gaps.map((gap) => ({

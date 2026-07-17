@@ -57,10 +57,35 @@ const App = () => {
   
   const [selectedMunicipality, setSelectedMunicipality] = useState(null);
   const [municipalityTrails, setMunicipalityTrails] = useState([]);
-  const [showMunicipalityView, setShowMunicipalityView] = useState(false);
-  const [showMunicipalityProfileMap, setShowMunicipalityProfileMap] = useState(false);
-  const [showProjectTrailsView, setShowProjectTrailsView] = useState(false);
-  const [showProjectTrailsProfileMap, setShowProjectTrailsProfileMap] = useState(false);
+
+  // Derive profile mode from URL so refresh on /communityTrailsProfile?muni=...
+  // (or /projectTrailsProfile) opens the correct map, not Trails Overview.
+  const isCommunityProfilePath = location.pathname === "/communityTrailsProfile";
+  const isProjectProfilePath = location.pathname === "/projectTrailsProfile";
+
+  const [showMunicipalityView, setShowMunicipalityView] = useState(isCommunityProfilePath);
+  const [showMunicipalityProfileMap, setShowMunicipalityProfileMap] = useState(
+    isCommunityProfilePath
+  );
+  const [showProjectTrailsView, setShowProjectTrailsView] = useState(isProjectProfilePath);
+  const [showProjectTrailsProfileMap, setShowProjectTrailsProfileMap] = useState(
+    isProjectProfilePath
+  );
+
+  // Keep profile flags in sync when the route changes (deep links / refresh)
+  useEffect(() => {
+    if (isCommunityProfilePath) {
+      setShowMunicipalityProfileMap(true);
+      setShowMunicipalityView(true);
+      setShowProjectTrailsProfileMap(false);
+      setShowProjectTrailsView(false);
+    } else if (isProjectProfilePath) {
+      setShowProjectTrailsProfileMap(true);
+      setShowProjectTrailsView(true);
+      setShowMunicipalityProfileMap(false);
+      setShowMunicipalityView(false);
+    }
+  }, [isCommunityProfilePath, isProjectProfilePath]);
   
   // Layer toggle states for municipality profile
   const [showCommuterRail, setShowCommuterRail] = useState(false);
@@ -69,6 +94,8 @@ const App = () => {
   const [showSubwayStations, setShowSubwayStations] = useState(false);
   const [showEnvironmentalJustice, setShowEnvironmentalJustice] = useState(false);
   const [showOpenSpace, setShowOpenSpace] = useState(false);
+  const [showMuniOpenSpace, setShowMuniOpenSpace] = useState(false);
+  const [showProjectOpenSpace, setShowProjectOpenSpace] = useState(false);
   const [showLandlinesFeatureService, setShowLandlinesFeatureService] = useState(false);
   const [showTrailsRegNameSync, setShowTrailsRegNameSync] = useState(false);
   const [showTransitLandStops, setShowTransitLandStops] = useState(false);
@@ -180,6 +207,10 @@ const App = () => {
               setShowEnvironmentalJustice,
               showOpenSpace,
               setShowOpenSpace,
+              showMuniOpenSpace,
+              setShowMuniOpenSpace,
+              showProjectOpenSpace,
+              setShowProjectOpenSpace,
               showLandlinesFeatureService,
               setShowLandlinesFeatureService,
               showTrailsRegNameSync,
