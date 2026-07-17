@@ -629,7 +629,7 @@ const ProjectTrailsProfile = ({
             }`}
             onClick={() => setDetailTab("segments")}
           >
-            Segments
+            Trail Types
             {lengthByType.length > 0 && (
               <span className="ProjectTrailsProfile__tabBadge">
                 {lengthByType.length}
@@ -812,7 +812,7 @@ const ProjectTrailsProfile = ({
                 </div>
               ) : (
                 <p className="ProjectTrailsProfile__empty">
-                  No segment data available.
+                  No trail type data available.
                 </p>
               )}
             </div>

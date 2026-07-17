@@ -9,23 +9,676 @@
   z-index: 2;
 
   &__content {
-    max-width: 48rem;
+    max-width: 72rem;
     margin: 0 auto;
-    padding: 2.5rem 1.5rem;
+    padding: 2rem 1.5rem 3rem;
+  }
+
+  &__header {
+    margin-bottom: 1.5rem;
+  }
+
+  &__headerTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  &__scopeToggle {
+    display: flex;
+    align-items: center;
+    background: #eef1f3;
+    border-radius: 999px;
+    padding: 0.22rem;
+    gap: 0.1rem;
+    flex-shrink: 0;
+
+    &--filter {
+      width: 100%;
+    }
+
+    &--filterCompact {
+      width: fit-content;
+      max-width: 100%;
+    }
+  }
+
+  &__scopeButton {
+    border: none;
+    background: transparent;
+    padding: 0.5rem 0.85rem;
+    font-family: $body-font;
+    font-size: 0.82rem;
+    color: $dark-grey;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+
+    .Dashboard__scopeToggle--filter & {
+      flex: 1;
+      min-width: 0;
+      white-space: normal;
+      text-align: center;
+      line-height: 1.25;
+      padding: 0.48rem 0.7rem;
+    }
+
+    &--active {
+      background: $white;
+      color: $dark-blue;
+      font-weight: 600;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
   }
 
   &__title {
     font-family: $title-font;
-    font-size: 1.75rem;
+    font-size: 2rem;
     color: $dark-blue;
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.5rem;
   }
 
-  &__lead {
+  &__lead,
+  &__sectionLead {
     font-family: $body-font;
     font-size: 1rem;
     color: $dark-grey;
     margin: 0;
     line-height: 1.5;
+  }
+
+  &__status,
+  &__hint,
+  &__sectionLead,
+  &__typeMeta,
+  &__statusLegend {
+    color: $dark-grey;
+    font-size: 0.9rem;
+  }
+
+  &__status {
+    margin: 0;
+  }
+
+  &__error {
+    background: #fdecea;
+    border: 1px solid #f5c2c0;
+    border-radius: 8px;
+    color: #8a1f17;
+    padding: 1rem 1.25rem;
+  }
+
+  &__summaryGrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  &__fullRow {
+    margin-bottom: 1.5rem;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+
+    &--three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    &--two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  &__card {
+    background: #fff;
+    border: 1px solid rgba($dark-blue, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    padding: 1.25rem;
+
+    &--summary {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-height: 7rem;
+    }
+
+    &--table {
+      margin-bottom: 0;
+    }
+
+    &--skeleton {
+      pointer-events: none;
+    }
+  }
+
+  &__skeleton {
+    display: inline-block;
+    border-radius: 4px;
+    background-color: #eef1f3;
+    background-image: linear-gradient(
+      90deg,
+      #eef1f3 0%,
+      #f8fafb 20%,
+      #eef1f3 40%,
+      #eef1f3 100%
+    );
+    background-size: 200% 100%;
+    animation: dashboardSkeletonShimmer 1.4s ease-in-out infinite;
+  }
+
+  &__skeletonBar {
+    display: block;
+    border-radius: 999px;
+  }
+
+  &__skeletonLayout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $dark-grey;
+  }
+
+  &__summaryHelp {
+    color: rgba($dark-blue, 0.55);
+    cursor: help;
+    line-height: 1;
+    font-size: 0.9rem;
+
+    &:hover,
+    &:focus {
+      color: $dark-blue;
+      outline: none;
+    }
+  }
+
+  &__metricValue {
+    font-family: $title-font;
+    font-size: 1.75rem;
+    color: $dark-blue;
+    line-height: 1.1;
+  }
+
+  &__sectionTitle {
+    font-family: $title-font;
+    font-size: 1.15rem;
+    color: $dark-blue;
+    margin: 0 0 0.75rem;
+
+    + .Dashboard__sectionLead {
+      margin-top: -0.35rem;
+      margin-bottom: 0.85rem;
+    }
+  }
+
+  &__sectionLead {
+    margin-bottom: 1rem;
+  }
+
+  &__statusBar,
+  &__typeBar {
+    display: flex;
+    width: 100%;
+    height: 14px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #edf2f7;
+    margin-bottom: 0.75rem;
+  }
+
+  &__statusBarSegment,
+  &__typeBarSegment {
+    height: 100%;
+
+    &--existing {
+      background: $dark-blue;
+    }
+
+    &--planned {
+      background: lighten($dark-blue, 18%);
+    }
+
+    &--proposed {
+      background: lighten($dark-blue, 32%);
+    }
+  }
+
+  &__typeBarSegment {
+    min-width: 2px;
+  }
+
+  &__statusLegend,
+  &__typeMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+  }
+
+  &__insightList {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: $dark-grey;
+    line-height: 1.55;
+
+    li + li {
+      margin-top: 0.65rem;
+    }
+  }
+
+  &__typeList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__typeHeader {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.4rem;
+  }
+
+  &__typeLabel,
+  &__typeValue {
+    font-weight: 600;
+    color: $dark-blue;
+  }
+
+  &__rankedList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  &__rankedItem {
+    display: grid;
+    grid-template-columns: 1.75rem 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.55rem 0;
+    border-top: 1px solid rgba($dark-blue, 0.08);
+
+    &:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    &--chart {
+      grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 0.65rem 0.85rem;
+      padding: 0.75rem 0;
+
+      .Dashboard__rankedValue {
+        align-self: center;
+      }
+    }
+
+    &--trailType {
+      align-items: flex-start;
+
+      .Dashboard__rankedValue {
+        align-self: center;
+      }
+    }
+  }
+
+  &__rankedChartBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  &__rankedBar {
+    height: 10px;
+    background: rgba($dark-blue, 0.1);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  &__rankedBarFill {
+    height: 100%;
+    background: $dark-blue;
+    border-radius: 999px;
+    min-width: 2px;
+    transition: width 0.2s ease;
+  }
+
+  &__rankedTrailType {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  &__leaderboardFilters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin: 0.85rem 0 1.1rem;
+  }
+
+  &__filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  &__filterLabel {
+    font-family: $body-font;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: $dark-grey;
+  }
+
+  &__emptyState {
+    font-family: $body-font;
+    font-size: 0.95rem;
+    color: $dark-grey;
+    margin: 0;
+  }
+
+  &__statusBadge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.14rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+
+    &--existing {
+      background: rgba($dark-blue, 0.12);
+      color: $dark-blue;
+    }
+
+    &--planned {
+      background: rgba(#6a1b9a, 0.12);
+      color: #6a1b9a;
+    }
+  }
+
+  &__rank {
+    font-weight: 700;
+    color: $dark-grey;
+  }
+
+  &__rankedName {
+    color: $dark-blue;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  &__muniLink {
+    color: $dark-blue;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__contactEmail {
+    color: $dark-blue;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__card--contacts {
+    margin-top: 0.5rem;
+  }
+
+  &__tableWrap--contacts {
+    max-height: none;
+    overflow: visible;
+  }
+
+  &__table--contacts {
+    th,
+    td {
+      white-space: normal;
+    }
+  }
+
+  &__rankedValue {
+    font-weight: 600;
+    color: $dark-grey;
+    white-space: nowrap;
+  }
+
+  &__tableIntro {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 42rem;
+
+    .Dashboard__sectionTitle {
+      margin-bottom: 0;
+    }
+
+    .Dashboard__sectionLead {
+      margin: 0;
+    }
+
+    .Dashboard__sectionList {
+      margin: 0;
+    }
+  }
+
+  &__sectionList {
+    padding-left: 1.2rem;
+    color: $dark-grey;
+    font-family: $body-font;
+    font-size: 1rem;
+    line-height: 1.5;
+
+    li + li {
+      margin-top: 0.35rem;
+    }
+  }
+
+  &__measurementNote {
+    color: $dark-blue;
+    font-weight: 600;
+  }
+
+  &__tableHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  &__search {
+    min-width: 14rem;
+    border: 1px solid rgba($dark-blue, 0.18);
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    font: inherit;
+  }
+
+  &__tableWrap {
+    max-height: 28rem;
+    overflow: auto;
+    border: 1px solid rgba($dark-blue, 0.08);
+    border-radius: 8px;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+
+    th,
+    td {
+      padding: 0.65rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid rgba($dark-blue, 0.08);
+      white-space: nowrap;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f8fafc;
+      box-shadow: inset 0 -1px 0 rgba($dark-blue, 0.08);
+    }
+
+    th {
+      background: #f8fafc;
+      color: $dark-blue;
+      font-weight: 600;
+    }
+
+    tbody tr:hover {
+      background: rgba($dark-blue, 0.03);
+    }
+  }
+
+  &__sortButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: inherit;
+    cursor: pointer;
+    padding: 0;
+
+    &--active {
+      color: $dark-blue;
+    }
+  }
+
+  &__sortIcon {
+    font-size: 0.8rem;
+    opacity: 0.35;
+    color: $dark-grey;
+  }
+
+  &__sortButton--active &__sortIcon {
+    opacity: 1;
+    color: $dark-blue;
+  }
+
+  @media (max-width: 1100px) {
+    &__summaryGrid,
+    &__grid,
+    &__grid--three,
+    &__grid--two {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    &__headerTop {
+      flex-direction: column;
+    }
+
+    &__scopeToggle {
+      width: 100%;
+    }
+
+    &__scopeButton {
+      flex: 1;
+      white-space: normal;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    &__summaryGrid,
+    &__grid,
+    &__grid--three,
+    &__grid--two {
+      grid-template-columns: 1fr;
+    }
+
+    &__tableHeader {
+      flex-direction: column;
+    }
+
+    &__search {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+}
+
+.Dashboard__summaryTooltip.tooltip {
+  .tooltip-inner {
+    max-width: 24rem;
+    text-align: left;
+    padding: 0.65rem 0.75rem;
+    background-color: rgba(59, 131, 199, 0.92);
+    overflow: visible;
+  }
+
+  .tooltip-arrow::before {
+    border-right-color: rgba(59, 131, 199, 0.92);
+  }
+
+  &[data-popper-placement^="right"] .tooltip-arrow::before {
+    border-right-color: rgba(59, 131, 199, 0.92);
+  }
+}
+
+.Dashboard__summaryTooltipText {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.Dashboard__summaryTooltipContent .Dashboard__summaryTooltipText {
+  margin-bottom: 0.5rem;
+}
+
+.Dashboard__summaryTooltipList {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  columns: 2;
+  column-gap: 1.25rem;
+
+  li {
+    break-inside: avoid;
+  }
+}
+
+@keyframes dashboardSkeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
