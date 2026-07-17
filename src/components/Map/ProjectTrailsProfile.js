@@ -25,7 +25,7 @@ import bbox from "@turf/bbox";
 const legendBoxStyle = {
   position: "absolute",
   bottom: 40,
-  right: 10,
+  right: 50,
   background: "rgba(255, 255, 255, 0.95)",
   border: "1px solid rgba(0, 0, 0, 0.1)",
   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
