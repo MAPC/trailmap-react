@@ -15,22 +15,22 @@
 
   &__notice {
     position: absolute;
-    right: calc(100% + 1.5rem);
+    right: calc(100% + 3.5rem);
     top: calc(50% + 0.4rem);
     transform: translateY(-50%);
     width: max-content;
-    max-width: 14rem;
+    max-width: 12rem;
     background: rgba(255, 255, 255, 0.97);
     border: 1px solid rgba(0, 0, 0, 0.1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     border-radius: 6px;
-    padding: 0.4rem 0.65rem;
+    padding: 0.35rem 0.7rem;
     font-family: $body-font;
     font-size: 0.75rem;
-    line-height: 1.35;
+    line-height: 1.3;
     color: $dark-grey;
     cursor: pointer;
-    text-align: right;
+    text-align: left;
     pointer-events: auto;
   }
 
