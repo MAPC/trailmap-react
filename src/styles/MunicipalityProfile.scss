@@ -637,11 +637,15 @@
     transition: width 0.25s ease;
 
     &--existing {
-      background: $dark-blue;
+      background: #2774bd;
     }
 
     &--planned {
-      background: #8ec5e8;
+      background: #f0ad4e;
+    }
+
+    &--proposed {
+      background: #c5c9cc;
     }
 
     &--empty {
@@ -654,6 +658,10 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.45rem;
+
+    &--three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
   &__trailBreakdownItem {
@@ -674,11 +682,15 @@
     margin-top: 0.2rem;
 
     &--existing {
-      background: $dark-blue;
+      background: #2774bd;
     }
 
     &--planned {
-      background: #8ec5e8;
+      background: #f0ad4e;
+    }
+
+    &--proposed {
+      background: #c5c9cc;
     }
   }
 

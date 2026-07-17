@@ -23,27 +23,27 @@ const GlossaryModal = () => {
         </span>
         <ul className="Modal__list text-left p-1 mb-0">
           <li className="mt-4">
-            <span className="ControlPanel_type_button__pavedPaths">Paved Shared Use</span>: Hard packed accessible
+            <span className="ControlPanel_type_button__pavedPaths">Existing Paved Shared Use Paths</span>: Hard packed accessible
             surface, typically asphalt or stonedust
           </li>
           <li className="mt-2">
-            <span className="ControlPanel_type_button__unimprovedPaths">Unimproved Shared Use</span>: Future paved
+            <span className="ControlPanel_type_button__unimprovedPaths">Existing Unimproved Shared Use Paths</span>: Future paved
             paths, currently with an unimproved natural surface
           </li>
           <li className="mt-2 mb-2">
-            <span className="ControlPanel_type_button__bikeLane">Bike Lane</span>: Striped lane within the roadway
+            <span className="ControlPanel_type_button__bikeLane">Existing Bike Lanes</span>: Striped lane within the roadway
             adjacent to traffic
           </li>
           <li className="mt-2 mb-2">
-            <span className="ControlPanel_type_button__protectedBikeLane">Protected Bike Lane</span>: Physically
+            <span className="ControlPanel_type_button__protectedBikeLane">Existing Protected Bike Lanes</span>: Physically
             separated from motor vehicle traffic
           </li>
           <li className="mt-2 mb-2">
-            <span className="ControlPanel_type_button__pavedFootway">Paved Foot Path</span>: Hard surface path,
+            <span className="ControlPanel_type_button__pavedFootway">Paved Footway</span>: Hard surface path,
             typically in city park or campus environments
           </li>
           <li className="mt-2 mb-4">
-            <span className="ControlPanel_type_button__naturalSurfaceFootway">Natural Surface Path</span>: Hiking trail,
+            <span className="ControlPanel_type_button__naturalSurfaceFootway">Natural Surface Footway</span>: Hiking trail,
             typically found in conservation areas
           </li>
         </ul>

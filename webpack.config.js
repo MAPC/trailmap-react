@@ -91,5 +91,13 @@ module.exports = {
         runtimeErrors: true,
       },
     },
+    proxy: [
+      {
+        context: ["/api"],
+        target: "http://localhost:3001",
+        changeOrigin: true,
+        pathRewrite: { "^/api": "" },
+      },
+    ],
   }
 };
