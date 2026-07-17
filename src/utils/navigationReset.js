@@ -15,6 +15,8 @@ export const resetSharedNavigationState = ({
   setShowSubwayStations,
   setShowEnvironmentalJustice,
   setShowOpenSpace,
+  setShowMuniOpenSpace,
+  setShowProjectOpenSpace,
   setShowLandlinesFeatureService,
   setShowTrailsRegNameSync,
   setShowTransitLandStops,
@@ -47,6 +49,8 @@ export const resetSharedNavigationState = ({
   setShowSubwayStations(false);
   setShowEnvironmentalJustice(false);
   setShowOpenSpace(false);
+  if (setShowMuniOpenSpace) setShowMuniOpenSpace(false);
+  if (setShowProjectOpenSpace) setShowProjectOpenSpace(false);
   setShowLandlinesFeatureService(false);
   setShowTrailsRegNameSync(false);
   setShowTransitLandStops(false);

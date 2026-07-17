@@ -491,6 +491,89 @@
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   }
 
+  &__openSpaceCard {
+    background: $white;
+    border: 1px solid #e8ecef;
+    border-radius: 8px;
+    padding: 0.85rem 0.9rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  &__openSpaceHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin-bottom: 0.45rem;
+  }
+
+  &__openSpaceSwitchRow {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+
+  &__openSpaceSwitch {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-left: 0;
+
+    .form-check-input {
+      cursor: pointer;
+      float: none;
+      margin-left: 0;
+      margin-top: 0;
+    }
+
+    .form-check-label {
+      font-size: 0.72rem;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+  }
+
+  &__openSpaceCount {
+    font-family: $title-font;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #2f6f3e;
+    line-height: 1.2;
+  }
+
+  &__openSpaceStatus {
+    font-size: 0.8rem;
+    color: #6b7280;
+    padding: 0.25rem 0;
+
+    &--error {
+      color: #b42318;
+    }
+  }
+
+  &__openSpaceList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #eef1f4;
+    border-radius: 6px;
+
+    li {
+      padding: 0.45rem 0.7rem;
+      font-size: 0.8rem;
+      color: #2c3e50;
+      border-bottom: 1px solid #eef1f4;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+
   &__trailOverview {
     display: flex;
     flex-direction: column;

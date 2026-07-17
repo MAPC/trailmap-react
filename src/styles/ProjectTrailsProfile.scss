@@ -716,6 +716,76 @@
     font-size: 0.72rem;
     line-height: 1.4;
     color: #6b7280;
+    margin-bottom: 0.75rem;
+  }
+
+  &__openSpaceCard {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  &__openSpaceTitleSkeleton {
+    margin-bottom: 0.55rem;
+  }
+
+  &__openSpaceSwitchRow {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+
+  &__openSpaceSwitch {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-left: 0;
+
+    .form-check-input {
+      cursor: pointer;
+      float: none;
+      margin-left: 0;
+      margin-top: 0;
+    }
+
+    .form-check-label {
+      font-size: 0.72rem;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+  }
+
+  &__openSpaceStatus {
+    font-size: 0.8rem;
+    color: #6b7280;
+    padding: 0.25rem 0;
+
+    &--error {
+      color: #b42318;
+    }
+  }
+
+  &__openSpaceList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 180px;
+    overflow-y: auto;
+
+    li {
+      font-family: $body-font;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      color: #374151;
+      padding: 0.28rem 0;
+      border-bottom: 1px solid #eef1f3;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
   }
 
   &__segmentsPanel {
