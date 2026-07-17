@@ -3,7 +3,7 @@ const LayerData = {
     {
       id: 'pavedPaths',
       'esri-id': 8,
-      label: 'Paved Shared Use',
+      label: 'Existing Paved Shared Use Paths',
       type: 'line',
       'source-layer': 'Existing Paved Shared Use Paths',
       layout: {
@@ -20,7 +20,7 @@ const LayerData = {
     {
       id: 'unimprovedPaths',
       'esri-id': 10,
-      label: 'Unimproved Shared Use',
+      label: 'Existing Unimproved Shared Use Paths',
       type: 'line',
       'source-layer': 'Existing Unimproved Shared Use Paths',
       layout: {
@@ -37,7 +37,7 @@ const LayerData = {
     {
       id: 'bikeLane',
       'esri-id': 2,
-      label: 'Bike Lanes',
+      label: 'Existing Bike Lanes',
       type: 'line',
       'source-layer': 'Existing Bike Lanes',
       layout: {
@@ -53,7 +53,7 @@ const LayerData = {
     {
       id: 'protectedBikeLane',
       'esri-id': 0,
-      label: 'Protected Bike Lanes',
+      label: 'Existing Protected Bike Lanes',
       type: 'line',
       'source-layer': 'Existing Protected Bike Lanes',
       layout: {
@@ -69,7 +69,7 @@ const LayerData = {
     {
       id: 'pavedFootway',
       'esri-id': 4,
-      label: 'Paved Foot Path',
+      label: 'Paved Footway',
       type: 'line',
       'source-layer': 'Paved Footway',
       layout: {
@@ -86,7 +86,7 @@ const LayerData = {
     {
       id: 'naturalSurfaceFootway',
       'esri-id': 6,
-      label: 'Natural Surface Path',
+      label: 'Natural Surface Footway',
       type: 'line',
       'source-layer': 'Natural Surface Footway',
       layout: {
@@ -105,7 +105,7 @@ const LayerData = {
     {
       id: 'pavedPathsProposed',
       'esri-id': 9,
-      label: 'Planned Paved Shared Use',
+      label: 'Proposed Paved Shared Use Paths',
       type: 'line',
       'source-layer': 'Proposed Paved Shared Use Paths',
       layout: {
@@ -122,7 +122,7 @@ const LayerData = {
     {
       id: 'unimprovedPathsProposed',
       'esri-id': 11,
-      label: 'Planned Unimproved Shared Use',
+      label: 'Proposed Unimproved Shared Use Paths',
       type: 'line',
       'source-layer': 'Proposed Unimproved Shared Use Paths',
       layout: {
@@ -139,7 +139,7 @@ const LayerData = {
     {
       id: 'bikeLaneProposed',
       'esri-id': 3,
-      label: 'Planned Bike Lanes',
+      label: 'Proposed Bike Lanes',
       type: 'line',
       'source-layer': 'Proposed Bike Lanes',
       layout: {
@@ -158,7 +158,7 @@ const LayerData = {
       'esri-id': 1,
       label: 'Planned Protected Bike Lanes',
       type: 'line',
-      'source-layer': 'Proposed Protected Bike Lanes',
+      'source-layer': 'Planned Protected Bike Lanes',
       layout: {
         'line-cap': 'butt',
         'line-join': 'miter'
@@ -173,7 +173,7 @@ const LayerData = {
     {
       id: 'pavedFootwayProposed',
       'esri-id': 5,
-      label: 'Planned Paved Foot Path',
+      label: 'Proposed Paved Footway',
       type: 'line',
       'source-layer': 'Proposed Paved Footway',
       layout: {
@@ -190,7 +190,7 @@ const LayerData = {
     {
       id: 'naturalSurfaceFootwayProposed',
       'esri-id': 7,
-      label: 'Planned Natural Surface Path',
+      label: 'Proposed Natural Surface Footway',
       type: 'line',
       'source-layer': 'Proposed Natural Surface Footway',
       layout: {
