@@ -351,3 +351,45 @@ export const fetchTrailMetricsDashboardData = async (
     enrichedRows,
   };
 };
+
+/** MapServer layer id → trail-metrics API length_mi column */
+export const COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS = {
+  0: "existing_protected_bike_lanes_length_mi",
+  1: "planned_protected_bike_lanes_length_mi",
+  2: "existing_bike_lanes_length_mi",
+  3: "proposed_bike_lanes_length_mi",
+  4: "paved_footway_length_mi",
+  5: "proposed_paved_footway_length_mi",
+  6: "natural_surface_footway_length_mi",
+  7: "proposed_natural_surface_footway_length_mi",
+  8: "existing_paved_shared_use_paths_length_mi",
+  9: "proposed_paved_shared_use_paths_length_mi",
+  10: "proposed_unimproved_shared_use_paths_length_mi",
+  11: "existing_unimproved_shared_use_paths_length_mi",
+};
+
+let massachusettsMetricsCachePromise = null;
+
+/** Cached statewide metrics rows (same source as the dashboard table). */
+export const fetchAllMunicipalityTrailMetrics = () => {
+  if (!massachusettsMetricsCachePromise) {
+    massachusettsMetricsCachePromise = fetchTrailMetricsDashboardData(
+      DASHBOARD_SCOPES.MASSACHUSETTS
+    )
+      .then(({ enrichedRows }) => enrichedRows)
+      .catch((error) => {
+        massachusettsMetricsCachePromise = null;
+        throw error;
+      });
+  }
+
+  return massachusettsMetricsCachePromise;
+};
+
+export const findMunicipalityTrailMetricsByTownId = async (townId) => {
+  const normalizedId = Number(townId);
+  if (!normalizedId) return null;
+
+  const rows = await fetchAllMunicipalityTrailMetrics();
+  return rows.find((row) => Number(row.muni_id) === normalizedId) || null;
+};

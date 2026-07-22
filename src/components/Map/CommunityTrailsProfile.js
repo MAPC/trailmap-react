@@ -662,10 +662,20 @@ const CommunityTrailsProfile = ({
               const townName = muniFeature.properties.town || muniFeature.properties.NAME;
               if (townName) {
                 const muniName = townName.toLowerCase();
+                // Ignore re-clicks on the same municipality. Mapbox returns
+                // tile-clipped geometry from queryRenderedFeatures, which would
+                // otherwise thrash selection state while inspecting trails.
+                if (selectedMunicipality?.name === muniName) {
+                  return;
+                }
+                const fullFeature = massachusettsData.features.find((f) => {
+                  const name = (f.properties.town || f.properties.NAME || "").toLowerCase();
+                  return name === muniName;
+                });
                 setSelectedMunicipality({
                   name: muniName,
-                  properties: muniFeature.properties,
-                  geometry: muniFeature.geometry
+                  properties: fullFeature?.properties || muniFeature.properties,
+                  geometry: fullFeature?.geometry || muniFeature.geometry,
                 });
                 if (showMunicipalityView && location.pathname === '/communityTrailsProfile') {
                   navigate(`/communityTrailsProfile?muni=${encodeURIComponent(muniName)}`, { replace: true });

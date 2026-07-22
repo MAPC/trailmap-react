@@ -5,6 +5,7 @@ import IntroModal, { isIntroModalDismissed } from "./components/Modals/IntroModa
 import ContributeModal from "./components/Modals/ContributeModal";
 import AboutModal from "./components/Modals/AboutModal";
 import EditModal from "./components/Modals/EditModal";
+import GlossaryModal from "./components/Modals/GlossaryModal";
 import Map from "./components/Map";
 import Dashboard from "./components/Dashboard";
 import LayerData from "./data/LayerData";
@@ -165,6 +166,7 @@ const App = () => {
         >
           <AboutModal />
           <ContributeModal />
+          <GlossaryModal />
           <LayerContext.Provider
             value={{
               trailLayers,

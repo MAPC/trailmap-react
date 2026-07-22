@@ -7,17 +7,92 @@ import DropdownButton from "react-bootstrap/DropdownButton";
 import ButtonGroup from "react-bootstrap/ButtonGroup";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Tooltip from "react-bootstrap/Tooltip";
-import * as turf from '@turf/turf';
 import massachusettsData from "../../data/massachusetts.json";
 import { useNavigate, useLocation } from "react-router-dom";
 import TrailsInventoryModal from "../Modals/TrailsInventoryModal";
 import { fetchOpenSpaceByTownId } from "../../utils/fetchOpenSpace";
+import {
+  COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS,
+  findMunicipalityTrailMetricsByTownId,
+  fetchAllMunicipalityTrailMetrics,
+} from "../../utils/trailMetricsDashboard";
 import {
   geojsonTrailLayers,
   getTrailStatus,
   trailFacilityTypePairs,
   TRAIL_STATUS,
 } from "../Map/constants/geojsonTrailLayers";
+
+const milesToFeet = (miles) => (Number(miles) || 0) * 5280;
+
+const emptyTrailStats = () => ({
+  totalTrails: 0,
+  totalLength: 0,
+  existingLength: 0,
+  plannedLength: 0,
+  proposedLength: 0,
+  byType: {},
+  completionRates: {},
+  density: 0,
+  area: 0,
+});
+
+/** Build overview stats from the same trail-metrics API row the dashboard uses. */
+const buildTrailStatsFromMetricsRow = (row) => {
+  if (!row) return emptyTrailStats();
+
+  const stats = emptyTrailStats();
+  const existingLength = milesToFeet(row.existingMiles);
+  const plannedLength = milesToFeet(row.plannedMiles);
+  const proposedLength = milesToFeet(row.proposedMiles);
+
+  stats.existingLength = existingLength;
+  stats.plannedLength = plannedLength;
+  stats.proposedLength = proposedLength;
+  stats.totalLength = existingLength + plannedLength + proposedLength;
+  stats.area = Number(row.areaSqMi) || 0;
+  stats.density =
+    row.density != null ? parseFloat(Number(row.density).toFixed(2)) : 0;
+
+  geojsonTrailLayers.forEach((layer) => {
+    const key = COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS[layer.id];
+    const length = key ? milesToFeet(row[key]) : 0;
+    stats.byType[layer.name] = {
+      count: length > 0 ? 1 : 0,
+      length,
+      color: layer.color,
+      status: layer.status,
+      layerId: layer.id,
+    };
+  });
+
+  trailFacilityTypePairs.forEach(({ existingId, otherIds, label }) => {
+    const existingLayer = geojsonTrailLayers.find((l) => l.id === existingId);
+    const existingPairLength = existingLayer
+      ? stats.byType[existingLayer.name]?.length || 0
+      : 0;
+
+    let otherLength = 0;
+    otherIds.forEach((id) => {
+      const otherLayer = geojsonTrailLayers.find((l) => l.id === id);
+      if (otherLayer) {
+        otherLength += stats.byType[otherLayer.name]?.length || 0;
+      }
+    });
+
+    const total = existingPairLength + otherLength;
+    if (total > 0) {
+      stats.completionRates[label] = {
+        existing: existingPairLength,
+        planned: otherLength,
+        total,
+        rate: (existingPairLength / total) * 100,
+      };
+    }
+  });
+
+  return stats;
+};
 
 const Skeleton = ({ className = "", style = {} }) => (
   <span
@@ -65,6 +140,8 @@ const MunicipalityProfile = ({
   const [openSpaceSiteNames, setOpenSpaceSiteNames] = useState([]);
   const [isLoadingOpenSpace, setIsLoadingOpenSpace] = useState(false);
   const [openSpaceError, setOpenSpaceError] = useState(null);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
+  const [densityRankVersion, setDensityRankVersion] = useState(0);
   const densityRankCacheRef = useRef(new Map());
 
   // Reset component states when switching back to trail filters
@@ -78,6 +155,7 @@ const MunicipalityProfile = ({
       setOpenSpaceSiteNames([]);
       setIsLoadingOpenSpace(false);
       setOpenSpaceError(null);
+      setIsLoadingMetrics(false);
     };
     
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
@@ -234,160 +312,67 @@ const MunicipalityProfile = ({
     };
   }, [selectedMunicipality?.properties?.town_id]);
 
-  // Calculate trail statistics when municipality or trails change
+  // Overview metrics come from the same trail-metrics API as the dashboard.
+  // Map trail geometries still come from FeatureServer intersection separately.
   useEffect(() => {
-    if (selectedMunicipality && municipalityTrails) {
-      calculateTrailStats();
-    }
-  }, [selectedMunicipality, municipalityTrails]);
-
-
-  const calculateTrailStats = () => {
-    if (!municipalityTrails || municipalityTrails.length === 0) {
-      setTrailStats({
-        totalTrails: 0,
-        totalLength: 0,
-        existingLength: 0,
-        plannedLength: 0,
-        proposedLength: 0,
-        byType: {},
-        completionRates: {},
-        density: 0,
-        area: 0
-      });
+    const townId = selectedMunicipality?.properties?.town_id;
+    if (!selectedMunicipality || townId == null) {
+      setTrailStats(null);
+      setIsLoadingMetrics(false);
       return;
     }
 
-    const stats = {
-      totalTrails: municipalityTrails.length,
-      totalLength: 0,
-      existingLength: 0,
-      plannedLength: 0,
-      proposedLength: 0,
-      byType: {},
-      completionRates: {},
-      density: 0,
-      area: 0
-    };
+    let cancelled = false;
+    setIsLoadingMetrics(true);
+    setTrailStats(null);
 
-    // Calculate municipality area and trail density
-    if (selectedMunicipality && selectedMunicipality.geometry) {
-      try {
-        let area = 0;
-        
-        // Handle both Polygon and MultiPolygon geometries
-        if (selectedMunicipality.geometry.type === 'Polygon') {
-          const muniPolygon = turf.polygon(selectedMunicipality.geometry.coordinates);
-          area = turf.area(muniPolygon) * 10.764; // Convert from sq meters to sq feet
-        } else if (selectedMunicipality.geometry.type === 'MultiPolygon') {
-          const muniMultiPolygon = turf.multiPolygon(selectedMunicipality.geometry.coordinates);
-          area = turf.area(muniMultiPolygon) * 10.764; // Convert from sq meters to sq feet
+    findMunicipalityTrailMetricsByTownId(townId)
+      .then((row) => {
+        if (cancelled) return;
+        setTrailStats(buildTrailStatsFromMetricsRow(row));
+      })
+      .catch((error) => {
+        console.error("Error loading municipality trail metrics:", error);
+        if (!cancelled) {
+          setTrailStats(emptyTrailStats());
         }
-        
-        stats.area = area;
-      } catch (error) {
-        console.error('Error calculating municipality area:', error);
-      }
-    }
-
-    // Initialize counts for all MapServer trail layers
-    geojsonTrailLayers.forEach((layer) => {
-      stats.byType[layer.name] = {
-        count: 0,
-        length: 0,
-        color: layer.color,
-        status: layer.status,
-        layerId: layer.id,
-      };
-    });
-
-    let existingTrailsLength = 0;
-    let plannedTrailsLength = 0;
-    let proposedTrailsLength = 0;
-
-    municipalityTrails.forEach((trail) => {
-      const layerName = trail.layerName || "Unknown";
-      const status = getTrailStatus(trail) || TRAIL_STATUS.EXISTING;
-
-      const rawLengthFeet =
-        trail.attributes?.["Facility Length in Feet"] ??
-        trail.attributes?.length_ft;
-      const lengthValue =
-        rawLengthFeet !== undefined &&
-        rawLengthFeet !== null &&
-        rawLengthFeet !== "Null" &&
-        rawLengthFeet !== " "
-          ? rawLengthFeet
-          : trail.attributes?.Shape_Length || 0;
-
-      const lengthInFeet = Number(lengthValue) || 0;
-
-      if (stats.byType[layerName]) {
-        stats.byType[layerName].count += 1;
-        stats.byType[layerName].length += lengthInFeet;
-      } else {
-        stats.byType[layerName] = {
-          count: 1,
-          length: lengthInFeet,
-          color: trail.color || "#888",
-          status,
-          layerId: trail.layerId,
-        };
-      }
-
-      stats.totalLength += lengthInFeet;
-
-      if (status === TRAIL_STATUS.EXISTING) {
-        existingTrailsLength += lengthInFeet;
-      } else if (status === TRAIL_STATUS.PLANNED) {
-        plannedTrailsLength += lengthInFeet;
-      } else {
-        proposedTrailsLength += lengthInFeet;
-      }
-    });
-
-    stats.existingLength = existingTrailsLength;
-    stats.plannedLength = plannedTrailsLength;
-    stats.proposedLength = proposedTrailsLength;
-
-    // Trail density uses existing only (includes Paved/Natural Surface Footways)
-    if (stats.area > 0) {
-      const areaInSqMiles = stats.area / 27878400;
-      const existingTrailsLengthInMiles = existingTrailsLength / 5280;
-      stats.density =
-        areaInSqMiles > 0
-          ? parseFloat((existingTrailsLengthInMiles / areaInSqMiles).toFixed(2))
-          : 0;
-    }
-
-    // Completion rates: existing / (existing + planned + proposed) per facility type
-    trailFacilityTypePairs.forEach(({ existingId, otherIds, label }) => {
-      const existingLayer = geojsonTrailLayers.find((l) => l.id === existingId);
-      const existingLength = existingLayer
-        ? stats.byType[existingLayer.name]?.length || 0
-        : 0;
-
-      let otherLength = 0;
-      otherIds.forEach((id) => {
-        const otherLayer = geojsonTrailLayers.find((l) => l.id === id);
-        if (otherLayer) {
-          otherLength += stats.byType[otherLayer.name]?.length || 0;
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingMetrics(false);
         }
       });
 
-      const total = existingLength + otherLength;
-      if (total > 0) {
-        stats.completionRates[label] = {
-          existing: existingLength,
-          planned: otherLength,
-          total,
-          rate: (existingLength / total) * 100,
-        };
-      }
-    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedMunicipality?.properties?.town_id, selectedMunicipality?.name]);
 
-    setTrailStats(stats);
-  };
+  // Seed density rankings from the full statewide metrics table once.
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchAllMunicipalityTrailMetrics()
+      .then((rows) => {
+        if (cancelled) return;
+        rows.forEach((row) => {
+          const slug = String(row.municipalityName || "")
+            .trim()
+            .toLowerCase();
+          if (slug && row.density != null) {
+            densityRankCacheRef.current.set(slug, row.density);
+          }
+        });
+        setDensityRankVersion((version) => version + 1);
+      })
+      .catch(() => {
+        // Ranking is optional; overview metrics still load per municipality.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const capitalizeWords = (str) => {
     return str.split(' ').map(word =>
@@ -468,11 +453,6 @@ const MunicipalityProfile = ({
     return pop != null ? Number(pop).toLocaleString("en-US") : null;
   };
 
-  const getMuniAreaSqMi = (properties) => {
-    if (!properties?.sum_square) return null;
-    return parseFloat(Number(properties.sum_square).toFixed(1));
-  };
-
   const regionRank = useMemo(() => {
     if (!selectedMunicipality?.name || trailStats?.density == null) {
       return null;
@@ -482,7 +462,7 @@ const MunicipalityProfile = ({
     );
     const idx = sorted.findIndex(([name]) => name === selectedMunicipality.name);
     return idx >= 0 ? idx + 1 : null;
-  }, [selectedMunicipality?.name, trailStats?.density]);
+  }, [selectedMunicipality?.name, trailStats?.density, densityRankVersion]);
 
  
 
@@ -1230,7 +1210,7 @@ const MunicipalityProfile = ({
   };
 
   const isOverviewLoading =
-    isLoadingTrails || (selectedMunicipality && trailStats === null);
+    isLoadingMetrics || (selectedMunicipality && trailStats === null);
 
   return (
     <div
@@ -1306,7 +1286,11 @@ const MunicipalityProfile = ({
                     {trailStats && renderOverviewTrailStats(trailStats)}
                     {renderOpenSpaceOverview()}
 
-                    {municipalityTrails && municipalityTrails.length > 0 && (
+                    {isLoadingTrails ? (
+                      <div className="alert alert-info small p-2 mb-2">
+                        Loading trail geometries for the map…
+                      </div>
+                    ) : municipalityTrails && municipalityTrails.length > 0 ? (
                       <>
                         <div className="mb-2">
                           <Button
@@ -1363,11 +1347,9 @@ const MunicipalityProfile = ({
                           </Button>
                         </div>
                       </>
-                    )}
-
-                    {(!municipalityTrails || municipalityTrails.length === 0) && (
+                    ) : (
                       <div className="alert alert-info small p-2 mb-2">
-                        No trails found in this municipality.
+                        No trail geometries found to display or download for this municipality.
                       </div>
                     )}
                   </>
