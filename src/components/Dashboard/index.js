@@ -258,6 +258,37 @@ const MunicipalityTrailTypeLeaderboard = ({ municipalities }) => {
     TRAIL_STATUS_OPTIONS.find((option) => option.key === statusKey) ||
     TRAIL_STATUS_OPTIONS[0];
 
+  const rankingNotes = useMemo(() => {
+    const notesByType = {
+      sharedUsePaths:
+        "Shared-use paths combine paved and unimproved shared-use path mileage.",
+      footways:
+        "Footways combine paved footway and natural surface footway mileage into one total.",
+      bikeFacilities:
+        "Bike facilities combine protected bike lanes and bike lanes.",
+    };
+
+    const compositionNote = notesByType[facilityGroup.key] || "";
+    const statusKeys = {
+      existing: facilityGroup.existingKeys || [],
+      planned: facilityGroup.plannedKeys || [],
+      proposed: facilityGroup.proposedKeys || [],
+    }[statusKey] || [];
+
+    if (statusKeys.length === 0) {
+      return [
+        compositionNote,
+        `${facilityGroup.label} have no ${statusOption.label.toLowerCase()} mileage in the metrics table, so this ranking will be empty.`,
+      ].filter(Boolean);
+    }
+
+    return [
+      `Ranks the top 10 communities by ${statusOption.label.toLowerCase()} ${facilityGroup.label.toLowerCase()} mileage.`,
+      compositionNote,
+      "Values come from the same trail-metrics totals used in the municipality table below.",
+    ].filter(Boolean);
+  }, [facilityGroup, statusKey, statusOption.label]);
+
   const maxTrailTypeMiles = items[0]?.trailTypeMiles || 0;
 
   return (
@@ -265,6 +296,11 @@ const MunicipalityTrailTypeLeaderboard = ({ municipalities }) => {
       <h2 className="Dashboard__sectionTitle">
         Top communities by Trail type and Trail status
       </h2>
+      <ul className="Dashboard__sectionList Dashboard__sectionList--compact">
+        {rankingNotes.map((note) => (
+          <li key={note}>{note}</li>
+        ))}
+      </ul>
 
       <div className="Dashboard__leaderboardFilters">
         <div className="Dashboard__filterGroup">

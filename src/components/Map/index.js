@@ -9,7 +9,6 @@ import bbox from "@turf/bbox";
 import LoadingBar from "../LoadingBar";
 import TrailListWindow from "../TrailListWindow";
 import BasemapPanel from "../BasemapPanel";
-import GlossaryModal from "../Modals/GlossaryModal";
 import Identify from "./Identify";
 import CommunityIdentify from "./CommunityIdentify";
 import ShareModal from "../Modals/ShareModal";
@@ -134,7 +133,6 @@ const Map = () => {
   return (
     <>
       <ShareModal url={generateShareUrl()} />
-      <GlossaryModal />
       <EditModal trailObj={identifyInfo !== null ? identifyInfo[pointIndex] : null} />
       <SuccessModal />
       <FailModal />
