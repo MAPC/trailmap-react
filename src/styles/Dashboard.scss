@@ -525,6 +525,16 @@
     li + li {
       margin-top: 0.35rem;
     }
+
+    &--compact {
+      margin: 0 0 0.85rem;
+      font-size: 0.92rem;
+      line-height: 1.45;
+
+      li + li {
+        margin-top: 0.25rem;
+      }
+    }
   }
 
   &__measurementNote {
