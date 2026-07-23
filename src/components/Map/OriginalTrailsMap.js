@@ -19,11 +19,22 @@ import {
   getVisibleEsriLayerIds,
   pickIdentifyResultForLayer,
 } from "./utils/trailHighlightUtils";
+import {
+  getLandlineLayerIds,
+  identifyLandlineAtPoint,
+  isLandlineLayerId,
+} from "./utils/landlineIdentify";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
-const LANDLINE_SOURCE = process.env.REACT_APP_LANDLINE_TILE_URL;
-const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL 
+const DEFAULT_LANDLINE_TILE_URL =
+  "https://tiles.arcgis.com/tiles/c5WwApDsDjRhIVkH/arcgis/rest/services/land_lines/VectorTileServer/tile/{z}/{y}/{x}.pbf";
+const LANDLINE_SOURCE =
+  process.env.REACT_APP_LANDLINE_TILE_URL &&
+  !process.env.REACT_APP_LANDLINE_TILE_URL.includes("mapc_trails_vector_tiles")
+    ? process.env.REACT_APP_LANDLINE_TILE_URL
+    : DEFAULT_LANDLINE_TILE_URL;
+const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL;
 
 
 const OriginalTrailsMap = ({ 
@@ -92,6 +103,11 @@ const OriginalTrailsMap = ({
     [trailLayers, proposedLayers, existingTrails, proposedTrails]
   );
 
+  const landlineLayerIds = useMemo(
+    () => (showLandlineLayer ? getLandlineLayerIds(landlines) : []),
+    [showLandlineLayer, landlines]
+  );
+
   const interactiveLayerIds = useMemo(() => {
     const ids = [];
     if (showMaHouseDistricts) ids.push("ma-house-districts-fill");
@@ -101,6 +117,9 @@ const OriginalTrailsMap = ({
     if (activeTrailLayerIds.length > 0) {
       ids.push(...activeTrailLayerIds);
     }
+    if (landlineLayerIds.length > 0) {
+      ids.push(...landlineLayerIds);
+    }
     return ids;
   }, [
     showMaHouseDistricts,
@@ -108,6 +127,7 @@ const OriginalTrailsMap = ({
     showMunicipalities,
     showMapcBoundary,
     activeTrailLayerIds,
+    landlineLayerIds,
   ]);
 
   const clearHoverIdentifyTimer = () => {
@@ -263,24 +283,21 @@ const OriginalTrailsMap = ({
   }, [showIdentifyPopup]);
 
   const landlineLayers = () => {
-    const visibleLandlineLayers = [];
-    if (showLandlineLayer) {
-      landlines.reverse().forEach((layer) => {
-        visibleLandlineLayers.push(
-          <Layer
-            key={layer.id}
-            id={layer.id}
-            type={layer.type}
-            filter={layer.filter}
-            source="MAPC landline vector tiles"
-            source-layer={layer["source-layer"]}
-            paint={layer.paint}
-            layout={layer.layout}
-          />
-        );
-      });
-    }
-    return visibleLandlineLayers;
+    if (!showLandlineLayer) return [];
+
+    // Copy before reverse so we don't mutate LayerData.landline in place.
+    return [...landlines].reverse().map((layer) => (
+      <Layer
+        key={layer.id}
+        id={layer.id}
+        type={layer.type}
+        filter={layer.filter}
+        source="MAPC landline vector tiles"
+        source-layer={layer["source-layer"]}
+        paint={layer.paint}
+        layout={layer.layout}
+      />
+    ));
   };
 
   const maHouseDistrictsLayers = () => {
@@ -460,7 +477,11 @@ const OriginalTrailsMap = ({
       width="100%"
       height="100%"
       interactiveLayerIds={interactiveLayerIds}
-      cursor={hoveredTrailHighlight || clickedTrailHighlight ? "pointer" : "default"}
+      cursor={
+        hoveredTrailHighlight || clickedTrailHighlight || landlineLayerIds.length > 0
+          ? undefined
+          : "default"
+      }
       onMove={(event) => {
         const newViewport = event.viewState;
         if (Math.abs(newViewport.zoom - viewport.zoom) > 0.01) {
@@ -487,6 +508,32 @@ const OriginalTrailsMap = ({
               });
               return;
             }
+          }
+        }
+
+        // LandLine segment identify popup
+        if (showLandlineLayer && event.features?.length) {
+          const landlineFeature = event.features.find(
+            (f) => f.layer && isLandlineLayerId(f.layer.id, landlines)
+          );
+          if (landlineFeature && event.lngLat) {
+            identifyLandlineAtPoint({
+              lng: event.lngLat.lng,
+              lat: event.lngLat.lat,
+            })
+              .then((results) => {
+                if (results.length > 0) {
+                  setClickedTrailHighlight(null);
+                  setIdentifyInfo(results);
+                  setPointIndex(0);
+                  setIdentifyPoint(event.lngLat);
+                  toggleIdentifyPopup(true);
+                }
+              })
+              .catch((err) => {
+                console.error("Landline identify request failed:", err);
+              });
+            return;
           }
         }
         
@@ -701,6 +748,7 @@ const OriginalTrailsMap = ({
         <Identify
           point={identifyPoint}
           identifyResult={identifyInfo}
+          showContribute={!identifyInfo.some((item) => item.layerId === "landline")}
           handleShowPopup={() => {
             toggleIdentifyPopup(false);
             setHoverFeature(null);

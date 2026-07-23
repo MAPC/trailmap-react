@@ -3,9 +3,58 @@ import { LayerContext } from "../../App";
 import CollapsibleTrailLegend from "./CollapsibleTrailLegend";
 import {
   TRAIL_LAYER_CATEGORIES,
-  LANDLINE_SWATCH_COLOR,
+  getLandlineLegendItems,
   getLayerColor,
 } from "../ControlPanel/trailLayerConfig";
+
+const TrailSwatch = ({ color, dashed = false }) => (
+  <span
+    className={`MapTrailLegend__swatch${dashed ? " MapTrailLegend__swatch--dashed" : ""}`}
+    style={{ "--swatch-color": color }}
+    aria-hidden="true"
+  />
+);
+
+/** SVG preview built from the same stroke paints used on the map. */
+const LandlineSwatch = ({ item }) => {
+  const strokes = item.previewStrokes?.length
+    ? item.previewStrokes
+    : [{ color: item.color, width: 3, dasharray: item.dashed ? "6 4" : null }];
+
+  const height = item.doubleLine ? 14 : item.hasCasing ? 12 : 10;
+  const midY = height / 2;
+
+  return (
+    <svg
+      className="MapTrailLegend__swatchSvg"
+      width="40"
+      height={height}
+      viewBox={`0 0 40 ${height}`}
+      aria-hidden="true"
+    >
+      {strokes.map((stroke, index) => {
+        let y = midY;
+        if (item.doubleLine && strokes.length > 1) {
+          y = midY + (index === 0 ? -3 : 3);
+        }
+
+        return (
+          <line
+            key={`${item.key}-${index}`}
+            x1="1"
+            y1={y}
+            x2="39"
+            y2={y}
+            stroke={stroke.color}
+            strokeWidth={Math.min(7, Math.max(1.5, stroke.width || 3))}
+            strokeLinecap="round"
+            strokeDasharray={stroke.dasharray || undefined}
+          />
+        );
+      })}
+    </svg>
+  );
+};
 
 const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
   const {
@@ -14,9 +63,10 @@ const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
     showLandlineLayer,
     existingTrails,
     proposedTrails,
+    landlines,
   } = useContext(LayerContext);
 
-  const { existingItems, plannedItems, landlineItem } = useMemo(() => {
+  const { existingItems, plannedItems, landlineItems } = useMemo(() => {
     const existing = [];
     const planned = [];
 
@@ -39,18 +89,10 @@ const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
       });
     });
 
-    const landline = showLandlineLayer
-      ? {
-          key: "landline",
-          label: "LandLine Regional Greenway",
-          color: LANDLINE_SWATCH_COLOR,
-        }
-      : null;
-
     return {
       existingItems: existing,
       plannedItems: planned,
-      landlineItem: landline,
+      landlineItems: showLandlineLayer ? getLandlineLegendItems(landlines) : [],
     };
   }, [
     trailLayers,
@@ -58,24 +100,19 @@ const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
     showLandlineLayer,
     existingTrails,
     proposedTrails,
+    landlines,
   ]);
 
   const hasLegendContent =
-    existingItems.length > 0 || plannedItems.length > 0 || landlineItem;
+    existingItems.length > 0 || plannedItems.length > 0 || landlineItems.length > 0;
 
   if (!hasLegendContent) {
     return null;
   }
 
-  const renderItem = (item, dashed = false) => (
+  const renderTrailItem = (item, dashed = false) => (
     <li key={item.key} className="MapTrailLegend__item">
-      <span
-        className={`MapTrailLegend__swatch${
-          dashed ? " MapTrailLegend__swatch--dashed" : ""
-        }`}
-        style={{ "--swatch-color": item.color }}
-        aria-hidden="true"
-      />
+      <TrailSwatch color={item.color} dashed={dashed || item.dashed} />
       <span className="MapTrailLegend__label">{item.label}</span>
     </li>
   );
@@ -88,7 +125,9 @@ const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
     return (
       <div className="MapTrailLegend__section">
         <h4 className="MapTrailLegend__section-title">{title}</h4>
-        <ul className="MapTrailLegend__list">{items.map((item) => renderItem(item, dashed))}</ul>
+        <ul className="MapTrailLegend__list">
+          {items.map((item) => renderTrailItem(item, dashed))}
+        </ul>
       </div>
     );
   };
@@ -101,10 +140,17 @@ const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
     >
       {renderSection("Existing", existingItems)}
       {renderSection("Planned", plannedItems, true)}
-      {landlineItem && (
+      {landlineItems.length > 0 && (
         <div className="MapTrailLegend__section">
-          <h4 className="MapTrailLegend__section-title">Other</h4>
-          <ul className="MapTrailLegend__list">{renderItem(landlineItem)}</ul>
+          <h4 className="MapTrailLegend__section-title">LandLine</h4>
+          <ul className="MapTrailLegend__list">
+            {landlineItems.map((item) => (
+              <li key={item.key} className="MapTrailLegend__item">
+                <LandlineSwatch item={item} />
+                <span className="MapTrailLegend__label">{item.label}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </CollapsibleTrailLegend>
