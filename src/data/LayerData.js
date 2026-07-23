@@ -722,5 +722,6 @@ const LayerData = {
     }
   ]
 };
-
+// the style for the landline layer is at:
+// https://tiles.arcgis.com/tiles/c5WwApDsDjRhIVkH/arcgis/rest/services/land_lines/VectorTileServer/resources/styles/root.json
 export default LayerData;

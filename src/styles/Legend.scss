@@ -1,8 +1,32 @@
 .Legend {
   height: 400px;
   margin-top: -2rem;
+  overflow-y: auto;
 
   &Item {
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+
+    &__swatch {
+      flex-shrink: 0;
+      width: 1.75rem;
+      height: 3px;
+      margin-top: 0.45rem;
+      border-radius: 2px;
+      background-color: var(--swatch-color);
+
+      &--dashed {
+        background-color: transparent;
+        background-image: repeating-linear-gradient(
+          90deg,
+          var(--swatch-color),
+          var(--swatch-color) 3px,
+          transparent 3px,
+          transparent 5px
+        );
+      }
+    }
+
     &__label {
       font-family: $layer-font;
       font-size: $layer-font-size;

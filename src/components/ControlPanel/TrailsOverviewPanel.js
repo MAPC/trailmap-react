@@ -149,7 +149,7 @@ const TrailsOverviewPanel = () => {
         />
         <a
           className="TrailsOverviewPanel__landline-link"
-          href="https://mapc.github.io/embedded-map/"
+          href="https://www.mapc.org/transportation/landline/"
           target="_blank"
           rel="noopener noreferrer"
         >

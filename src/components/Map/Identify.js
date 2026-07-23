@@ -6,7 +6,13 @@ import editIcon from "../../assets/icons/edit-icon.svg";
 import { ModalContext } from "../../App";
 import muniKeys from "../../data/ma_muni_keys.json";
 
-const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) => {
+const Identify = ({
+  point,
+  identifyResult,
+  handleShowPopup,
+  handleCarousel,
+  showContribute = true,
+}) => {
   const { showEditModal, toggleEditModal } = useContext(ModalContext);
   const [carouselIndex, setCarouselIndex] = useState(0);
 
@@ -43,6 +49,9 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
     return Number.isFinite(parsed) ? parsed.toFixed(2) : "";
   };
 
+  const getOpeningDate = (attributes) =>
+    getAttributeValue(attributes, ["open_date", "Facility Opening Date"]);
+
   const identifyLayer = [];
   const identifyAttributes = [];
   const identifyTrailName = [];
@@ -59,14 +68,12 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
         element.attributes["muni_id"] || element.attributes["Municipal ID"] || null
       ) ?? ""
     );
-    identifyDate.push(
-      getAttributeValue(element.attributes, ["open_date", "Facility Opening Date"])
-    );
+    identifyDate.push(getOpeningDate(element.attributes));
     identifyLength.push(getLengthFeet(element.attributes));
   });
-
   const carouselItems = [];
   for (let i = 0; i < identifyResult.length; i++) {
+    const isLandline = identifyResult[i]?.layerId === "landline";
     carouselItems.push(
       <Carousel.Item key={i}>
         {(identifyTrailName[i] && <span className="Popup__name ">Name: {identifyTrailName[i]}</span>) ||
@@ -79,8 +86,10 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
           (!identifyLayer[i] && <span className="Popup__layer Popup__section">Type: N/A</span>)}
         {(identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: {identifyMunicipality[i]}</span>) ||
           (!identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: N/A</span>)}
-        {(identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
-          (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)}
+        {!isLandline && (
+          (identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
+          (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)
+        )}
         {(identifyLength[i] && <span className="Popup__info Popup__section">Length: {identifyLength[i]} ft</span>) ||
            (!identifyLength[i] && <span className="Popup__info Popup__section">Length: N/A</span>)}
       </Carousel.Item>
@@ -110,14 +119,16 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
       >
         {carouselItems}
       </Carousel>
-      <Button
-        className="identify-contribute-btn"
-        onClick={() => {
-          toggleEditModal(true);
-        }}
-      >
-        <img src={editIcon} alt={"Contribute Data"}></img>
-      </Button>
+      {showContribute && (
+        <Button
+          className="identify-contribute-btn"
+          onClick={() => {
+            toggleEditModal(true);
+          }}
+        >
+          <img src={editIcon} alt={"Contribute Data"}></img>
+        </Button>
+      )}
     </Popup>
   );
 };
