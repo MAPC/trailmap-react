@@ -3,7 +3,7 @@ export const MOBILE_NAV_MAX_WIDTH = 680;
 export const HEADER_NAV_ITEMS = [
   {
     id: "trails",
-    label: "Trails Overview",
+    label: "Regional Trail Map",
     path: "/",
     icon: "bi-map-fill",
   },
@@ -23,7 +23,7 @@ export const HEADER_NAV_ITEMS = [
   },
   {
     id: "regional",
-    label: "Regional Trails Profiles",
+    label: "Trails Profiles",
     path: "/projectTrailsProfile",
     icon: "bi-graph-up",
     hideOnMobile: true,
