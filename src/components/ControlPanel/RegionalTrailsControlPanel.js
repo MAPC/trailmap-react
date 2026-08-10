@@ -66,7 +66,6 @@ const RegionalTrailsControlPanel = ({
 
   return (
     <div className="ControlPanel ControlPanel--regional text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto project-trails-profile">
-      <div className="ControlPanel_opacity position-fixed" />
       <ProjectTrailsProfile
         regNames={regNames.length > 0 ? regNames : projectRegNames ?? []}
         selectedRegNames={

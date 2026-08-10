@@ -30,7 +30,7 @@ const fittedMapcViewport = new WebMercatorViewport({
   { padding: 48 }
 );
 
-/** Default Trails Overview camera centered on the MAPC region. */
+/** Default Regional Trail Map camera centered on the MAPC region. */
 export const MAPC_OVERVIEW_VIEWPORT = {
   latitude: fittedMapcViewport.latitude,
   longitude: fittedMapcViewport.longitude,

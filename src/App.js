@@ -61,7 +61,7 @@ const App = () => {
   const [municipalityTrails, setMunicipalityTrails] = useState([]);
 
   // Derive profile mode from URL so refresh on /communityTrailsProfile?muni=...
-  // (or /projectTrailsProfile) opens the correct map, not Trails Overview.
+  // (or /projectTrailsProfile) opens the correct map, not Regional Trail Map.
   const isCommunityProfilePath = location.pathname === "/communityTrailsProfile";
   const isProjectProfilePath = location.pathname === "/projectTrailsProfile";
 

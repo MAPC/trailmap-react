@@ -11,24 +11,8 @@ export const isIntroModalDismissed = () =>
 
 const INTRO_CARDS = [
   {
-    id: "community",
-    title: "Community Profile",
-    description:
-      "Dive into one municipality — trail miles, build-out, and how it compares across the region.",
-    iconClass: "bi-people-fill",
-    accent: "community",
-  },
-  {
-    id: "regional",
-    title: "Regional Trails Profile",
-    description:
-      "Follow named trail networks like the Mass Central Rail Trail across community lines.",
-    iconClass: "bi-signpost-split-fill",
-    accent: "regional",
-  },
-  {
     id: "map",
-    title: "Trails Overview",
+    title: "Regional Trail Map",
     description: "Jump straight to the full interactive map and toggle every trail type yourself.",
     iconClass: "bi-map-fill",
     accent: "map",
@@ -40,6 +24,22 @@ const INTRO_CARDS = [
       "Explore regional trail metrics and insights across Metro Boston.",
     iconClass: "bi-grid-fill",
     accent: "dashboard",
+  },
+  {
+    id: "community",
+    title: "Community Profile",
+    description:
+      "Dive into one municipality — trail miles, build-out, and how it compares across the region.",
+    iconClass: "bi-people-fill",
+    accent: "community",
+  },
+  {
+    id: "regional",
+    title: "Trails Profiles",
+    description:
+      "Follow named trail networks like the Mass Central Rail Trail across community lines.",
+    iconClass: "bi-signpost-split-fill",
+    accent: "regional",
   },
 ];
 
