@@ -7,6 +7,7 @@ import {
   TRAIL_LAYER_CATEGORIES,
   LANDLINE_SWATCH_COLOR,
   getLayerColor,
+  getLayerLabel,
   getExistingLayerIds,
   getProposedLayerIds,
 } from "./trailLayerConfig";
@@ -37,7 +38,7 @@ const TrailsOverviewPanel = () => {
         const sourceLayers = layerType === "existing" ? existingTrails : proposedTrails;
         return {
           id,
-          label: item.label,
+          label: getLayerLabel(sourceLayers, id),
           color: getLayerColor(sourceLayers, id),
           dashed: layerType === "planned",
         };

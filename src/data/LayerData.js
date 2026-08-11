@@ -19,7 +19,7 @@ const LayerData = {
     },
     {
       id: 'unimprovedPaths',
-      'esri-id': 10,
+      'esri-id': 11,
       label: 'Existing Unimproved Shared Use Paths',
       type: 'line',
       'source-layer': 'Existing Unimproved Shared Use Paths',
@@ -121,7 +121,7 @@ const LayerData = {
     },
     {
       id: 'unimprovedPathsProposed',
-      'esri-id': 11,
+      'esri-id': 10,
       label: 'Proposed Unimproved Shared Use Paths',
       type: 'line',
       'source-layer': 'Proposed Unimproved Shared Use Paths',

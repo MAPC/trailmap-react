@@ -2,22 +2,22 @@ export const TRAIL_LAYER_CATEGORIES = [
   {
     title: "SHARED-USE PATHS",
     items: [
-      { existingId: "pavedPaths", proposedId: "pavedPathsProposed", label: "Existing Paved Shared Use Paths" },
-      { existingId: "unimprovedPaths", proposedId: "unimprovedPathsProposed", label: "Existing Unimproved Shared Use Paths" },
+      { existingId: "pavedPaths", proposedId: "pavedPathsProposed" },
+      { existingId: "unimprovedPaths", proposedId: "unimprovedPathsProposed" },
     ],
   },
   {
     title: "BIKE FACILITIES",
     items: [
-      { existingId: "bikeLane", proposedId: "bikeLaneProposed", label: "Existing Bike Lanes" },
-      { existingId: "protectedBikeLane", proposedId: "protectedBikeLaneProposed", label: "Existing Protected Bike Lanes" },
+      { existingId: "bikeLane", proposedId: "bikeLaneProposed" },
+      { existingId: "protectedBikeLane", proposedId: "protectedBikeLaneProposed" },
     ],
   },
   {
     title: "FOOT PATHS",
     items: [
-      { existingId: "pavedFootway", proposedId: "pavedFootwayProposed", label: "Paved Footway" },
-      { existingId: "naturalSurfaceFootway", proposedId: "naturalSurfaceFootwayProposed", label: "Natural Surface Footway" },
+      { existingId: "pavedFootway", proposedId: "pavedFootwayProposed" },
+      { existingId: "naturalSurfaceFootway", proposedId: "naturalSurfaceFootwayProposed" },
     ],
   },
 ];
@@ -199,6 +199,11 @@ export const getLandlineLegendItems = (landlineLayers = []) => {
 export const getLayerColor = (layers, layerId) => {
   const layer = layers.find((l) => l.id === layerId);
   return layer?.paint?.["line-color"] || "#505150";
+};
+
+export const getLayerLabel = (layers, layerId) => {
+  const layer = layers.find((l) => l.id === layerId);
+  return layer?.label || layerId;
 };
 
 export const getExistingLayerIds = () =>
