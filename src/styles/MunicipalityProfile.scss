@@ -955,142 +955,215 @@
 
 // Completion Rates Modal Styles
 .CompletionRatesModal {
+  .modal-dialog {
+    width: min(1100px, calc(100vw - 2rem)) !important;
+    max-width: min(1100px, calc(100vw - 2rem));
+    margin-left: auto;
+    margin-right: auto;
+  }
+
   .modal-header {
-    border-bottom: 2px solid #dee2e6;
-    
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid #e5e7eb;
+
     .modal-title {
-      font-size: 1.25rem;
+      font-size: 1.05rem;
       font-weight: 600;
+      line-height: 1.25;
     }
   }
 
-  .modal-body {
-    padding: 1.5rem;
-    
-    // Smooth scroll
+  &__body {
+    padding: 0.9rem 1.1rem 1rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
     scroll-behavior: smooth;
-    
-    // Custom scrollbar
+
     &::-webkit-scrollbar {
-      width: 10px;
+      width: 8px;
     }
-    
+
     &::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 5px;
+      background: #f3f4f6;
+      border-radius: 4px;
     }
-    
+
     &::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 5px;
-    }
-    
-    &::-webkit-scrollbar-thumb:hover {
-      background: #555;
+      background: #9ca3af;
+      border-radius: 4px;
     }
   }
 
-  .modal-footer {
-    border-top: 2px solid #dee2e6;
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 1.1rem;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
   }
 
-  // Card styles
-  .card {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-    background-color: #ffffff;
-    margin-bottom: 0;
-    
-    &:hover {
-      cursor: default;
-    }
+  &__summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 0.85rem;
   }
 
-  // Completion Rate Card with hover effect - compact horizontal layout
-  .completion-rate-card {
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  &__summaryItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.55rem 0.7rem;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+
+  &__summaryLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+
+  &__summaryValue {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__summaryHint {
+    font-size: 0.7rem;
+    color: #9ca3af;
+  }
+
+  &__help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #0070cd;
+    cursor: help;
+    font-size: 0.85em;
+    line-height: 1;
+  }
+
+  &__sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.45rem;
+  }
+
+  &__sectionTitle {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  &__tableWrap {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
     overflow: hidden;
-    background-color: #ffffff;
-    
-    &:hover {
-      transform: translateX(4px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
-    }
+  }
 
-    .card-body {
-      padding: 0.75rem !important;
-    }
+  &__table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    table-layout: auto;
 
-    // Progress bar
-    .progress {
-      background-color: #e9ecef;
-    }
-
-    // Ensure text doesn't wrap awkwardly
-    .text-truncate {
-      overflow: hidden;
-      text-overflow: ellipsis;
+    th,
+    td {
+      padding: 0.45rem 0.55rem;
+      border-bottom: 1px solid #eef2f7;
+      vertical-align: middle;
       white-space: nowrap;
     }
-  }
 
-  // Compact row spacing
-  .row.g-2 {
-    margin-left: -0.25rem;
-    margin-right: -0.25rem;
+    thead th {
+      background: #f8fafc;
+      color: #6b7280;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
 
-    > [class*="col-"] {
-      padding-left: 0.25rem;
-      padding-right: 0.25rem;
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover td {
+      background: #f9fafb;
+    }
+
+    td:first-child,
+    th:first-child {
+      text-align: left;
+      white-space: nowrap;
+      width: 1%;
+      max-width: none;
+      min-width: 0;
     }
   }
 
-  // Progress bar animation
-  .progress-bar {
-    animation: progressAnimation 1s ease-in-out;
+  &__swatch {
+    display: inline-block;
+    width: 0.35rem;
+    height: 0.9rem;
+    margin-right: 0.45rem;
+    border-radius: 2px;
+    vertical-align: middle;
   }
 
-  @keyframes progressAnimation {
-    from {
-      width: 0;
-    }
-  }
+  &__num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: #374151;
 
-  // Alert styling
-  .alert {
-    border-radius: 8px;
-    border: none;
-    
-    &.alert-info {
-      background-color: #cfe2ff;
-      color: #084298;
-    }
-    
-    &.alert-warning {
-      background-color: #fff3cd;
-      color: #664d03;
+    &--strong {
+      font-weight: 700;
+      color: #111827;
     }
   }
 
-  // Statistics cards alignment
-  .alert-light {
-    .row.g-3 {
-      .col-md-4 {
-        .text-center {
-          .fw-bold.fs-5 {
-            font-family: 'Courier New', monospace; // Use monospace font for numbers
-            text-align: center;
-            display: block;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-        }
-      }
+  &__rate {
+    font-weight: 700;
+
+    &--high {
+      color: #198754;
     }
+
+    &--mid {
+      color: #d97706;
+    }
+
+    &--low {
+      color: #dc3545;
+    }
+  }
+
+  &__unitsNote {
+    margin: 0.4rem 0 0;
+    font-size: 0.68rem;
+    color: #9ca3af;
   }
 }
 
-// Responsive adjustments
 @media (max-width: 768px) {
   .MunicipalityProfile {
     &__trail-list {
@@ -1100,26 +1173,30 @@
 
   .CompletionRatesModal {
     .modal-dialog {
+      width: calc(100vw - 1rem) !important;
+      max-width: calc(100vw - 1rem);
       margin: 0.5rem;
     }
-    
-    .modal-body {
-      padding: 1rem;
+
+    &__summary {
+      grid-template-columns: 1fr;
     }
-    
-    // Stack cards on mobile
-    .col-md-6 {
-      margin-bottom: 1rem;
+
+    &__body {
+      padding: 0.75rem;
+      max-height: 65vh;
     }
-    
-    // Adjust card font sizes on mobile
-    .card {
-      .card-title {
-        font-size: 0.85rem !important;
-      }
-      
-      .fw-bold {
-        font-size: 1.5rem !important;
+
+    &__tableWrap {
+      overflow-x: auto;
+    }
+
+    &__table {
+      font-size: 0.74rem;
+
+      th,
+      td {
+        padding: 0.4rem 0.45rem;
       }
     }
   }
@@ -1128,74 +1205,11 @@
 @media (max-width: 576px) {
   .CompletionRatesModal {
     .modal-title {
-      font-size: 1rem !important;
-      
-      span:first-child {
-        font-size: 1.2rem;
-      }
+      font-size: 0.95rem !important;
     }
-    
-    .modal-body {
-      padding: 0.75rem;
-      max-height: 60vh !important;
-    }
-    
-    // Full width cards on small mobile
-    .col-12 {
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
-    }
-    
-    .card-body {
-      padding: 0.75rem !important;
-    }
-  }
-}
 
-// Large screen adjustments
-@media (min-width: 1200px) {
-  .CompletionRatesModal {
-    .modal-dialog {
-      max-width: 90vw;
-      width: 90vw;
-    }
-    
-    .modal-body {
-      padding: 2rem;
-    }
-    
-    // Keep 2 columns on large screens for better readability
-    .col-md-6 {
-      flex: 0 0 50%;
-      max-width: 50%;
-    }
-  }
-}
-
-// Extra large screen adjustments
-@media (min-width: 1400px) {
-  .CompletionRatesModal {
-    .modal-dialog {
-      max-width: 85vw;
-      width: 85vw;
-    }
-    
-    .modal-body {
-      padding: 2.5rem;
-    }
-  }
-}
-
-// Ultra wide screen adjustments
-@media (min-width: 1600px) {
-  .CompletionRatesModal {
-    .modal-dialog {
-      max-width: 80vw;
-      width: 80vw;
-    }
-    
-    .modal-body {
-      padding: 3rem;
+    &__body {
+      max-height: 60vh;
     }
   }
 }
@@ -1506,8 +1520,12 @@
   }
 }
 
-// Scoped so dashboard / other tooltips keep their own styles
+// Scoped so dashboard / other tooltips keep their own styles.
+// Must sit above .modal (z-index: 1200 in Models.scss) so help icons
+// inside Completion Rates / other modals are visible.
 .tooltip.MunicipalityProfile__tooltip {
+  z-index: 1300;
+
   &.show {
     opacity: 1;
   }

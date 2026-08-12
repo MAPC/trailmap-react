@@ -14,7 +14,7 @@ import TrailLegend from "./TrailLegend";
 import BufferAnalysisWindow from "../BufferAnalysisWindow";
 import { LayerContext } from "../../App";
 import massachusettsData from "../../data/massachusetts.json";
-import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
+import { mapcTrailLayers } from "./constants/mapcTrailLayersConfig";
 const DEFAULT_BUFFER_RADIUS = 1609; // 1 mile in meters
 import { queryMunicipalityTrails } from "./utils/trailQueries";
 import { calculateBufferAnalysis } from "./utils/bufferAnalysis";
@@ -128,7 +128,7 @@ const CommunityTrailsProfile = ({
   const [visibleTrailTypes, setVisibleTrailTypes] = useState(() => {
     // Initialize all trail types as visible by default
     const initialVisibility = {};
-    geojsonTrailLayers.forEach(layer => {
+    mapcTrailLayers.forEach(layer => {
       initialVisibility[layer.id] = true;
     });
     return initialVisibility;
@@ -270,7 +270,7 @@ const CommunityTrailsProfile = ({
       setBufferPreviewCenter(null);
       // Reset trail type visibility to all visible
       const resetVisibility = {};
-      geojsonTrailLayers.forEach(layer => {
+      mapcTrailLayers.forEach(layer => {
         resetVisibility[layer.id] = true;
       });
       setVisibleTrailTypes(resetVisibility);
@@ -430,7 +430,7 @@ const CommunityTrailsProfile = ({
         interactiveLayerIds={[
           ...(showTransitLandStops ? ['transit-land-stops'] : []),
           "municipality-profile-base",
-          ...geojsonTrailLayers.flatMap((layer) => [
+          ...mapcTrailLayers.flatMap((layer) => [
             `geojson-trail-${layer.id}`,
             `geojson-trail-hover-${layer.id}`,
           ]),
