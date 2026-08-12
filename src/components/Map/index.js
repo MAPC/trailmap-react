@@ -26,9 +26,6 @@ import * as turf from "@turf/turf";
 import CommunityTrailsProfile from "./CommunityTrailsProfile";
 import OriginalTrailsMap from "./OriginalTrailsMap";
 import ProjectTrailsProfile from "./ProjectTrailsProfile";
-// Extracted constants
-import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
-
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
 const LANDLINE_SOURCE = process.env.REACT_APP_LANDLINE_TILE_URL;

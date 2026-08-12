@@ -17,11 +17,11 @@ import {
   fetchAllMunicipalityTrailMetrics,
 } from "../../utils/trailMetricsDashboard";
 import {
-  geojsonTrailLayers,
+  mapcTrailLayers,
   getTrailStatus,
-  trailFacilityTypePairs,
+  mapcTrailFacilityPairs,
   TRAIL_STATUS,
-} from "../Map/constants/geojsonTrailLayers";
+} from "../Map/constants/mapcTrailLayersConfig";
 
 const milesToFeet = (miles) => (Number(miles) || 0) * 5280;
 
@@ -32,7 +32,6 @@ const emptyTrailStats = () => ({
   plannedLength: 0,
   proposedLength: 0,
   byType: {},
-  completionRates: {},
   density: 0,
   area: 0,
 });
@@ -54,7 +53,7 @@ const buildTrailStatsFromMetricsRow = (row) => {
   stats.density =
     row.density != null ? parseFloat(Number(row.density).toFixed(2)) : 0;
 
-  geojsonTrailLayers.forEach((layer) => {
+  mapcTrailLayers.forEach((layer) => {
     const key = COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS[layer.id];
     const length = key ? milesToFeet(row[key]) : 0;
     stats.byType[layer.name] = {
@@ -64,31 +63,6 @@ const buildTrailStatsFromMetricsRow = (row) => {
       status: layer.status,
       layerId: layer.id,
     };
-  });
-
-  trailFacilityTypePairs.forEach(({ existingId, otherIds, label }) => {
-    const existingLayer = geojsonTrailLayers.find((l) => l.id === existingId);
-    const existingPairLength = existingLayer
-      ? stats.byType[existingLayer.name]?.length || 0
-      : 0;
-
-    let otherLength = 0;
-    otherIds.forEach((id) => {
-      const otherLayer = geojsonTrailLayers.find((l) => l.id === id);
-      if (otherLayer) {
-        otherLength += stats.byType[otherLayer.name]?.length || 0;
-      }
-    });
-
-    const total = existingPairLength + otherLength;
-    if (total > 0) {
-      stats.completionRates[label] = {
-        existing: existingPairLength,
-        planned: otherLength,
-        total,
-        rate: (existingPairLength / total) * 100,
-      };
-    }
   });
 
   return stats;
@@ -736,7 +710,7 @@ const MunicipalityProfile = ({
           className="w-100 MunicipalityProfile__summaryButton"
           onClick={() => setShowCompletionModal(true)}
         >
-          View Trail Details & Completion Rates
+          View Trail Network Details
         </Button>
       </div>
     );
@@ -957,7 +931,7 @@ const MunicipalityProfile = ({
   const getTrailTypeStatusRows = (stats) => {
     if (!stats?.byType) return [];
 
-    return trailFacilityTypePairs
+    return mapcTrailFacilityPairs
       .map(({ existingId, otherIds, label }) => {
         const layerIds = [existingId, ...otherIds];
         const lengths = {
@@ -968,7 +942,7 @@ const MunicipalityProfile = ({
         let color = "#888";
 
         layerIds.forEach((layerId) => {
-          const layer = geojsonTrailLayers.find((l) => l.id === layerId);
+          const layer = mapcTrailLayers.find((l) => l.id === layerId);
           if (!layer) return;
 
           const length = stats.byType[layer.name]?.length || 0;
@@ -990,11 +964,14 @@ const MunicipalityProfile = ({
           existing: lengths[TRAIL_STATUS.EXISTING],
           planned: lengths[TRAIL_STATUS.PLANNED],
           proposed: lengths[TRAIL_STATUS.PROPOSED],
+          rate: total > 0 ? (lengths[TRAIL_STATUS.EXISTING] / total) * 100 : 0,
         };
       })
       .filter((row) => row.total > 0)
       .sort((a, b) => b.total - a.total);
   };
+
+  const trailTypeStatusRows = getTrailTypeStatusRows(trailStats);
 
   const runTrailGeoJSONDownloads = (trails, option = 'both', filenameSuffix = '') => {
     if (!selectedMunicipality || !trails || trails.length === 0) {
@@ -1370,12 +1347,11 @@ const MunicipalityProfile = ({
         centered
         scrollable
         className="CompletionRatesModal"
-        style={{ maxWidth: '90vw' }}
       >
         <Modal.Header closeButton className="bg-light">
           <Modal.Title className="w-100">
               <div>
-                <span>Trail Network Completion Rates</span>
+                <span>Trail Network Details</span>
                 {selectedMunicipality && (
                   <div className="text-muted fs-6 fw-normal mt-1">
                     {capitalizeWords(selectedMunicipality.name)}
@@ -1384,196 +1360,152 @@ const MunicipalityProfile = ({
             </div>
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-          {selectedMunicipality && (
-            <div className="alert alert-info mb-4">
-              <div className="d-flex align-items-start">
-                <div className="small">
-                  <strong>Completion Rate</strong> shows the percentage of existing trails compared to the total network (existing + planned + proposed).
-                  Higher percentages indicate more trail infrastructure is already built.
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Trail Density Information */}
+        <Modal.Body className="CompletionRatesModal__body">
           {trailStats && (
-            <div className="alert alert-light mb-4">
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <div className="text-center">
-                    <div className="text-muted small">Total Length (existing + planned + proposed)</div>
-                    <div className="fw-bold fs-5">{formatLength(trailStats.totalLength)} mi</div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="text-center">
-                    <div className="text-muted small d-flex align-items-center justify-content-center">
-                      Trail Density (existing only)
-                      <OverlayTrigger
-                        placement="top"
-                        overlay={
-                          <Tooltip id="density-modal-tooltip" className="MunicipalityProfile__tooltip">
-                            Trail Density = Existing Trails Length (miles) / Municipality Area (sq miles)
-                          </Tooltip>
-                        }
-                      >
-                        <span 
-                          className="ms-1" 
-                          style={{ cursor: 'help', fontSize: '0.85em', color: '#0070cd', display: 'inline-block' }}
-                          role="button"
-                          tabIndex={0}
-                        >
-                          <i className="fas fa-question-circle"></i>
-                        </span>
-                      </OverlayTrigger>
-                    </div>
-                    <div className="fw-bold fs-5">{trailStats.density} mi/mi²</div>
-                  </div>
-                </div>
+            <div className="CompletionRatesModal__summary">
+              <div className="CompletionRatesModal__summaryItem">
+                <span className="CompletionRatesModal__summaryLabel">Total length</span>
+                <span className="CompletionRatesModal__summaryValue">
+                  {formatLength(trailStats.totalLength)} mi
+                </span>
+                <span className="CompletionRatesModal__summaryHint">
+                  existing + planned + proposed
+                </span>
+              </div>
+              <div className="CompletionRatesModal__summaryItem">
+                <span className="CompletionRatesModal__summaryLabel">
+                  Trail density
+                  <OverlayTrigger
+                    placement="bottom"
+                    overlay={
+                      <Tooltip id="density-modal-tooltip" className="MunicipalityProfile__tooltip">
+                        Trail Density = Existing Trails Length (miles) / Municipality Area (sq miles)
+                      </Tooltip>
+                    }
+                  >
+                    <span
+                      className="CompletionRatesModal__help"
+                      role="button"
+                      tabIndex={0}
+                      aria-label="About trail density"
+                    >
+                      <i className="fas fa-question-circle" aria-hidden="true" />
+                    </span>
+                  </OverlayTrigger>
+                </span>
+                <span className="CompletionRatesModal__summaryValue">
+                  {trailStats.density} mi/mi²
+                </span>
+                <span className="CompletionRatesModal__summaryHint">
+                  existing trails per sq mile
+                </span>
               </div>
             </div>
           )}
 
-          {/* All Trail Types Section */}
-          {trailStats && Object.keys(trailStats.byType).length > 0 && (
-            <div className="mb-4">
-              <h6 className="fw-bold mb-3 d-flex align-items-center">
-                All Trail Types in {selectedMunicipality && capitalizeWords(selectedMunicipality.name)}
-              </h6>
-              <div className="row g-3">
-                {getTrailTypeStatusRows(trailStats).map((row) => (
-                  <div key={row.label} className="col-12 col-md-6">
-                    <div className="card border shadow-sm h-100">
-                      <div className="card-body p-3">
-                        <div className="d-flex align-items-start">
-                          <div
-                            style={{
-                              width: "4px",
-                              backgroundColor: row.color,
-                              marginRight: "12px",
-                              borderRadius: "2px",
-                              minHeight: "48px",
-                              alignSelf: "stretch",
-                            }}
-                          />
-                          <div className="flex-grow-1">
-                            <h6
-                              className="mb-2 fw-semibold"
-                              style={{ fontSize: "0.9rem", lineHeight: 1.3 }}
-                            >
-                              {row.label}
-                            </h6>
-                            <div className="text-muted small" style={{ fontSize: "0.7rem" }}>
-                              TOTAL LENGTH
-                            </div>
-                            <div className="fw-bold" style={{ fontSize: "1.1rem" }}>
-                              {formatLength(row.total)} mi
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Completion Rates Section */}
-          {trailStats && trailStats.completionRates && Object.keys(trailStats.completionRates).length > 0 && (
-            <>
-              <h6 className="fw-bold mb-3 d-flex align-items-center">
-                Trail Network Completion Rates
-              </h6>
-              <div className="row g-2">
-              {Object.entries(trailStats.completionRates)
-                .sort(([, a], [, b]) => b.rate - a.rate)
-                .map(([type, data], index) => (
-                  <div 
-                    key={type} 
-                    className="col-12 mb-2"
+          {trailStats && trailTypeStatusRows.length > 0 && (
+            <div className="CompletionRatesModal__section">
+              <div className="CompletionRatesModal__sectionHeader">
+                <h6 className="CompletionRatesModal__sectionTitle">
+                  Trail types by status
+                </h6>
+                <OverlayTrigger
+                  placement="bottom"
+                  overlay={
+                    <Tooltip id="completion-rate-help-tooltip" className="MunicipalityProfile__tooltip">
+                      For each trail type, Existing, Planned, and Proposed miles
+                      are shown separately. Completion rate is existing miles ÷ total
+                      miles (existing + planned + proposed).
+                    </Tooltip>
+                  }
+                >
+                  <span
+                    className="CompletionRatesModal__help"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="About completion rate"
                   >
-                    <div className="completion-rate-card card shadow-sm border-0">
-                      <div className="card-body p-2">
-                        <div className="d-flex align-items-center justify-content-between">
-                          {/* Left side: Type name and progress */}
-                          <div className="flex-grow-1 pe-3" style={{ minWidth: 0 }}>
-                            <div className="d-flex align-items-center mb-2">
-                              <h6 className="mb-0 fw-semibold text-truncate" style={{ fontSize: '0.85rem' }}>
-                                {type.replace(/^Existing\s+/, "")}
-                              </h6>
-                            </div>
-                            <div className="progress mb-2" style={{ height: '8px', borderRadius: '4px' }}>
-                              <div 
-                                className={`progress-bar ${
-                                  data.rate >= 75 ? 'bg-success' : 
-                                  data.rate >= 50 ? 'bg-warning' : 
-                                  'bg-danger'
-                                }`}
-                                role="progressbar" 
-                                style={{ 
-                                  width: `${data.rate}%`,
-                                  transition: 'width 0.6s ease'
-                                }}
-                                aria-valuenow={data.rate} 
-                                aria-valuemin="0" 
-                                aria-valuemax="100"
-                              ></div>
-                            </div>
-                            <div className="d-flex align-items-center small" style={{ fontSize: '0.75rem' }}>
-                              <span className="text-success me-3">
-                                <strong>Existing:</strong> {formatLength(data.existing)} mi
-                              </span>
-                              <span className="text-warning me-3">
-                                <strong>Planned/Proposed:</strong> {formatLength(data.planned)} mi
-                              </span>
-                              <span className="text-muted">
-                                <strong>Total:</strong> {formatLength(data.total)} mi
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Right side: Percentage */}
-                          <div className="text-end" style={{ minWidth: '80px' }}>
-                            <div className="fw-bold" style={{ 
-                              fontSize: '1.5rem',
-                              lineHeight: '1',
-                              color: data.rate >= 75 ? '#198754' : data.rate >= 50 ? '#fd7e14' : '#dc3545'
-                            }}>
-                              {data.rate.toFixed(1)}%
-                            </div>
-                            <div className="small text-muted" style={{ fontSize: '0.65rem' }}>
-                              Complete
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    <i className="fas fa-question-circle" aria-hidden="true" />
+                  </span>
+                </OverlayTrigger>
               </div>
-            </>
+
+              <div className="CompletionRatesModal__tableWrap">
+                <table className="CompletionRatesModal__table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Trail type</th>
+                      <th scope="col" className="CompletionRatesModal__num">
+                        Existing
+                      </th>
+                      <th scope="col" className="CompletionRatesModal__num">
+                        Planned
+                      </th>
+                      <th scope="col" className="CompletionRatesModal__num">
+                        Proposed
+                      </th>
+                      <th scope="col" className="CompletionRatesModal__num">
+                        Total
+                      </th>
+                      <th scope="col" className="CompletionRatesModal__num">
+                        Completion rate
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trailTypeStatusRows.map((row) => {
+                      const rateTone =
+                        row.rate >= 75
+                          ? "high"
+                          : row.rate >= 50
+                            ? "mid"
+                            : "low";
+                      return (
+                        <tr key={row.label}>
+                          <td>
+                            <span
+                              className="CompletionRatesModal__swatch"
+                              style={{ backgroundColor: row.color }}
+                              aria-hidden="true"
+                            />
+                            {row.label}
+                          </td>
+                          <td className="CompletionRatesModal__num">
+                            {formatLength(row.existing)}
+                          </td>
+                          <td className="CompletionRatesModal__num">
+                            {formatLength(row.planned)}
+                          </td>
+                          <td className="CompletionRatesModal__num">
+                            {formatLength(row.proposed)}
+                          </td>
+                          <td className="CompletionRatesModal__num CompletionRatesModal__num--strong">
+                            {formatLength(row.total)}
+                          </td>
+                          <td
+                            className={`CompletionRatesModal__num CompletionRatesModal__rate CompletionRatesModal__rate--${rateTone}`}
+                          >
+                            {row.rate.toFixed(1)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="CompletionRatesModal__unitsNote">Lengths in miles</p>
+            </div>
           )}
         </Modal.Body>
-        <Modal.Footer className="bg-light">
-          <div className="w-100 d-flex justify-content-between align-items-center">
-            <div className="d-flex gap-2 align-items-center">
-              <small className="text-muted d-flex align-items-center">
-                {trailStats && (
-                  <>
-                    {Object.keys(trailStats.byType).filter(key => trailStats.byType[key].count > 0).length} trail type(s)
-                    {trailStats.completionRates && Object.keys(trailStats.completionRates).length > 0 && 
-                      ` • ${Object.keys(trailStats.completionRates).length} with completion data`
-                    }
-                  </>
-                )}
-              </small>
-            </div>
-            <Button variant="secondary" size="sm" onClick={() => setShowCompletionModal(false)}>
-              Close
-            </Button>
-          </div>
+        <Modal.Footer className="CompletionRatesModal__footer">
+          <small className="text-muted">
+            {`${trailTypeStatusRows.length} trail type${
+              trailTypeStatusRows.length === 1 ? "" : "s"
+            }`}
+          </small>
+          <Button variant="secondary" size="sm" onClick={() => setShowCompletionModal(false)}>
+            Close
+          </Button>
         </Modal.Footer>
       </Modal>
 

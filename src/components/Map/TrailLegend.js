@@ -2,7 +2,7 @@ import React from 'react';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import '../../styles/TrailLegend.scss';
-import { geojsonTrailLayers, TRAIL_STATUS } from './constants/geojsonTrailLayers';
+import { mapcTrailLayers, TRAIL_STATUS } from './constants/mapcTrailLayersConfig';
 
 const TrailLegend = ({
   visibleTrailTypes,
@@ -21,13 +21,13 @@ const TrailLegend = ({
     onToggleTrailType(layerId);
   };
 
-  const existingTrails = geojsonTrailLayers.filter(
+  const existingTrails = mapcTrailLayers.filter(
     (layer) => layer.status === TRAIL_STATUS.EXISTING
   );
-  const plannedTrails = geojsonTrailLayers.filter(
+  const plannedTrails = mapcTrailLayers.filter(
     (layer) => layer.status === TRAIL_STATUS.PLANNED
   );
-  const proposedTrails = geojsonTrailLayers.filter(
+  const proposedTrails = mapcTrailLayers.filter(
     (layer) => layer.status === TRAIL_STATUS.PROPOSED
   );
 

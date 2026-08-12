@@ -1,4 +1,4 @@
-import { geojsonTrailLayers } from "../constants/geojsonTrailLayers";
+import { mapcTrailLayers } from "../constants/mapcTrailLayersConfig";
 
 const FEATURE_SERVER_BASE = process.env.REACT_APP_TRAIL_MAP_FEATURE_SERVER_BASE;
 
@@ -134,7 +134,7 @@ export const queryMunicipalityTrails = async ({
 
   try {
     const allTrailResults = [];
-    const totalLayers = geojsonTrailLayers.length;
+    const totalLayers = mapcTrailLayers.length;
     const isCommunityTrailsProfile = location?.pathname === "/communityTrailsProfile";
     const esriPolygon = geojsonPolygonToEsriPolygon(municipality.geometry);
 
@@ -145,8 +145,8 @@ export const queryMunicipalityTrails = async ({
       return;
     }
 
-    for (let i = 0; i < geojsonTrailLayers.length; i++) {
-      const layer = geojsonTrailLayers[i];
+    for (let i = 0; i < mapcTrailLayers.length; i++) {
+      const layer = mapcTrailLayers[i];
       setLoadingMessage(`Querying ${layer.name}...`);
       setLoadingProgress((i / totalLayers) * 80);
 

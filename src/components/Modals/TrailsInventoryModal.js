@@ -11,7 +11,7 @@ import massachusettsData from "../../data/massachusetts.json";
 import MunicipalityMapLayer from "../Map/layers/MunicipalityMapLayer";
 import CommunityTrailsProfileLayers from "../Map/layers/CommunityTrailsProfileLayers";
 import TrailLegend from "../Map/TrailLegend";
-import { geojsonTrailLayers } from "../Map/constants/geojsonTrailLayers";
+import { mapcTrailLayers } from "../Map/constants/mapcTrailLayersConfig";
 import {
   buildInventoryTableModel,
   compareInventoryRowValues,
@@ -187,7 +187,7 @@ const TrailsInventoryModal = ({
 
   const mapAllLayersVisible = useMemo(() => {
     const v = {};
-    geojsonTrailLayers.forEach((l) => {
+    mapcTrailLayers.forEach((l) => {
       v[l.id] = true;
     });
     return v;

@@ -1,5 +1,7 @@
-// Layer definitions matching MapcTrails MapServer layer names/ids:
+// MapcTrails MapServer layer metadata (ids, labels, colors, status).
 // https://geo.mapc.org/server/rest/services/MapcTrails/MapServer
+//
+// Used for FeatureServer queries, community-profile metrics, legend, and styling.
 //
 // status:
 //   existing — built facilities (includes Paved Footway + Natural Surface Footway)
@@ -12,18 +14,17 @@ export const TRAIL_STATUS = {
   PROPOSED: "proposed",
 };
 
-export const geojsonTrailLayers = [
+/** MapServer layers 0–11: id, display name, map color, and build status. */
+export const mapcTrailLayers = [
   {
     id: 0,
     name: "Existing Protected Bike Lanes",
-    filename: "existing_protected_bike_lanes.json",
     color: "#2166AC",
     status: TRAIL_STATUS.EXISTING,
   },
   {
     id: 1,
     name: "Planned Protected Bike Lanes",
-    filename: "planned_protected_bike_lanes.json",
     color: "#2166AC",
     dashArray: [2, 2],
     status: TRAIL_STATUS.PLANNED,
@@ -31,14 +32,12 @@ export const geojsonTrailLayers = [
   {
     id: 2,
     name: "Existing Bike Lanes",
-    filename: "existing_bike_lanes.json",
     color: "#92C5DE",
     status: TRAIL_STATUS.EXISTING,
   },
   {
     id: 3,
     name: "Proposed Bike Lanes",
-    filename: "proposed_bike_lanes.json",
     color: "#92C5DE",
     dashArray: [2, 2],
     status: TRAIL_STATUS.PROPOSED,
@@ -46,14 +45,12 @@ export const geojsonTrailLayers = [
   {
     id: 4,
     name: "Paved Footway",
-    filename: "paved_footway.json",
     color: "#903366",
     status: TRAIL_STATUS.EXISTING,
   },
   {
     id: 5,
     name: "Proposed Paved Footway",
-    filename: "proposed_paved_footway.json",
     color: "#903366",
     dashArray: [2, 2],
     status: TRAIL_STATUS.PROPOSED,
@@ -61,14 +58,12 @@ export const geojsonTrailLayers = [
   {
     id: 6,
     name: "Natural Surface Footway",
-    filename: "natural_surface_footway.json",
     color: "#A87196",
     status: TRAIL_STATUS.EXISTING,
   },
   {
     id: 7,
     name: "Proposed Natural Surface Footway",
-    filename: "proposed_natural_surface_footway.json",
     color: "#A87196",
     dashArray: [2, 2],
     status: TRAIL_STATUS.PROPOSED,
@@ -76,14 +71,12 @@ export const geojsonTrailLayers = [
   {
     id: 8,
     name: "Existing Paved Shared Use Paths",
-    filename: "existing_paved_shared_use_paths.json",
     color: "#214A2D",
     status: TRAIL_STATUS.EXISTING,
   },
   {
     id: 9,
     name: "Proposed Paved Shared Use Paths",
-    filename: "proposed_paved_shared_use_paths.json",
     color: "#214A2D",
     dashArray: [2, 2],
     status: TRAIL_STATUS.PROPOSED,
@@ -91,7 +84,6 @@ export const geojsonTrailLayers = [
   {
     id: 10,
     name: "Proposed Unimproved Shared Use Paths",
-    filename: "proposed_unimproved_shared_use_paths.json",
     color: "#4BAA40",
     dashArray: [2, 2],
     status: TRAIL_STATUS.PROPOSED,
@@ -99,24 +91,26 @@ export const geojsonTrailLayers = [
   {
     id: 11,
     name: "Existing Unimproved Shared Use Paths",
-    filename: "existing_unimproved_shared_use_paths.json",
     color: "#4BAA40",
     status: TRAIL_STATUS.EXISTING,
   },
 ];
 
-/** Facility type pairs for completion rates / All Trail Types bars */
-export const trailFacilityTypePairs = [
-  { existingId: 0, otherIds: [1], label: "Existing Protected Bike Lanes" },
-  { existingId: 2, otherIds: [3], label: "Existing Bike Lanes" },
+/**
+ * Existing MapServer layer + its planned/proposed counterparts.
+ * Drives All Trail Types and Completion Rates in the community profile.
+ */
+export const mapcTrailFacilityPairs = [
+  { existingId: 0, otherIds: [1], label: "Protected Bike Lanes" },
+  { existingId: 2, otherIds: [3], label: "Bike Lanes" },
   { existingId: 4, otherIds: [5], label: "Paved Footway" },
   { existingId: 6, otherIds: [7], label: "Natural Surface Footway" },
-  { existingId: 8, otherIds: [9], label: "Existing Paved Shared Use Paths" },
-  { existingId: 11, otherIds: [10], label: "Existing Unimproved Shared Use Paths" },
+  { existingId: 8, otherIds: [9], label: "Paved Shared Use Paths" },
+  { existingId: 11, otherIds: [10], label: "Unimproved Shared Use Paths" },
 ];
 
 const layerById = Object.fromEntries(
-  geojsonTrailLayers.map((layer) => [layer.id, layer])
+  mapcTrailLayers.map((layer) => [layer.id, layer])
 );
 
 export const getTrailLayerById = (layerId) => layerById[layerId] || null;
