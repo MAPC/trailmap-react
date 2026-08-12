@@ -537,10 +537,11 @@
 
   &__openSpaceCount {
     font-family: $title-font;
-    font-size: 1.45rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: #2f6f3e;
     line-height: 1.2;
+    white-space: nowrap;
   }
 
   &__openSpaceStatus {
@@ -550,27 +551,6 @@
 
     &--error {
       color: #b42318;
-    }
-  }
-
-  &__openSpaceList {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    max-height: 220px;
-    overflow-y: auto;
-    border: 1px solid #eef1f4;
-    border-radius: 6px;
-
-    li {
-      padding: 0.45rem 0.7rem;
-      font-size: 0.8rem;
-      color: #2c3e50;
-      border-bottom: 1px solid #eef1f4;
-
-      &:last-child {
-        border-bottom: none;
-      }
     }
   }
 

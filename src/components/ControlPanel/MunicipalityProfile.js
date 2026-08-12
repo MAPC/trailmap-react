@@ -111,7 +111,7 @@ const MunicipalityProfile = ({
   const [communitySearch, setCommunitySearch] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [openSpaceSiteNames, setOpenSpaceSiteNames] = useState([]);
+  const [openSpaceTotalAcres, setOpenSpaceTotalAcres] = useState(0);
   const [isLoadingOpenSpace, setIsLoadingOpenSpace] = useState(false);
   const [openSpaceError, setOpenSpaceError] = useState(null);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
@@ -126,7 +126,7 @@ const MunicipalityProfile = ({
       setShowCompletionModal(false);
       setShowShareMenu(false);
       setShowTrailsInventoryModal(false);
-      setOpenSpaceSiteNames([]);
+      setOpenSpaceTotalAcres(0);
       setIsLoadingOpenSpace(false);
       setOpenSpaceError(null);
       setIsLoadingMetrics(false);
@@ -217,7 +217,7 @@ const MunicipalityProfile = ({
         setShowCompletionModal(false);
         setShowShareMenu(false);
         setShowTrailsInventoryModal(false);
-        setOpenSpaceSiteNames([]);
+        setOpenSpaceTotalAcres(0);
 
         // Close Overview "Show on map" for open space by default
         if (onToggleMuniOpenSpace) onToggleMuniOpenSpace(false);
@@ -238,7 +238,7 @@ const MunicipalityProfile = ({
       setShowCompletionModal(false);
       setShowShareMenu(false);
       setShowTrailsInventoryModal(false);
-      setOpenSpaceSiteNames([]);
+      setOpenSpaceTotalAcres(0);
       if (onToggleMuniOpenSpace) onToggleMuniOpenSpace(false);
       window.dispatchEvent(
         new CustomEvent("toggleMuniOpenSpace", { detail: { show: false } })
@@ -248,11 +248,11 @@ const MunicipalityProfile = ({
     }
   }, [selectedMunicipality, onToggleMuniOpenSpace]);
 
-  // Fetch open space SITE_NAMEs when a municipality is selected
+  // Fetch open space GIS_ACRES total when a municipality is selected
   useEffect(() => {
     const townId = selectedMunicipality?.properties?.town_id;
     if (townId == null) {
-      setOpenSpaceSiteNames([]);
+      setOpenSpaceTotalAcres(0);
       setIsLoadingOpenSpace(false);
       setOpenSpaceError(null);
       return;
@@ -263,15 +263,15 @@ const MunicipalityProfile = ({
     setOpenSpaceError(null);
 
     fetchOpenSpaceByTownId(townId)
-      .then(({ siteNames }) => {
+      .then(({ totalGisAcres }) => {
         if (!cancelled) {
-          setOpenSpaceSiteNames(siteNames);
+          setOpenSpaceTotalAcres(Number(totalGisAcres) || 0);
         }
       })
       .catch((err) => {
         console.error("Error fetching open space for municipality:", err);
         if (!cancelled) {
-          setOpenSpaceSiteNames([]);
+          setOpenSpaceTotalAcres(0);
           setOpenSpaceError("Could not load open space data.");
         }
       })
@@ -726,14 +726,20 @@ const MunicipalityProfile = ({
       <div className="MunicipalityProfile__openSpaceCard">
         <div className="MunicipalityProfile__openSpaceHeader">
           <span className="MunicipalityProfile__trailOverviewEyebrow">
-            Protected and recreational open space
+            Protected and recreational open space acres within{" "}
+            {selectedMunicipality
+              ? capitalizeWords(selectedMunicipality.name)
+              : "this municipality"}
           </span>
           <div className="MunicipalityProfile__openSpaceCount">
             {isLoadingOpenSpace
               ? "…"
               : openSpaceError
                 ? "—"
-                : openSpaceSiteNames.length}
+                : openSpaceTotalAcres.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
           </div>
         </div>
 
@@ -747,7 +753,7 @@ const MunicipalityProfile = ({
             disabled={
               isLoadingOpenSpace ||
               !!openSpaceError ||
-              openSpaceSiteNames.length === 0
+              openSpaceTotalAcres <= 0
             }
             aria-label="Show municipality protected and recreational open space on map"
             label="Show on map"
@@ -756,7 +762,7 @@ const MunicipalityProfile = ({
 
         {isLoadingOpenSpace && (
           <div className="MunicipalityProfile__openSpaceStatus">
-            Loading open space sites…
+            Loading open space…
           </div>
         )}
 
@@ -766,18 +772,10 @@ const MunicipalityProfile = ({
           </div>
         )}
 
-        {!isLoadingOpenSpace && !openSpaceError && openSpaceSiteNames.length === 0 && (
+        {!isLoadingOpenSpace && !openSpaceError && openSpaceTotalAcres <= 0 && (
           <div className="MunicipalityProfile__openSpaceStatus">
-            No protected and recreational open space sites found.
+            No protected and recreational open space found.
           </div>
-        )}
-
-        {!isLoadingOpenSpace && openSpaceSiteNames.length > 0 && (
-          <ul className="MunicipalityProfile__openSpaceList">
-            {openSpaceSiteNames.map((siteName) => (
-              <li key={siteName}>{siteName}</li>
-            ))}
-          </ul>
         )}
       </div>
     );
