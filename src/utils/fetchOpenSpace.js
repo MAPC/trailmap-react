@@ -39,7 +39,7 @@ export function formatTownIdsParam(townIds) {
 /**
  * Fetch protected open space records for one or more municipality town_id values.
  * Accepts a single id, comma-separated string, or array of ids.
- * Returns { rows, siteNames, featureCollection }.
+ * Returns { rows, siteNames, totalGisAcres, featureCollection }.
  */
 export async function fetchOpenSpaceByTownId(townIds) {
   const townIdParam = formatTownIdsParam(townIds);
@@ -47,6 +47,7 @@ export async function fetchOpenSpaceByTownId(townIds) {
     return {
       rows: [],
       siteNames: [],
+      totalGisAcres: 0,
       featureCollection: { type: "FeatureCollection", features: [] },
     };
   }
@@ -74,9 +75,15 @@ export async function fetchOpenSpaceByTownId(townIds) {
     ),
   ].sort((a, b) => a.localeCompare(b));
 
+  const totalGisAcres = rows.reduce((sum, row) => {
+    const acres = Number(row.GIS_ACRES ?? row.GIS_ACRE);
+    return sum + (Number.isFinite(acres) ? acres : 0);
+  }, 0);
+
   return {
     rows,
     siteNames,
+    totalGisAcres,
     featureCollection: openSpaceRowsToGeoJSON(rows),
   };
 }
