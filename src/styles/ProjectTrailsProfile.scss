@@ -725,6 +725,31 @@
     border-top: 1px solid #e5e7eb;
   }
 
+  &__openSpaceHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.55rem;
+  }
+
+  &__openSpaceLabel {
+    font-family: $body-font;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #6b7280;
+    line-height: 1.35;
+  }
+
+  &__openSpaceCount {
+    font-family: $title-font;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2f6f3e;
+    line-height: 1.2;
+  }
+
   &__openSpaceTitleSkeleton {
     margin-bottom: 0.55rem;
   }
@@ -733,7 +758,7 @@
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.35rem;
   }
 
   &__openSpaceSwitch {
@@ -764,27 +789,6 @@
 
     &--error {
       color: #b42318;
-    }
-  }
-
-  &__openSpaceList {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    max-height: 180px;
-    overflow-y: auto;
-
-    li {
-      font-family: $body-font;
-      font-size: 0.72rem;
-      line-height: 1.35;
-      color: #374151;
-      padding: 0.28rem 0;
-      border-bottom: 1px solid #eef1f3;
-
-      &:last-child {
-        border-bottom: none;
-      }
     }
   }
 

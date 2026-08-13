@@ -105,7 +105,7 @@ const ProjectTrailsProfile = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [listTab, setListTab] = useState("major");
   const [detailTab, setDetailTab] = useState("overview");
-  const [openSpaceSiteNames, setOpenSpaceSiteNames] = useState([]);
+  const [openSpaceTotalAcres, setOpenSpaceTotalAcres] = useState(0);
   const [isLoadingOpenSpace, setIsLoadingOpenSpace] = useState(false);
   const [openSpaceError, setOpenSpaceError] = useState(null);
 
@@ -118,7 +118,7 @@ const ProjectTrailsProfile = ({
 
   useEffect(() => {
     if (!detailTownIds) {
-      setOpenSpaceSiteNames([]);
+      setOpenSpaceTotalAcres(0);
       setIsLoadingOpenSpace(false);
       setOpenSpaceError(null);
       return undefined;
@@ -129,15 +129,15 @@ const ProjectTrailsProfile = ({
     setOpenSpaceError(null);
 
     fetchOpenSpaceByTownId(detailTownIds)
-      .then(({ siteNames }) => {
+      .then(({ totalGisAcres }) => {
         if (!cancelled) {
-          setOpenSpaceSiteNames(siteNames);
+          setOpenSpaceTotalAcres(Number(totalGisAcres) || 0);
         }
       })
       .catch((err) => {
         console.error("Error fetching open space for regional trail:", err);
         if (!cancelled) {
-          setOpenSpaceSiteNames([]);
+          setOpenSpaceTotalAcres(0);
           setOpenSpaceError("Could not load open space data.");
         }
       })
@@ -848,25 +848,13 @@ const ProjectTrailsProfile = ({
                       <Skeleton
                         style={{ width: "92%", height: "0.85rem", marginBottom: "0.4rem" }}
                       />
-                      <Skeleton style={{ width: "68%", height: "0.85rem" }} />
+                      <Skeleton style={{ width: "4.5rem", height: "1.2rem" }} />
                     </div>
                     <div className="ProjectTrailsProfile__openSpaceSwitchRow">
                       <Skeleton
                         style={{ width: "6.5rem", height: "1.4rem", borderRadius: "999px" }}
                       />
                     </div>
-                    <ul className="ProjectTrailsProfile__openSpaceList">
-                      {Array.from({ length: 4 }, (_, idx) => (
-                        <li key={`os-sk-${idx}`}>
-                          <Skeleton
-                            style={{
-                              width: `${70 + (idx % 3) * 8}%`,
-                              height: "0.72rem",
-                            }}
-                          />
-                        </li>
-                      ))}
-                    </ul>
                   </div>
                 </>
               ) : (
@@ -894,7 +882,7 @@ const ProjectTrailsProfile = ({
                         <div
                           className="ProjectTrailsProfile__openSpaceTitleSkeleton"
                           aria-busy="true"
-                          aria-label="Loading protected and recreational open space"
+                          aria-label="Loading protected and recreational open space acres"
                         >
                           <Skeleton
                             style={{
@@ -903,7 +891,7 @@ const ProjectTrailsProfile = ({
                               marginBottom: "0.4rem",
                             }}
                           />
-                          <Skeleton style={{ width: "68%", height: "0.85rem" }} />
+                          <Skeleton style={{ width: "4.5rem", height: "1.2rem" }} />
                         </div>
                         <div className="ProjectTrailsProfile__openSpaceSwitchRow">
                           <Skeleton
@@ -914,36 +902,27 @@ const ProjectTrailsProfile = ({
                             }}
                           />
                         </div>
-                        <ul className="ProjectTrailsProfile__openSpaceList">
-                          {Array.from({ length: 4 }, (_, idx) => (
-                            <li key={`os-load-sk-${idx}`}>
-                              <Skeleton
-                                style={{
-                                  width: `${70 + (idx % 3) * 8}%`,
-                                  height: "0.72rem",
-                                }}
-                              />
-                            </li>
-                          ))}
-                        </ul>
                       </>
                     ) : (
                       <>
-                        <h3 className="ProjectTrailsProfile__sectionTitle">
-                          {openSpaceError ? (
-                            "Protected and recreational open space"
-                          ) : (
-                            <>
-                              {openSpaceSiteNames.length} protected and
-                              recreational open space{" "}
-                              {openSpaceSiteNames.length === 1
-                                ? "site"
-                                : "sites"}{" "}
-                              across {communities.length} communit
-                              {communities.length === 1 ? "y" : "ies"}
-                            </>
-                          )}
-                        </h3>
+                        <div className="ProjectTrailsProfile__openSpaceHeader">
+                          <span className="ProjectTrailsProfile__openSpaceLabel">
+                            Protected and recreational open space acres within{" "}
+                            {communities.length > 0
+                              ? `${communities.length} municipalit${
+                                  communities.length === 1 ? "y" : "ies"
+                                }`
+                              : "these municipalities"}
+                          </span>
+                          <div className="ProjectTrailsProfile__openSpaceCount">
+                            {openSpaceError
+                              ? "—"
+                              : openSpaceTotalAcres.toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                          </div>
+                        </div>
 
                         <div className="ProjectTrailsProfile__openSpaceSwitchRow">
                           <Form.Check
@@ -956,7 +935,7 @@ const ProjectTrailsProfile = ({
                             }
                             disabled={
                               !!openSpaceError ||
-                              openSpaceSiteNames.length === 0 ||
+                              openSpaceTotalAcres <= 0 ||
                               !detailTownIds
                             }
                             aria-label="Show protected and recreational open space on map"
@@ -970,12 +949,10 @@ const ProjectTrailsProfile = ({
                           </div>
                         )}
 
-                        {!openSpaceError && openSpaceSiteNames.length > 0 && (
-                          <ul className="ProjectTrailsProfile__openSpaceList">
-                            {openSpaceSiteNames.map((siteName) => (
-                              <li key={siteName}>{siteName}</li>
-                            ))}
-                          </ul>
+                        {!openSpaceError && openSpaceTotalAcres <= 0 && (
+                          <div className="ProjectTrailsProfile__openSpaceStatus">
+                            No protected and recreational open space found.
+                          </div>
                         )}
                       </>
                     )}

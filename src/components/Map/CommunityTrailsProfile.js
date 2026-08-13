@@ -25,6 +25,7 @@ import SubwayStationsLayers from "./layers/SubwayStationsLayers";
 import BlueBikeStationsLayers from "./layers/BlueBikeStationsLayers";
 import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
 import OpenSpaceLayer from "./layers/OpenSpaceLayer";
+import OpenSpacePopupContent from "./tooltip/OpenSpacePopupContent";
 import LandlinesLayer from "./layers/LandlinesLayer";
 import TrailsRegNameSyncLayer from "./layers/TrailsRegNameSyncLayer";
 import TransitLandStopsLayer from "./layers/TransitLandStopsLayer";
@@ -118,6 +119,8 @@ const CommunityTrailsProfile = ({
     layerId === "openspace-outline" ||
     layerId === "muni-openspace-layer" ||
     layerId === "muni-openspace-outline";
+  const getExistingOpenSpaceLayerIds = (map) =>
+    openSpaceInteractiveLayerIds.filter((id) => map?.getLayer?.(id));
   
   // Handle OpenSpace hover
   const handleOpenSpaceHover = (hoverInfo) => {
@@ -686,11 +689,12 @@ const CommunityTrailsProfile = ({
           }
           
           // If clicking on empty space (not on any feature), close popups
-          if (isAnyOpenSpaceVisible && openSpaceClickInfo && openSpaceInteractiveLayerIds.length > 0) {
+          if (isAnyOpenSpaceVisible && openSpaceClickInfo) {
             const map = mapRef.current?.getMap();
-            if (map && event.lngLat) {
+            const existingOpenSpaceLayers = getExistingOpenSpaceLayerIds(map);
+            if (map && event.lngLat && existingOpenSpaceLayers.length > 0) {
               const queriedFeatures = map.queryRenderedFeatures(event.point, {
-                layers: openSpaceInteractiveLayerIds
+                layers: existingOpenSpaceLayers
               });
               if (queriedFeatures.length === 0) {
                 setOpenSpaceClickInfo(null);
@@ -722,7 +726,7 @@ const CommunityTrailsProfile = ({
             );
           });
 
-          if (isAnyOpenSpaceVisible && event.lngLat && openSpaceInteractiveLayerIds.length > 0 && !trailHoverFeature) {
+          if (isAnyOpenSpaceVisible && event.lngLat && !trailHoverFeature) {
             const map = mapRef.current?.getMap();
             if (map) {
               const openSpaceFeature = features.find(f =>
@@ -735,17 +739,22 @@ const CommunityTrailsProfile = ({
                   feature: openSpaceFeature
                 });
               } else {
-                const queriedFeatures = map.queryRenderedFeatures(event.point, {
-                  layers: openSpaceInteractiveLayerIds
-                });
-                if (queriedFeatures.length > 0) {
-                  const feature =
-                    queriedFeatures.find((f) => f.layer.id.endsWith("-layer")) ||
-                    queriedFeatures[0];
-                  setOpenSpaceHoverInfo({
-                    point: event.lngLat,
-                    feature: feature
+                const existingOpenSpaceLayers = getExistingOpenSpaceLayerIds(map);
+                if (existingOpenSpaceLayers.length > 0) {
+                  const queriedFeatures = map.queryRenderedFeatures(event.point, {
+                    layers: existingOpenSpaceLayers
                   });
+                  if (queriedFeatures.length > 0) {
+                    const feature =
+                      queriedFeatures.find((f) => f.layer.id.endsWith("-layer")) ||
+                      queriedFeatures[0];
+                    setOpenSpaceHoverInfo({
+                      point: event.lngLat,
+                      feature: feature
+                    });
+                  } else {
+                    setOpenSpaceHoverInfo(null);
+                  }
                 } else {
                   setOpenSpaceHoverInfo(null);
                 }
@@ -956,36 +965,7 @@ const CommunityTrailsProfile = ({
             anchor="top"
             offset={12}
           >
-            {(() => {
-              const properties = openSpaceHoverInfo.feature.properties || {};
-              
-              return (
-                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                  <div style={{fontWeight: 600, marginBottom: '6px'}}>OpenSpace</div>
-                  {properties.SITE_NAME && (
-                    <div style={{marginBottom: '4px', fontWeight: 500}}>{properties.SITE_NAME}</div>
-                  )}
-                  {properties.FEE_OWNER && (
-                    <div style={{marginBottom: '2px'}}>Owner: {properties.FEE_OWNER}</div>
-                  )}
-                  {properties.OWNER_TYPE && (
-                    <div style={{marginBottom: '2px'}}>Owner Type: {properties.OWNER_TYPE}</div>
-                  )}
-                  {properties.PRIM_PURP && (
-                    <div style={{marginBottom: '2px'}}>Primary Purpose: {properties.PRIM_PURP}</div>
-                  )}
-                  {properties.PUB_ACCESS && (
-                    <div style={{marginBottom: '2px'}}>Public Access: {properties.PUB_ACCESS}</div>
-                  )}
-                  {properties.GIS_ACRES !== null && properties.GIS_ACRES !== undefined && (
-                    <div style={{marginBottom: '2px'}}>Acres: {parseFloat(properties.GIS_ACRES).toFixed(2)}</div>
-                  )}
-                  {!properties.SITE_NAME && !properties.FEE_OWNER && (
-                    <div>No data available</div>
-                  )}
-                </div>
-              );
-            })()}
+            <OpenSpacePopupContent properties={openSpaceHoverInfo.feature.properties} />
           </Popup>
         )}
         
@@ -999,36 +979,7 @@ const CommunityTrailsProfile = ({
             anchor="top"
             offset={12}
           >
-            {(() => {
-              const properties = openSpaceClickInfo.feature.properties || {};
-              
-              return (
-                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                  <div style={{fontWeight: 600, marginBottom: '6px'}}>OpenSpace</div>
-                  {properties.SITE_NAME && (
-                    <div style={{marginBottom: '4px', fontWeight: 500}}>{properties.SITE_NAME}</div>
-                  )}
-                  {properties.FEE_OWNER && (
-                    <div style={{marginBottom: '2px'}}>Owner: {properties.FEE_OWNER}</div>
-                  )}
-                  {properties.OWNER_TYPE && (
-                    <div style={{marginBottom: '2px'}}>Owner Type: {properties.OWNER_TYPE}</div>
-                  )}
-                  {properties.PRIM_PURP && (
-                    <div style={{marginBottom: '2px'}}>Primary Purpose: {properties.PRIM_PURP}</div>
-                  )}
-                  {properties.PUB_ACCESS && (
-                    <div style={{marginBottom: '2px'}}>Public Access: {properties.PUB_ACCESS}</div>
-                  )}
-                  {properties.GIS_ACRES !== null && properties.GIS_ACRES !== undefined && (
-                    <div style={{marginBottom: '2px'}}>Acres: {parseFloat(properties.GIS_ACRES).toFixed(2)}</div>
-                  )}
-                  {!properties.SITE_NAME && !properties.FEE_OWNER && (
-                    <div>No data available</div>
-                  )}
-                </div>
-              );
-            })()}
+            <OpenSpacePopupContent properties={openSpaceClickInfo.feature.properties} />
           </Popup>
         )}
         
