@@ -60,7 +60,9 @@ export const getTrailFeatureAtEvent = (map, event, layerIds) => {
   if (!map || !event?.point || !layerIds?.length) return null;
 
   const { x, y } = event.point;
-  const padding = 10;
+  // Wider hit area at low zoom — overview trails are thin and hard to target.
+  const zoom = map.getZoom?.() ?? 12;
+  const padding = zoom < 11 ? 18 : zoom < 13 ? 14 : 10;
 
   try {
     const features = map.queryRenderedFeatures(

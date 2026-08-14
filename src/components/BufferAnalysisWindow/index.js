@@ -319,7 +319,7 @@ const BufferAnalysisWindow = ({
 
               {/* Trails by Type */}
               <div className="mb-3">
-                <div className="small fw-semibold mb-2">Trail Types (Counts)</div>
+                <div className="small fw-semibold mb-2">Trail Types</div>
                 {bufferResults.trails.length === 0 ? (
                   <div className="small text-muted text-center p-2 border rounded">
                     No trails found
@@ -327,35 +327,31 @@ const BufferAnalysisWindow = ({
                 ) : (
                   <div className="BufferAnalysisWindow__trail-types">
                     {(() => {
-                      // Group trails by type
+                      // Unique trail types present in the buffer
                       const trailsByType = {};
                       bufferResults.trails.forEach((trail) => {
                         if (!trailsByType[trail.type]) {
                           trailsByType[trail.type] = {
-                            count: 0,
-                            color: trail.color
+                            color: trail.color,
                           };
                         }
-                        trailsByType[trail.type].count++;
                       });
 
                       return Object.entries(trailsByType)
-                        .sort(([, a], [, b]) => b.count - a.count)
+                        .sort(([a], [b]) => a.localeCompare(b))
                         .map(([type, data]) => (
                           <div key={type} className="BufferAnalysisWindow__type-badge">
                             <div className="type-name small text-muted mb-1" title={type}>
                               {type}
                             </div>
-                            <div 
-                              className="type-circle d-flex align-items-center justify-content-center fw-bold"
-                              style={{ 
-                                backgroundColor: data.color || '#6c757d',
-                                color: '#ffffff'
+                            <div
+                              className="type-circle"
+                              style={{
+                                backgroundColor: data.color || "#6c757d",
                               }}
-                              title={`${data.count} ${type} trails`}
-                            >
-                              {data.count}
-                            </div>
+                              title={type}
+                              aria-label={type}
+                            />
                           </div>
                         ));
                     })()}

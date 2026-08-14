@@ -24,7 +24,7 @@ import TrailLegend from "./TrailLegend";
 import * as turf from "@turf/turf";
 // Extracted components
 import CommunityTrailsProfile from "./CommunityTrailsProfile";
-import OriginalTrailsMap from "./OriginalTrailsMap";
+import RegionalTrailMap from "./RegionalTrailMap";
 import ProjectTrailsProfile from "./ProjectTrailsProfile";
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
@@ -122,14 +122,9 @@ const Map = () => {
     }
   }, [showMunicipalityProfileMap, showProjectTrailsProfileMap, basemaps, baseLayer, setBaseLayer]);
 
-  const generateShareUrl = () => {
-    return `${window.location.href.split("?")[0]}?baseLayer=${baseLayer.id}&trailLayers=${trailLayers.join(
-      ","
-    )}&centroid=${viewport.latitude},${viewport.longitude}&zoom=${viewport.zoom}`;
-  };
   return (
     <>
-      <ShareModal url={generateShareUrl()} />
+      <ShareModal />
       <EditModal trailObj={identifyInfo !== null ? identifyInfo[pointIndex] : null} />
       <SuccessModal />
       <FailModal />
@@ -142,6 +137,8 @@ const Map = () => {
             baseLayer={baseLayer}
             showBasemapPanel={showBasemapPanel}
             toggleBasemapPanel={toggleBasemapPanel}
+            showBoundariesPanel={showBoundariesPanel}
+            toggleBoundariesPanel={toggleBoundariesPanel}
             showControlPanel={showControlPanel}
             toggleControlPanel={toggleControlPanel}
             mapRef={mapRef}
@@ -153,12 +150,14 @@ const Map = () => {
             baseLayer={baseLayer}
             showBasemapPanel={showBasemapPanel}
             toggleBasemapPanel={toggleBasemapPanel}
+            showBoundariesPanel={showBoundariesPanel}
+            toggleBoundariesPanel={toggleBoundariesPanel}
             showControlPanel={showControlPanel}
             toggleControlPanel={toggleControlPanel}
             mapRef={mapRef}
               />
             ) : (
-          <OriginalTrailsMap
+          <RegionalTrailMap
             viewport={viewport}
             setViewport={setViewport}
             baseLayer={baseLayer}

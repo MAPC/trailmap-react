@@ -93,7 +93,9 @@ const App = () => {
   const [showCommuterRail, setShowCommuterRail] = useState(false);
   const [showStationLabels, setShowStationLabels] = useState(false);
   const [showBlueBikeStations, setShowBlueBikeStations] = useState(false);
+  const [showBlueBikeStationLabels, setShowBlueBikeStationLabels] = useState(false);
   const [showSubwayStations, setShowSubwayStations] = useState(false);
+  const [showSubwayStationLabels, setShowSubwayStationLabels] = useState(false);
   const [showEnvironmentalJustice, setShowEnvironmentalJustice] = useState(false);
   const [showOpenSpace, setShowOpenSpace] = useState(false);
   const [showMuniOpenSpace, setShowMuniOpenSpace] = useState(false);
@@ -206,8 +208,12 @@ const App = () => {
               setShowStationLabels,
               showBlueBikeStations,
               setShowBlueBikeStations,
+              showBlueBikeStationLabels,
+              setShowBlueBikeStationLabels,
               showSubwayStations,
               setShowSubwayStations,
+              showSubwayStationLabels,
+              setShowSubwayStationLabels,
               showEnvironmentalJustice,
               setShowEnvironmentalJustice,
               showOpenSpace,

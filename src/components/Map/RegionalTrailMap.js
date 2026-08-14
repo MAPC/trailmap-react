@@ -37,7 +37,7 @@ const LANDLINE_SOURCE =
 const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL;
 
 
-const OriginalTrailsMap = ({ 
+const RegionalTrailMap = ({ 
   viewport, 
   setViewport, 
   baseLayer, 
@@ -477,11 +477,7 @@ const OriginalTrailsMap = ({
       width="100%"
       height="100%"
       interactiveLayerIds={interactiveLayerIds}
-      cursor={
-        hoveredTrailHighlight || clickedTrailHighlight || landlineLayerIds.length > 0
-          ? undefined
-          : "default"
-      }
+      cursor={interactiveLayerIds.length > 0 ? undefined : "default"}
       onMove={(event) => {
         const newViewport = event.viewState;
         if (Math.abs(newViewport.zoom - viewport.zoom) > 0.01) {
@@ -943,5 +939,5 @@ const OriginalTrailsMap = ({
   );
 };
 
-export default OriginalTrailsMap;
+export default RegionalTrailMap;
 

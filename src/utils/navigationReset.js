@@ -13,7 +13,9 @@ export const resetSharedNavigationState = ({
   setShowCommuterRail,
   setShowStationLabels,
   setShowBlueBikeStations,
+  setShowBlueBikeStationLabels,
   setShowSubwayStations,
+  setShowSubwayStationLabels,
   setShowEnvironmentalJustice,
   setShowOpenSpace,
   setShowMuniOpenSpace,
@@ -49,7 +51,9 @@ export const resetSharedNavigationState = ({
   setShowCommuterRail(false);
   setShowStationLabels(false);
   setShowBlueBikeStations(false);
+  if (setShowBlueBikeStationLabels) setShowBlueBikeStationLabels(false);
   setShowSubwayStations(false);
+  if (setShowSubwayStationLabels) setShowSubwayStationLabels(false);
   setShowEnvironmentalJustice(false);
   setShowOpenSpace(false);
   if (setShowMuniOpenSpace) setShowMuniOpenSpace(false);

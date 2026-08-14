@@ -108,7 +108,7 @@ const EnvironmentalJusticeLayer = ({ showEnvironmentalJustice, showMunicipalityP
         id="environmental-justice-layer"
         type="raster"
         paint={{
-          "raster-opacity": 0.7
+          "raster-opacity": 0.28
         }}
       />
     </Source>

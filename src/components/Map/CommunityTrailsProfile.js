@@ -26,11 +26,15 @@ import BlueBikeStationsLayers from "./layers/BlueBikeStationsLayers";
 import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
 import OpenSpaceLayer from "./layers/OpenSpaceLayer";
 import OpenSpacePopupContent from "./tooltip/OpenSpacePopupContent";
+import EnvironmentalJusticePopupContent from "./tooltip/EnvironmentalJusticePopupContent";
+import { queryFeatureAtPoint } from "./utils/arcgisPointQuery";
+import { EJ2020_MAP_SERVER_URL } from "./constants/trailFacilityTypeLabels";
 import LandlinesLayer from "./layers/LandlinesLayer";
 import TrailsRegNameSyncLayer from "./layers/TrailsRegNameSyncLayer";
 import TransitLandStopsLayer from "./layers/TransitLandStopsLayer";
 import TransitLandRoutesLayer from "./layers/TransitLandRoutesLayer";
 import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
+import BoundaryLayers from "./layers/BoundaryLayers";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 
@@ -40,6 +44,8 @@ const CommunityTrailsProfile = ({
   baseLayer, 
   showBasemapPanel, 
   toggleBasemapPanel,
+  showBoundariesPanel,
+  toggleBoundariesPanel,
   showControlPanel,
   toggleControlPanel,
   mapRef
@@ -58,8 +64,12 @@ const CommunityTrailsProfile = ({
     setShowStationLabels,
     showBlueBikeStations,
     setShowBlueBikeStations,
+    showBlueBikeStationLabels,
+    setShowBlueBikeStationLabels,
     showSubwayStations,
     setShowSubwayStations,
+    showSubwayStationLabels,
+    setShowSubwayStationLabels,
     showEnvironmentalJustice,
     setShowEnvironmentalJustice,
     showOpenSpace,
@@ -101,7 +111,11 @@ const CommunityTrailsProfile = ({
   const [hoveredTransitStop, setHoveredTransitStop] = useState(null);
   const [ejHoverPoint, setEjHoverPoint] = useState(null);
   const [ejHoverInfo, setEjHoverInfo] = useState(null);
+  const [showOneLayerNotice, setShowOneLayerNotice] = useState(false);
   const ejIdentifyTimeoutRef = useRef(null);
+  const ejHoverQueryIdRef = useRef(0);
+  const ejLastQueryAtRef = useRef(0);
+  const ejPendingPointRef = useRef(null);
   
   // OpenSpace hover state
   const [openSpaceHoverInfo, setOpenSpaceHoverInfo] = useState(null);
@@ -235,9 +249,13 @@ const CommunityTrailsProfile = ({
   useEffect(() => {
     const handleToggleCommuterRail = (event) => setShowCommuterRail(event.detail.show);
     const handleToggleStationLabels = (event) => setShowStationLabels(event.detail.show);
+    const handleToggleBlueBikeStationLabels = (event) =>
+      setShowBlueBikeStationLabels(event.detail.show);
     const handleOpenBufferAnalysis = () => setShowBufferAnalysis(true);
     const handleToggleBlueBikeStations = (event) => setShowBlueBikeStations(event.detail.show);
     const handleToggleSubwayStations = (event) => setShowSubwayStations(event.detail.show);
+    const handleToggleSubwayStationLabels = (event) =>
+      setShowSubwayStationLabels(event.detail.show);
     const handleToggleEnvironmentalJustice = (event) => setShowEnvironmentalJustice(event.detail.show);
     const handleToggleOpenSpace = (event) => setShowOpenSpace(event.detail.show);
     const handleToggleMuniOpenSpace = (event) => setShowMuniOpenSpace(event.detail.show);
@@ -259,7 +277,9 @@ const CommunityTrailsProfile = ({
       setShowCommuterRail(false);
       setShowStationLabels(false);
       setShowBlueBikeStations(false);
+      setShowBlueBikeStationLabels(false);
       setShowSubwayStations(false);
+      setShowSubwayStationLabels(false);
       setShowEnvironmentalJustice(false);
       setShowOpenSpace(false);
       setShowMuniOpenSpace(false);
@@ -289,8 +309,10 @@ const CommunityTrailsProfile = ({
     
     window.addEventListener('toggleCommuterRail', handleToggleCommuterRail);
     window.addEventListener('toggleStationLabels', handleToggleStationLabels);
+    window.addEventListener('toggleBlueBikeStationLabels', handleToggleBlueBikeStationLabels);
     window.addEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
     window.addEventListener('toggleSubwayStations', handleToggleSubwayStations);
+    window.addEventListener('toggleSubwayStationLabels', handleToggleSubwayStationLabels);
     window.addEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
     window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
     window.addEventListener('toggleMuniOpenSpace', handleToggleMuniOpenSpace);
@@ -304,8 +326,10 @@ const CommunityTrailsProfile = ({
     return () => {
       window.removeEventListener('toggleCommuterRail', handleToggleCommuterRail);
       window.removeEventListener('toggleStationLabels', handleToggleStationLabels);
+      window.removeEventListener('toggleBlueBikeStationLabels', handleToggleBlueBikeStationLabels);
       window.removeEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
       window.removeEventListener('toggleSubwayStations', handleToggleSubwayStations);
+      window.removeEventListener('toggleSubwayStationLabels', handleToggleSubwayStationLabels);
       window.removeEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
       window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
       window.removeEventListener('toggleMuniOpenSpace', handleToggleMuniOpenSpace);
@@ -414,7 +438,13 @@ const CommunityTrailsProfile = ({
         {...viewport}
         width="100%"
         height="100%"
-        cursor={isBufferActive ? "crosshair" : hoveredTrail ? "pointer" : "default"}
+        cursor={
+          isBufferActive
+            ? "crosshair"
+            : hoveredTrail || ejHoverInfo || openSpaceHoverInfo
+              ? "pointer"
+              : "default"
+        }
         transformRequest={(url, resourceType) => {
           // Use transformRequest to add API key header for Transit.land tiles
           // This is recommended by Transit.land documentation
@@ -829,58 +859,46 @@ const CommunityTrailsProfile = ({
             setHoveredTransitStop(null);
           }
 
-          // Handle Environmental Justice layer hover
-          // Note: Raster layers don't appear in features, so we query identify endpoint when layer is visible
-          if (showEnvironmentalJustice && event.lngLat) {
-            setEjHoverPoint(event.lngLat);
-            
-            // Debounce identify requests to avoid too many API calls
-            if (ejIdentifyTimeoutRef.current) {
-              clearTimeout(ejIdentifyTimeoutRef.current);
-            }
-            
-            ejIdentifyTimeoutRef.current = setTimeout(() => {
-              const EJ2020_IDENTIFY_URL = "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/EJ2020/MapServer/identify";
-              const map = mapRef.current?.getMap();
-              
-              if (map) {
-                const mapBounds = map.getBounds();
-                const sw = mapBounds.getSouthWest();
-                const ne = mapBounds.getNorthEast();
-                
-                axios
-                  .get(EJ2020_IDENTIFY_URL, {
-                    params: {
-                      geometry: `${event.lngLat.lng},${event.lngLat.lat}`,
-                      geometryType: "esriGeometryPoint",
-                      sr: 4326,
-                      layers: "all:0",
-                      tolerance: 5,
-                      mapExtent: `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`,
-                      imageDisplay: `${map.getContainer().clientWidth || 1024},${map.getContainer().clientHeight || 768},96`,
-                      returnGeometry: false,
-                      f: "pjson",
-                    },
-                  })
-                  .then((res) => {
-                    if (res.data.results && res.data.results.length > 0) {
-                      setEjHoverInfo(res.data.results[0]);
-                    } else {
-                      setEjHoverInfo(null);
-                    }
-                  })
-                  .catch((error) => {
-                    console.error("Error identifying EJ feature:", error);
-                    setEjHoverInfo(null);
-                  });
+          // EJ is a raster overlay — throttle attribute queries so the tooltip
+          // follows the cursor instead of only appearing after you pause.
+          if (showEnvironmentalJustice && event.lngLat && EJ2020_MAP_SERVER_URL) {
+            const { lng, lat } = event.lngLat;
+            setEjHoverPoint({ lng, lat });
+            ejPendingPointRef.current = { lng, lat };
+
+            const runEjQuery = () => {
+              const point = ejPendingPointRef.current;
+              if (!point) return;
+              const queryId = ++ejHoverQueryIdRef.current;
+              ejLastQueryAtRef.current = Date.now();
+              queryFeatureAtPoint(`${EJ2020_MAP_SERVER_URL}/0`, point.lng, point.lat).then(
+                (ejFeature) => {
+                  if (queryId !== ejHoverQueryIdRef.current) return;
+                  setEjHoverInfo(ejFeature || null);
+                }
+              );
+            };
+
+            const elapsed = Date.now() - ejLastQueryAtRef.current;
+            if (elapsed >= 80) {
+              if (ejIdentifyTimeoutRef.current) {
+                clearTimeout(ejIdentifyTimeoutRef.current);
+                ejIdentifyTimeoutRef.current = null;
               }
-            }, 200);
+              runEjQuery();
+            } else if (!ejIdentifyTimeoutRef.current) {
+              ejIdentifyTimeoutRef.current = setTimeout(() => {
+                ejIdentifyTimeoutRef.current = null;
+                runEjQuery();
+              }, 80 - elapsed);
+            }
           } else {
-            // Clear EJ hover when layer is not visible
             setEjHoverPoint(null);
             setEjHoverInfo(null);
+            ejPendingPointRef.current = null;
             if (ejIdentifyTimeoutRef.current) {
               clearTimeout(ejIdentifyTimeoutRef.current);
+              ejIdentifyTimeoutRef.current = null;
             }
           }
         }}
@@ -893,8 +911,10 @@ const CommunityTrailsProfile = ({
           setOpenSpaceHoverInfo(null);
           setEjHoverPoint(null);
           setEjHoverInfo(null);
+          ejPendingPointRef.current = null;
           if (ejIdentifyTimeoutRef.current) {
             clearTimeout(ejIdentifyTimeoutRef.current);
+            ejIdentifyTimeoutRef.current = null;
           }
         }}
         mapboxAccessToken={MAPBOX_TOKEN}
@@ -921,37 +941,14 @@ const CommunityTrailsProfile = ({
             longitude={ejHoverPoint.lng}
             latitude={ejHoverPoint.lat}
             closeButton={false}
-            closeOnMove={true}
+            closeOnMove={false}
             anchor="top"
             offset={12}
+            maxWidth="340px"
           >
-            {(() => {
-              const attributes = ejHoverInfo.attributes || {};
-              const layerName = ejHoverInfo.layerName || "Environmental Justice";
-              
-              // Extract relevant EJ attributes
-              const geographicAreaName = attributes["Geographic Area Name"] || attributes.Geographic_Area_Name || null;
-              const totalHouseholds = attributes["Total Number of Households"] || attributes.Total_Number_of_Households || null;
-              const totalPopulation = attributes["Total Poputation"] || attributes.Total_Poputation || attributes["Total Population"] || attributes.Total_Population || null;
-              
-              return (
-                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                  <div style={{fontWeight: 600, marginBottom: '6px'}}>{layerName}</div>
-                  {geographicAreaName && (
-                    <div style={{marginBottom: '4px', fontWeight: 500}}>{geographicAreaName}</div>
-                  )}
-                  {totalHouseholds !== null && (
-                    <div style={{marginBottom: '2px'}}>Total Number of Households: {totalHouseholds}</div>
-                  )}
-                  {totalPopulation !== null && (
-                    <div style={{marginBottom: '2px'}}>Total Population: {totalPopulation}</div>
-                  )}
-                  {!geographicAreaName && !totalHouseholds && totalPopulation === null && (
-                    <div>No data available</div>
-                  )}
-                </div>
-              );
-            })()}
+            <EnvironmentalJusticePopupContent
+              properties={ejHoverInfo.properties || ejHoverInfo.attributes || {}}
+            />
           </Popup>
         )}
 
@@ -1044,6 +1041,7 @@ const CommunityTrailsProfile = ({
           showBlueBikeStations={showBlueBikeStations}
           showMunicipalityProfileMap={true}
           blueBikeStationsData={blueBikeStationsData}
+          showStationLabels={showBlueBikeStationLabels}
           hoveredBlueBikeStation={hoveredBlueBikeStation}
         />
         
@@ -1052,6 +1050,7 @@ const CommunityTrailsProfile = ({
           showSubwayStations={showSubwayStations}
           showMunicipalityProfileMap={true}
           subwayStationsData={subwayStationsData}
+          showStationLabels={showSubwayStationLabels}
           hoveredSubwayStation={hoveredSubwayStation}
         />
 
@@ -1097,6 +1096,8 @@ const CommunityTrailsProfile = ({
             selectedMunicipality={selectedMunicipality}
           />
         </Source>
+
+        <BoundaryLayers />
         
         {/* Buffer Analysis Layers */}
         {renderBufferPreview(bufferPreviewCenter, isBufferActive, bufferRadius)}
@@ -1129,9 +1130,12 @@ const CommunityTrailsProfile = ({
       <MapToolbar
         showBasemapPanel={showBasemapPanel}
         toggleBasemapPanel={toggleBasemapPanel}
-        showBoundariesPanel={false}
-        toggleBoundariesPanel={() => {}}
-        showBoundaries={false}
+        showBoundariesPanel={showBoundariesPanel}
+        toggleBoundariesPanel={toggleBoundariesPanel}
+        onBoundaryLayerToggle={() => setShowOneLayerNotice(true)}
+        onBoundaryPanelOpen={() => setShowOneLayerNotice(true)}
+        showOneLayerNotice={showOneLayerNotice}
+        onDismissOneLayerNotice={() => setShowOneLayerNotice(false)}
       />
 
       <ControlPanelShell

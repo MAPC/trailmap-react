@@ -88,8 +88,12 @@ const MunicipalityProfile = ({
   onToggleStationLabels,
   showBlueBikeStations,
   onToggleBlueBikeStations,
+  showBlueBikeStationLabels,
+  onToggleBlueBikeStationLabels,
   showSubwayStations,
   onToggleSubwayStations,
+  showSubwayStationLabels,
+  onToggleSubwayStationLabels,
   showEnvironmentalJustice,
   onToggleEnvironmentalJustice,
   showOpenSpace,
@@ -839,15 +843,21 @@ const MunicipalityProfile = ({
             showCommuterRail,
             (checked) => {
               if (onToggleCommuterRail) onToggleCommuterRail(checked);
+              if (!checked && onToggleStationLabels) onToggleStationLabels(false);
               dispatchLayerToggle("toggleCommuterRail", checked);
+              if (!checked) {
+                window.dispatchEvent(
+                  new CustomEvent("toggleStationLabels", { detail: { show: false } })
+                );
+              }
             }
           )}
 
           {showCommuterRail &&
             renderMapLayerRow(
               "station-labels",
-              "Station labels",
-              showStationLabels,
+              "Show label",
+              !!showStationLabels,
               (checked) => {
                 if (onToggleStationLabels) onToggleStationLabels(checked);
                 window.dispatchEvent(
@@ -887,9 +897,37 @@ const MunicipalityProfile = ({
             showBlueBikeStations,
             (checked) => {
               if (onToggleBlueBikeStations) onToggleBlueBikeStations(checked);
+              if (!checked && onToggleBlueBikeStationLabels) {
+                onToggleBlueBikeStationLabels(false);
+              }
               dispatchLayerToggle("toggleBlueBikeStations", checked);
+              if (!checked) {
+                window.dispatchEvent(
+                  new CustomEvent("toggleBlueBikeStationLabels", {
+                    detail: { show: false },
+                  })
+                );
+              }
             }
           )}
+
+          {showBlueBikeStations &&
+            renderMapLayerRow(
+              "blue-bike-station-labels",
+              "Show label",
+              !!showBlueBikeStationLabels,
+              (checked) => {
+                if (onToggleBlueBikeStationLabels) {
+                  onToggleBlueBikeStationLabels(checked);
+                }
+                window.dispatchEvent(
+                  new CustomEvent("toggleBlueBikeStationLabels", {
+                    detail: { show: checked },
+                  })
+                );
+              },
+              true
+            )}
 
           {renderMapLayerRow(
             "subway",
@@ -897,9 +935,37 @@ const MunicipalityProfile = ({
             showSubwayStations,
             (checked) => {
               if (onToggleSubwayStations) onToggleSubwayStations(checked);
+              if (!checked && onToggleSubwayStationLabels) {
+                onToggleSubwayStationLabels(false);
+              }
               dispatchLayerToggle("toggleSubwayStations", checked);
+              if (!checked) {
+                window.dispatchEvent(
+                  new CustomEvent("toggleSubwayStationLabels", {
+                    detail: { show: false },
+                  })
+                );
+              }
             }
           )}
+
+          {showSubwayStations &&
+            renderMapLayerRow(
+              "subway-station-labels",
+              "Show label",
+              !!showSubwayStationLabels,
+              (checked) => {
+                if (onToggleSubwayStationLabels) {
+                  onToggleSubwayStationLabels(checked);
+                }
+                window.dispatchEvent(
+                  new CustomEvent("toggleSubwayStationLabels", {
+                    detail: { show: checked },
+                  })
+                );
+              },
+              true
+            )}
 
           {renderMapLayerRow(
             "transit-stops",

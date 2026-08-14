@@ -5,9 +5,12 @@
  * @param {string} layerUrl - ArcGIS layer URL (e.g. https://.../MapServer/0)
  * @param {number} lng - Longitude (EPSG:4326)
  * @param {number} lat - Latitude (EPSG:4326)
+ * @param {object} [options]
+ * @param {boolean} [options.returnGeometry=false] - Include geometry in response (slower)
  * @returns {Promise<object|null>} First feature containing the point, or null
  */
-export const queryFeatureAtPoint = async (layerUrl, lng, lat) => {
+export const queryFeatureAtPoint = async (layerUrl, lng, lat, options = {}) => {
+  const { returnGeometry = false } = options;
   try {
     const toWebMercator = (lon, latVal) => {
       const x = lon * 20037508.34 / 180;
@@ -31,7 +34,7 @@ export const queryFeatureAtPoint = async (layerUrl, lng, lat) => {
     params.set("outFields", "*");
     params.set("outSR", "4326");
     params.set("f", "geojson");
-    params.set("returnGeometry", "true");
+    params.set("returnGeometry", returnGeometry ? "true" : "false");
 
     const url = `${layerUrl}/query?${params.toString()}`;
     const response = await fetch(url);

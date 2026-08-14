@@ -32,8 +32,12 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
     setShowStationLabels,
     showBlueBikeStations,
     setShowBlueBikeStations,
+    showBlueBikeStationLabels,
+    setShowBlueBikeStationLabels,
     showSubwayStations,
     setShowSubwayStations,
+    showSubwayStationLabels,
+    setShowSubwayStationLabels,
     showEnvironmentalJustice,
     setShowEnvironmentalJustice,
     showOpenSpace,
@@ -110,7 +114,7 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
   }, [selectedMunicipality, municipalityTrails, showMunicipalityView]);
 
   return (
-    <div className="ControlPanel ControlPanel--community text-left pt-5 pb-5 ps-2 pe-2 position-absolute overflow-auto">
+    <div className="ControlPanel ControlPanel--community text-left pt-3 pb-5 ps-2 pe-2 position-absolute overflow-auto">
       <MunicipalityProfile
         isLoadingTrails={isLoadingTrails}
         selectedMunicipality={selectedMunicipality}
@@ -129,8 +133,12 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
         onToggleStationLabels={setShowStationLabels}
         showBlueBikeStations={showBlueBikeStations}
         onToggleBlueBikeStations={setShowBlueBikeStations}
+        showBlueBikeStationLabels={showBlueBikeStationLabels}
+        onToggleBlueBikeStationLabels={setShowBlueBikeStationLabels}
         showSubwayStations={showSubwayStations}
         onToggleSubwayStations={setShowSubwayStations}
+        showSubwayStationLabels={showSubwayStationLabels}
+        onToggleSubwayStationLabels={setShowSubwayStationLabels}
         showEnvironmentalJustice={showEnvironmentalJustice}
         onToggleEnvironmentalJustice={setShowEnvironmentalJustice}
         showOpenSpace={showOpenSpace}

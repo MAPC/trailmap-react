@@ -1,26 +1,17 @@
 import React, { useContext } from "react";
 import Button from "react-bootstrap/Button";
-import Form from "react-bootstrap/Form";
-import InputGroup from "react-bootstrap/InputGroup";
 import Modal from "react-bootstrap/Modal";
-import CopyIcon from "../../assets/icons/copy-icon.svg";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { ModalContext } from "../../App";
 
-const ShareModal = ({ url }) => {
+const ShareModal = () => {
   const location = useLocation();
   const { showShareModal, toggleShareModal } = useContext(ModalContext);
-  const { showContributeModal, toggleContributeModal } =
-    useContext(ModalContext);
+  const { toggleContributeModal } = useContext(ModalContext);
 
   // Hide download section in Community Trails Profile
   const isCommunityTrailsProfile =
     location.pathname === "/communityTrailsProfile";
-
-  const copyUrl = () => {
-    navigator.clipboard.writeText(url);
-    toggleShareModal(false);
-  };
 
   return (
     <Modal
@@ -38,17 +29,6 @@ const ShareModal = ({ url }) => {
         </span>
       </Modal.Title>
       <Modal.Body className="Modal__body text-center">
-        <span>Click below to copy the map URL to share.</span>
-        <InputGroup className="m-2">
-          <Form.Control type="text" value={url} readOnly></Form.Control>
-          <Button
-            className="share-button p-0 d-flex align-items-center"
-            variant="outline-secondary"
-            onClick={copyUrl}
-          >
-            <img src={CopyIcon} alt="Copy URL" />
-          </Button>
-        </InputGroup>
         {!isCommunityTrailsProfile && (
           <>
             <span>
@@ -56,6 +36,7 @@ const ShareModal = ({ url }) => {
               <a
                 href="https://datacommon.mapc.org/browser?geos=all&category=Transportation&q=lines"
                 target="_blank"
+                rel="noreferrer"
               >
                 MAPC's DataCommon
               </a>
@@ -75,12 +56,14 @@ const ShareModal = ({ url }) => {
                 <a
                   href="https://datacommon.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_walking_trails&format=csv&useMetadataColumns=false"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.csv</Button>
                 </a>
                 <a
                   href="https://datacommon.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_walking_trails&format=shapefile"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.shp</Button>
                 </a>
@@ -94,12 +77,14 @@ const ShareModal = ({ url }) => {
                 <a
                   href="https://datacommon.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_bike_facilities&format=csv&useMetadataColumns=false"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.csv</Button>
                 </a>
                 <a
                   href="https://datacommon.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_bike_facilities&format=shapefile"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.shp</Button>
                 </a>
@@ -113,12 +98,14 @@ const ShareModal = ({ url }) => {
                 <a
                   href="https://datacommon.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_land_line_systems&format=csv&useMetadataColumns=false"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.csv</Button>
                 </a>
                 <a
                   href="https://datacommon.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_land_line_systems&format=shapefile"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.shp</Button>
                 </a>
@@ -130,14 +117,16 @@ const ShareModal = ({ url }) => {
               </span>
               <div className="direct-download-link-right">
                 <a
-                  href="https://datacommon.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_shared_use_paths&format=csv&useMetadataColumns=false" 
+                  href="https://datacommon.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_shared_use_paths&format=csv&useMetadataColumns=false"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.csv</Button>
                 </a>
                 <a
                   href="https://datacommon.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_shared_use_paths&format=shapefile"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.shp</Button>
                 </a>

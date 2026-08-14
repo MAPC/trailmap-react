@@ -259,7 +259,6 @@ const ProjectTrailsProfile = ({
         } else {
           onToggleRegName?.(name);
         }
-        handleOpenTrailDetail(name, isMajor);
       }
     };
 
@@ -529,12 +528,6 @@ const ProjectTrailsProfile = ({
     }));
 
     const isDetailLoading = trailIsLoading(name, isMajor);
-    const trailFeatures = getTrailFeatures(
-      name,
-      isMajor,
-      majorTrailsData,
-      allTrailsData
-    );
     const communitySummary =
       communities.length <= 3
         ? communities.join(", ")
@@ -665,9 +658,6 @@ const ProjectTrailsProfile = ({
                   />
                   <div className="ProjectTrailsProfile__quickStats">
                     <Skeleton
-                      style={{ width: "5.5rem", height: "1.6rem", borderRadius: "999px" }}
-                    />
-                    <Skeleton
                       style={{ width: "4.5rem", height: "1.6rem", borderRadius: "999px" }}
                     />
                   </div>
@@ -698,10 +688,6 @@ const ProjectTrailsProfile = ({
                   </p>
 
                   <div className="ProjectTrailsProfile__quickStats">
-                    <span className="ProjectTrailsProfile__quickStat">
-                      <i className="fas fa-map-marker-alt" aria-hidden="true" />
-                      {trailFeatures.length} segments
-                    </span>
                     <span className="ProjectTrailsProfile__quickStat">
                       <i className="fas fa-share-alt" aria-hidden="true" />
                       {metrics.gaps?.length ?? 0} gaps
@@ -822,6 +808,22 @@ const ProjectTrailsProfile = ({
             <div className="ProjectTrailsProfile__sectionCard">
               {isDetailLoading ? (
                 <>
+                  <div className="ProjectTrailsProfile__openSpaceCard">
+                    <div
+                      className="ProjectTrailsProfile__openSpaceTitleSkeleton"
+                      aria-hidden="true"
+                    >
+                      <Skeleton
+                        style={{ width: "92%", height: "0.85rem", marginBottom: "0.4rem" }}
+                      />
+                      <Skeleton style={{ width: "4.5rem", height: "1.2rem" }} />
+                    </div>
+                    <div className="ProjectTrailsProfile__openSpaceSwitchRow">
+                      <Skeleton
+                        style={{ width: "6.5rem", height: "1.4rem", borderRadius: "999px" }}
+                      />
+                    </div>
+                  </div>
                   <Skeleton
                     style={{ width: "60%", height: "0.85rem", marginBottom: "0.65rem" }}
                   />
@@ -840,42 +842,9 @@ const ProjectTrailsProfile = ({
                   <Skeleton
                     style={{ width: "100%", height: "2.5rem", marginTop: "0.65rem", borderRadius: "8px" }}
                   />
-                  <div className="ProjectTrailsProfile__openSpaceCard">
-                    <div
-                      className="ProjectTrailsProfile__openSpaceTitleSkeleton"
-                      aria-hidden="true"
-                    >
-                      <Skeleton
-                        style={{ width: "92%", height: "0.85rem", marginBottom: "0.4rem" }}
-                      />
-                      <Skeleton style={{ width: "4.5rem", height: "1.2rem" }} />
-                    </div>
-                    <div className="ProjectTrailsProfile__openSpaceSwitchRow">
-                      <Skeleton
-                        style={{ width: "6.5rem", height: "1.4rem", borderRadius: "999px" }}
-                      />
-                    </div>
-                  </div>
                 </>
               ) : (
                 <>
-                  <h3 className="ProjectTrailsProfile__sectionTitle">
-                    Passes through {communities.length} communit
-                    {communities.length === 1 ? "y" : "ies"}
-                  </h3>
-                  <div className="ProjectTrailsProfile__communityTags">
-                    {communities.map((c) => (
-                      <span key={c} className="ProjectTrailsProfile__communityTag">
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                  {communities.length > 0 && (
-                    <div className="ProjectTrailsProfile__communityFooter">
-                      Towns of {communitySummary}
-                    </div>
-                  )}
-
                   <div className="ProjectTrailsProfile__openSpaceCard">
                     {isLoadingOpenSpace ? (
                       <>
@@ -957,6 +926,23 @@ const ProjectTrailsProfile = ({
                       </>
                     )}
                   </div>
+
+                  <h3 className="ProjectTrailsProfile__sectionTitle">
+                    Passes through {communities.length} communit
+                    {communities.length === 1 ? "y" : "ies"}
+                  </h3>
+                  <div className="ProjectTrailsProfile__communityTags">
+                    {communities.map((c) => (
+                      <span key={c} className="ProjectTrailsProfile__communityTag">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                  {communities.length > 0 && (
+                    <div className="ProjectTrailsProfile__communityFooter">
+                      Towns of {communitySummary}
+                    </div>
+                  )}
                 </>
               )}
             </div>

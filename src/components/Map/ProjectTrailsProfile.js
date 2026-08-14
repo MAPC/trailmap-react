@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ReactMapGL, { NavigationControl, GeolocateControl, ScaleControl, Popup, Source, Layer } from "react-map-gl";
-import BasemapPanel from "../BasemapPanel";
 import ControlPanelShell from "../ControlPanel/ControlPanelShell";
 import RegionalTrailsControlPanel from "../ControlPanel/RegionalTrailsControlPanel";
 import CommunityIdentify from "./tooltip/CommunityIdentify";
@@ -14,6 +13,8 @@ import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
 import EnvironmentalJusticePopupContent from "./tooltip/EnvironmentalJusticePopupContent";
 import OpenSpacePopupContent from "./tooltip/OpenSpacePopupContent";
 import TrailPopupContent from "./tooltip/TrailPopupContent";
+import MapToolbar from "./MapToolbar";
+import BoundaryLayers from "./layers/BoundaryLayers";
 import massachusettsData from "../../data/massachusetts.json";
 import { queryFeatureAtPoint } from "./utils/arcgisPointQuery";
 import { getFeaturesAtPoint } from "./utils/mapQueryUtils";
@@ -116,6 +117,8 @@ const ProjectTrailsProfile = ({
   baseLayer, 
   showBasemapPanel, 
   toggleBasemapPanel,
+  showBoundariesPanel,
+  toggleBoundariesPanel,
   showControlPanel,
   toggleControlPanel,
   mapRef
@@ -134,6 +137,9 @@ const ProjectTrailsProfile = ({
     setShowProjectOpenSpace,
     showEnvironmentalJustice,
     setShowEnvironmentalJustice,
+    showMapcBoundary,
+    showMaHouseDistricts,
+    showMaSenateDistricts,
   } = useContext(LayerContext);
 
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
@@ -158,6 +164,7 @@ const ProjectTrailsProfile = ({
   const isAnyOpenSpaceVisible = showOpenSpace || showProjectOpenSpace;
   
   const [openSpaceHoverInfo, setOpenSpaceHoverInfo] = useState(null);
+  const [showOneLayerNotice, setShowOneLayerNotice] = useState(false);
 
   const isOpenSpaceLayerId = (layerId) =>
     layerId === "openspace-regional-layer" ||
@@ -657,11 +664,14 @@ const ProjectTrailsProfile = ({
     return layerIds;
   };
 
-  // Municipality layers function - always show, no hover
+  // Municipality outlines for context; hide when another boundary overlay is active
+  // so MAPC / district boundaries are actually visible.
   const municipalitiesLayers = () => {
-    const visibleMunicipalitiesLayers = [];
-    // Always show municipalities in regional trails profile
-    visibleMunicipalitiesLayers.push(
+    if (showMapcBoundary || showMaHouseDistricts || showMaSenateDistricts) {
+      return [];
+    }
+
+    return [
       <Layer
         key="municipalities-fill"
         id="municipalities-fill"
@@ -669,11 +679,10 @@ const ProjectTrailsProfile = ({
         source="municipalities"
         paint={{
           "fill-color": "transparent",
-          "fill-outline-color": "black"
+          "fill-outline-color": "black",
         }}
-      />
-    );
-    return visibleMunicipalitiesLayers;
+      />,
+    ];
   };
 
   // Ensure trails layers are always on top
@@ -911,6 +920,7 @@ const ProjectTrailsProfile = ({
             onClose={() => setEnvironmentalJusticeClickInfo(null)}
             anchor="top"
             offset={12}
+            maxWidth="340px"
           >
             <EnvironmentalJusticePopupContent properties={environmentalJusticeClickInfo.feature.properties} />
           </Popup>
@@ -968,6 +978,9 @@ const ProjectTrailsProfile = ({
             </Popup>
           )}
 
+        {/* Boundary overlays above base municipality outlines */}
+        <BoundaryLayers />
+
         {/* Map controls */}
         <NavigationControl position="bottom-right" />
         <GeolocateControl position="bottom-right" />
@@ -979,13 +992,16 @@ const ProjectTrailsProfile = ({
         )}
       </ReactMapGL>
 
-
-      {/* Basemap Panel */}
-      {showBasemapPanel && (
-        <BasemapPanel
-          toggleBasemapPanel={toggleBasemapPanel}
-        />
-      )}
+      <MapToolbar
+        showBasemapPanel={showBasemapPanel}
+        toggleBasemapPanel={toggleBasemapPanel}
+        showBoundariesPanel={showBoundariesPanel}
+        toggleBoundariesPanel={toggleBoundariesPanel}
+        onBoundaryLayerToggle={() => setShowOneLayerNotice(true)}
+        onBoundaryPanelOpen={() => setShowOneLayerNotice(true)}
+        showOneLayerNotice={showOneLayerNotice}
+        onDismissOneLayerNotice={() => setShowOneLayerNotice(false)}
+      />
 
       <ControlPanelShell
         showControlPanel={showControlPanel}
