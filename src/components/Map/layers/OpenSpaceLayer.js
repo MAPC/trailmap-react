@@ -1,9 +1,44 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Source, Layer } from "react-map-gl";
+import bbox from "@turf/bbox";
 import { fetchOpenSpaceByTownId } from "../../../utils/fetchOpenSpace";
 
 const MASSGIS_OPENSPACE_URL =
   "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/openspace/FeatureServer/0";
+
+const DEFAULT_FIT_BOUNDS_OPTIONS = {
+  padding: 50,
+  duration: 1000,
+  maxZoom: 14,
+};
+
+const fitMapToOpenSpaceExtent = (mapRef, geojson, options = {}) => {
+  const map = mapRef?.current?.getMap?.();
+  if (!map || !geojson?.features?.length) return;
+
+  try {
+    let [minLng, minLat, maxLng, maxLat] = bbox(geojson);
+    if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) return;
+
+    if (minLng === maxLng || minLat === maxLat) {
+      const pad = 0.002;
+      minLng -= pad;
+      maxLng += pad;
+      minLat -= pad;
+      maxLat += pad;
+    }
+
+    map.fitBounds(
+      [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ],
+      { ...DEFAULT_FIT_BOUNDS_OPTIONS, ...options }
+    );
+  } catch (error) {
+    console.error("Error zooming to open space extent:", error);
+  }
+};
 
 /**
  * Protected / recreational open space layer.
@@ -22,10 +57,19 @@ const OpenSpaceLayer = ({
   /** Place fill/outline below this layer id (e.g. first trail layer). */
   beforeId,
   onDataChange,
+  /** When true, zoom the map to the loaded open space extent (Show on map). */
+  fitBoundsOnLoad = false,
+  fitBoundsOptions,
 }) => {
   const [openSpaceData, setOpenSpaceData] = useState(null);
   const updateTimeoutRef = useRef(null);
   const queryTimeoutRef = useRef(null);
+  const fitBoundsOnLoadRef = useRef(fitBoundsOnLoad);
+  const fitBoundsOptionsRef = useRef(fitBoundsOptions);
+  const didFitBoundsRef = useRef(false);
+
+  fitBoundsOnLoadRef.current = fitBoundsOnLoad;
+  fitBoundsOptionsRef.current = fitBoundsOptions;
 
   const sourceId = `${idPrefix}-source`;
   const fillLayerId = `${idPrefix}-layer`;
@@ -88,6 +132,8 @@ const OpenSpaceLayer = ({
 
   // Community Overview: fetch open space for selected municipality by town_id
   useEffect(() => {
+    didFitBoundsRef.current = false;
+
     if (!isActive || !useTownApi) {
       if (useTownApi) {
         setOpenSpaceData(null);
@@ -107,6 +153,18 @@ const OpenSpaceLayer = ({
           featureCollection.features.length > 0 ? featureCollection : null
         );
         if (onDataChange) onDataChange(featureCollection);
+        if (
+          fitBoundsOnLoadRef.current &&
+          !didFitBoundsRef.current &&
+          featureCollection.features.length > 0
+        ) {
+          didFitBoundsRef.current = true;
+          fitMapToOpenSpaceExtent(
+            mapRef,
+            featureCollection,
+            fitBoundsOptionsRef.current
+          );
+        }
       } catch (error) {
         console.error("Error fetching open space by town:", error);
         if (!cancelled) {

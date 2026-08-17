@@ -1007,6 +1007,7 @@ const CommunityTrailsProfile = ({
                 : undefined
             }
             mapRef={mapRef}
+            fitBoundsOnLoad
           />
         )}
 

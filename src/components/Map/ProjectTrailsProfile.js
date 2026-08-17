@@ -187,16 +187,6 @@ const ProjectTrailsProfile = ({
     const handleToggleOpenSpace = (event) => {
       if (location.pathname === '/projectTrailsProfile') {
         setShowOpenSpaceFromContext(event.detail.show);
-        // Zoom to level 11 when OpenSpace is opened, only if current zoom is smaller than 11
-        if (event.detail.show && mapRef?.current) {
-          const map = mapRef.current.getMap();
-          if (map && map.getZoom() < 11) {
-            map.easeTo({
-              zoom: 11,
-              duration: 1000
-            });
-          }
-        }
       }
     };
 
@@ -209,15 +199,6 @@ const ProjectTrailsProfile = ({
     const handleToggleProjectOpenSpace = (event) => {
       if (location.pathname === "/projectTrailsProfile") {
         setShowProjectOpenSpace(event.detail.show);
-        if (event.detail.show && mapRef?.current) {
-          const map = mapRef.current.getMap();
-          if (map && map.getZoom() < 11) {
-            map.easeTo({
-              zoom: 11,
-              duration: 1000,
-            });
-          }
-        }
       }
     };
 
@@ -235,7 +216,7 @@ const ProjectTrailsProfile = ({
         handleToggleEnvironmentalJustice
       );
     };
-  }, [location.pathname, setShowOpenSpaceFromContext, setShowProjectOpenSpace, setShowEnvironmentalJustice, mapRef]);
+  }, [location.pathname, setShowOpenSpaceFromContext, setShowProjectOpenSpace, setShowEnvironmentalJustice]);
 
   const [environmentalJusticeClickInfo, setEnvironmentalJusticeClickInfo] = useState(null); // Store Environmental Justice click info for popup
   const [majorTrailClickInfo, setMajorTrailClickInfo] = useState(null); // Store Major Trail click info for popup
@@ -852,6 +833,12 @@ const ProjectTrailsProfile = ({
                   ? "major-trails-layer"
                   : undefined
             }
+            fitBoundsOnLoad
+            fitBoundsOptions={{
+              padding: { top: 100, bottom: 100, left: 500, right: 80 },
+              duration: 1000,
+              maxZoom: 14,
+            }}
           />
         )}
 
