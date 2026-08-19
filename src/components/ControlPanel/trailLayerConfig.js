@@ -1,26 +1,35 @@
+import LayerData from "../../data/LayerData";
+
 export const TRAIL_LAYER_CATEGORIES = [
   {
     title: "SHARED-USE PATHS",
     items: [
-      { existingId: "pavedPaths", proposedId: "pavedPathsProposed", label: "Existing Paved Shared Use Paths" },
-      { existingId: "unimprovedPaths", proposedId: "unimprovedPathsProposed", label: "Existing Unimproved Shared Use Paths" },
+      { existingId: "pavedPaths", proposedId: "pavedPathsProposed" },
+      { existingId: "unimprovedPaths", proposedId: "unimprovedPathsProposed" },
     ],
   },
   {
     title: "BIKE FACILITIES",
     items: [
-      { existingId: "bikeLane", proposedId: "bikeLaneProposed", label: "Existing Bike Lanes" },
-      { existingId: "protectedBikeLane", proposedId: "protectedBikeLaneProposed", label: "Existing Protected Bike Lanes" },
+      { existingId: "bikeLane", proposedId: "bikeLaneProposed" },
+      { existingId: "protectedBikeLane", proposedId: "protectedBikeLaneProposed" },
     ],
   },
   {
     title: "FOOT PATHS",
     items: [
-      { existingId: "pavedFootway", proposedId: "pavedFootwayProposed", label: "Paved Footway" },
-      { existingId: "naturalSurfaceFootway", proposedId: "naturalSurfaceFootwayProposed", label: "Natural Surface Footway" },
+      { existingId: "pavedFootway", proposedId: "pavedFootwayProposed" },
+      { existingId: "naturalSurfaceFootway", proposedId: "naturalSurfaceFootwayProposed" },
     ],
   },
 ];
+
+const LAYER_LABELS_BY_ID = Object.fromEntries(
+  [...LayerData.existing, ...LayerData.proposed].map((layer) => [layer.id, layer.label])
+);
+
+export const getTrailLayerLabel = (layerId, fallback = layerId) =>
+  LAYER_LABELS_BY_ID[layerId] || fallback;
 
 export const LANDLINE_SWATCH_COLOR = "#00A884";
 

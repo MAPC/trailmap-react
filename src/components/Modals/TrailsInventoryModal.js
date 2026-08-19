@@ -7,7 +7,7 @@ import Tooltip from "react-bootstrap/Tooltip";
 import Collapse from "react-bootstrap/Collapse";
 import ReactMapGL, { Source, NavigationControl, ScaleControl } from "react-map-gl";
 import { LayerContext } from "../../App";
-import massachusettsData from "../../data/massachusetts.json";
+import { useMunicipalBoundaries } from "../../utils/fetchMunicipalBoundaries";
 import MunicipalityMapLayer from "../Map/layers/MunicipalityMapLayer";
 import CommunityTrailsProfileLayers from "../Map/layers/CommunityTrailsProfileLayers";
 import TrailLegend from "../Map/TrailLegend";
@@ -56,6 +56,7 @@ const TrailsInventoryModal = ({
   onDownloadGeoJSON,
 }) => {
   const { baseLayer } = useContext(LayerContext);
+  const { data: massachusettsData } = useMunicipalBoundaries();
   const mapRef = useRef(null);
   const [selectedTypeKeys, setSelectedTypeKeys] = useState(() => new Set());
   const [sortColumn, setSortColumn] = useState(null);

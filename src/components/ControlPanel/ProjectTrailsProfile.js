@@ -10,6 +10,7 @@ import {
 import { LayerContext } from "../../App";
 import { downloadTrailGeoJSON } from "../../utils/regionalTrailMetrics";
 import { fetchOpenSpaceByTownId } from "../../utils/fetchOpenSpace";
+import { MASSGIS_OPEN_SPACE_URL } from "../../utils/openSpaceLabels";
 import { sortLengthByTypeItems } from "../Map/constants/trailFacilityTypeLabels";
 
 const VIEW_DETAILS_TOOLTIP = "Click to view details";
@@ -813,15 +814,13 @@ const ProjectTrailsProfile = ({
                       className="ProjectTrailsProfile__openSpaceTitleSkeleton"
                       aria-hidden="true"
                     >
-                      <Skeleton
-                        style={{ width: "92%", height: "0.85rem", marginBottom: "0.4rem" }}
-                      />
-                      <Skeleton style={{ width: "4.5rem", height: "1.2rem" }} />
-                    </div>
-                    <div className="ProjectTrailsProfile__openSpaceSwitchRow">
-                      <Skeleton
-                        style={{ width: "6.5rem", height: "1.4rem", borderRadius: "999px" }}
-                      />
+                      <div className="ProjectTrailsProfile__openSpaceHeader">
+                        <Skeleton style={{ width: "8rem", height: "0.85rem" }} />
+                        <Skeleton
+                          style={{ width: "6.5rem", height: "1.4rem", borderRadius: "999px" }}
+                        />
+                      </div>
+                      <Skeleton style={{ width: "5.5rem", height: "1.2rem" }} />
                     </div>
                   </div>
                   <Skeleton
@@ -851,49 +850,27 @@ const ProjectTrailsProfile = ({
                         <div
                           className="ProjectTrailsProfile__openSpaceTitleSkeleton"
                           aria-busy="true"
-                          aria-label="Loading protected and recreational open space acres"
+                          aria-label="Loading total open spaces"
                         >
-                          <Skeleton
-                            style={{
-                              width: "92%",
-                              height: "0.85rem",
-                              marginBottom: "0.4rem",
-                            }}
-                          />
-                          <Skeleton style={{ width: "4.5rem", height: "1.2rem" }} />
-                        </div>
-                        <div className="ProjectTrailsProfile__openSpaceSwitchRow">
-                          <Skeleton
-                            style={{
-                              width: "6.5rem",
-                              height: "1.4rem",
-                              borderRadius: "999px",
-                            }}
-                          />
+                          <div className="ProjectTrailsProfile__openSpaceHeader">
+                            <Skeleton style={{ width: "8rem", height: "0.85rem" }} />
+                            <Skeleton
+                              style={{
+                                width: "6.5rem",
+                                height: "1.4rem",
+                                borderRadius: "999px",
+                              }}
+                            />
+                          </div>
+                          <Skeleton style={{ width: "5.5rem", height: "1.2rem" }} />
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="ProjectTrailsProfile__openSpaceHeader">
                           <span className="ProjectTrailsProfile__openSpaceLabel">
-                            Protected and recreational open space acres within{" "}
-                            {communities.length > 0
-                              ? `${communities.length} municipalit${
-                                  communities.length === 1 ? "y" : "ies"
-                                }`
-                              : "these municipalities"}
+                            Total open spaces
                           </span>
-                          <div className="ProjectTrailsProfile__openSpaceCount">
-                            {openSpaceError
-                              ? "—"
-                              : openSpaceTotalAcres.toLocaleString("en-US", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                          </div>
-                        </div>
-
-                        <div className="ProjectTrailsProfile__openSpaceSwitchRow">
                           <Form.Check
                             type="switch"
                             id="project-open-space-map-switch"
@@ -910,6 +887,31 @@ const ProjectTrailsProfile = ({
                             aria-label="Show protected and recreational open space on map"
                             label="Show on map"
                           />
+                        </div>
+                        <div className="ProjectTrailsProfile__openSpaceCount">
+                          {openSpaceError
+                            ? "—"
+                            : (
+                              <>
+                                {openSpaceTotalAcres.toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                                <span className="ProjectTrailsProfile__openSpaceUnit">
+                                  acres
+                                </span>
+                              </>
+                            )}
+                          <span className="ProjectTrailsProfile__openSpaceSource">
+                            Source:{" "}
+                            <a
+                              href={MASSGIS_OPEN_SPACE_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              MassGIS
+                            </a>
+                          </span>
                         </div>
 
                         {openSpaceError && (

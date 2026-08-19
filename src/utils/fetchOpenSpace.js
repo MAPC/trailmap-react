@@ -1,13 +1,6 @@
 import { openSpaceRowsToGeoJSON } from "./parseEwkb";
 
-const BACKEND_URL = (
-  process.env.REACT_APP_BACKEND_URL ||
-  "https://trailmap-backend-d66ee5db7604.herokuapp.com"
-).replace(/\/$/, "");
-
-const OPEN_SPACE_API_URL =
-  process.env.REACT_APP_OPEN_SPACE_API_URL ||
-  `${BACKEND_URL}/api/get-open-space`;
+const OPEN_SPACE_API_URL = `${process.env.REACT_APP_BACKEND_URL}/api/get-open-space`;
 
 /**
  * Normalize town id(s) to a comma-separated API param, e.g. "1,3,4,5".

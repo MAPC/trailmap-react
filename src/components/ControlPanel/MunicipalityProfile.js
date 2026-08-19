@@ -7,10 +7,11 @@ import DropdownButton from "react-bootstrap/DropdownButton";
 import ButtonGroup from "react-bootstrap/ButtonGroup";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Tooltip from "react-bootstrap/Tooltip";
-import massachusettsData from "../../data/massachusetts.json";
 import { useNavigate, useLocation } from "react-router-dom";
 import TrailsInventoryModal from "../Modals/TrailsInventoryModal";
 import { fetchOpenSpaceByTownId } from "../../utils/fetchOpenSpace";
+import { MASSGIS_OPEN_SPACE_URL } from "../../utils/openSpaceLabels";
+import { useMunicipalBoundaries } from "../../utils/fetchMunicipalBoundaries";
 import {
   COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS,
   findMunicipalityTrailMetricsByTownId,
@@ -51,7 +52,7 @@ const buildTrailStatsFromMetricsRow = (row) => {
   stats.totalLength = existingLength + plannedLength + proposedLength;
   stats.area = Number(row.areaSqMi) || 0;
   stats.density =
-    row.density != null ? parseFloat(Number(row.density).toFixed(2)) : 0;
+    row.density != null ? parseFloat(Number(row.density).toFixed(2)) : null;
 
   mapcTrailLayers.forEach((layer) => {
     const key = COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS[layer.id];
@@ -105,6 +106,7 @@ const MunicipalityProfile = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { data: massachusettsData } = useMunicipalBoundaries();
   const [municipalities, setMunicipalities] = useState([]);
   const [trailStats, setTrailStats] = useState(null);
   const [selectedTrailIndex, setSelectedTrailIndex] = useState(null);
@@ -121,6 +123,9 @@ const MunicipalityProfile = ({
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
   const [densityRankVersion, setDensityRankVersion] = useState(0);
   const densityRankCacheRef = useRef(new Map());
+  const onMunicipalitySelectRef = useRef(onMunicipalitySelect);
+  const appliedSharedMuniRef = useRef(null);
+  onMunicipalitySelectRef.current = onMunicipalitySelect;
 
   // Reset component states when switching back to trail filters
   useEffect(() => {
@@ -145,64 +150,67 @@ const MunicipalityProfile = ({
 
   // Extract municipality list from GeoJSON
   useEffect(() => {
-    if (massachusettsData && massachusettsData.features) {
-      const muniList = massachusettsData.features
-        .map(feature => {
-          const townName = feature.properties.town || feature.properties.NAME;
-          return townName ? {
-            name: townName.toLowerCase(),
-            properties: feature.properties,
-            geometry: feature.geometry
-          } : null;
-        })
-        .filter(Boolean)
-        .sort((a, b) => a.name.localeCompare(b.name));
-      
-      setMunicipalities(muniList);
+    if (!massachusettsData?.features?.length) return;
 
-      // Check URL parameters for shared municipality
-      const urlParams = new URLSearchParams(window.location.search);
-      const sharedMuni = urlParams.get('muni');
-      const sharedView = urlParams.get('view');
-      const showCompletion = urlParams.get('showCompletion');
+    const muniList = massachusettsData.features
+      .map(feature => {
+        const townName = feature.properties.town || feature.properties.NAME;
+        return townName ? {
+          name: townName.toLowerCase(),
+          properties: feature.properties,
+          geometry: feature.geometry
+        } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name));
       
-      // Check if we're on communityTrailsProfile path or have view=municipality parameter
-      const isCommunityTrailsProfile = location.pathname === '/communityTrailsProfile';
-      
-      if ((sharedView === 'municipality' || isCommunityTrailsProfile) && sharedMuni && muniList.length > 0) {
-        const foundMuni = muniList.find(m => m.name === sharedMuni.toLowerCase());
-        if (foundMuni && onMunicipalitySelect) {
-          // Small delay to ensure everything is loaded
-          setTimeout(() => {
-            onMunicipalitySelect(foundMuni);
+    setMunicipalities(muniList);
+
+    // Check URL parameters for shared municipality
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedMuni = urlParams.get('muni');
+    const sharedView = urlParams.get('view');
+    const showCompletion = urlParams.get('showCompletion');
+    
+    // Check if we're on communityTrailsProfile path or have view=municipality parameter
+    const isCommunityTrailsProfile = location.pathname === '/communityTrailsProfile';
+    
+    if ((sharedView === 'municipality' || isCommunityTrailsProfile) && sharedMuni && muniList.length > 0) {
+      const sharedMuniName = sharedMuni.toLowerCase();
+      const foundMuni = muniList.find(m => m.name === sharedMuniName);
+      if (foundMuni && onMunicipalitySelectRef.current) {
+        if (appliedSharedMuniRef.current === sharedMuniName) return;
+        appliedSharedMuniRef.current = sharedMuniName;
+        // Small delay to ensure everything is loaded
+        setTimeout(() => {
+          onMunicipalitySelectRef.current(foundMuni);
+          
+          // If showCompletion parameter is present, open the completion modal
+          if (showCompletion === 'true') {
+            setTimeout(() => {
+              setShowCompletionModal(true);
+            }, 1000); // Additional delay to ensure municipality is selected and stats are calculated
             
-            // If showCompletion parameter is present, open the completion modal
-            if (showCompletion === 'true') {
-              setTimeout(() => {
-                setShowCompletionModal(true);
-              }, 1000); // Additional delay to ensure municipality is selected and stats are calculated
-              
-              // Remove showCompletion from URL after processing
-              setTimeout(() => {
-                const params = new URLSearchParams(window.location.search);
-                params.delete('showCompletion');
-                const newUrl = params.toString() 
-                  ? `${location.pathname}?${params.toString()}`
-                  : location.pathname;
-                navigate(newUrl, { replace: true });
-              }, 1500); // Remove after modal opens
-            }
-            
-            // Update URL to include municipality parameter (but keep it in URL, don't clear)
-            if (isCommunityTrailsProfile && !sharedMuni) {
-              // If we're on the path but don't have muni param, add it
-              navigate(`/communityTrailsProfile?muni=${encodeURIComponent(foundMuni.name)}`, { replace: true });
-            }
-          }, 500);
-        }
+            // Remove showCompletion from URL after processing
+            setTimeout(() => {
+              const params = new URLSearchParams(window.location.search);
+              params.delete('showCompletion');
+              const newUrl = params.toString() 
+                ? `${location.pathname}?${params.toString()}`
+                : location.pathname;
+              navigate(newUrl, { replace: true });
+            }, 1500); // Remove after modal opens
+          }
+          
+          // Update URL to include municipality parameter (but keep it in URL, don't clear)
+          if (isCommunityTrailsProfile && !sharedMuni) {
+            // If we're on the path but don't have muni param, add it
+            navigate(`/communityTrailsProfile?muni=${encodeURIComponent(foundMuni.name)}`, { replace: true });
+          }
+        }, 500);
       }
     }
-  }, []);
+  }, [massachusettsData, location.pathname, location.search, navigate]);
 
   // Reset municipality profile states when a new municipality is selected
   // Track previous municipality to detect actual changes
@@ -700,7 +708,7 @@ const MunicipalityProfile = ({
               </OverlayTrigger>
             </div>
             <span className="MunicipalityProfile__trailDensityValue">
-              {stats.density} mi/mi²
+              {stats.density != null ? `${stats.density} mi/mi²` : "—"}
             </span>
             <span className="MunicipalityProfile__trailOverviewHint">
               existing trails per sq mile
@@ -730,24 +738,8 @@ const MunicipalityProfile = ({
       <div className="MunicipalityProfile__openSpaceCard">
         <div className="MunicipalityProfile__openSpaceHeader">
           <span className="MunicipalityProfile__trailOverviewEyebrow">
-            Protected and recreational open space acres within{" "}
-            {selectedMunicipality
-              ? capitalizeWords(selectedMunicipality.name)
-              : "this municipality"}
+            Total open spaces
           </span>
-          <div className="MunicipalityProfile__openSpaceCount">
-            {isLoadingOpenSpace
-              ? "…"
-              : openSpaceError
-                ? "—"
-                : openSpaceTotalAcres.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-          </div>
-        </div>
-
-        <div className="MunicipalityProfile__openSpaceSwitchRow">
           <Form.Check
             type="switch"
             id="overview-muni-open-space-map-switch"
@@ -762,6 +754,31 @@ const MunicipalityProfile = ({
             aria-label="Show municipality protected and recreational open space on map"
             label="Show on map"
           />
+        </div>
+        <div className="MunicipalityProfile__openSpaceCount">
+          {isLoadingOpenSpace
+            ? "…"
+            : openSpaceError
+              ? "—"
+              : (
+                <>
+                  {openSpaceTotalAcres.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                  <span className="MunicipalityProfile__openSpaceUnit">acres</span>
+                </>
+              )}
+          <span className="MunicipalityProfile__openSpaceSource">
+            Source:{" "}
+            <a
+              href={MASSGIS_OPEN_SPACE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              MassGIS
+            </a>
+          </span>
         </div>
 
         {isLoadingOpenSpace && (
@@ -1458,7 +1475,7 @@ const MunicipalityProfile = ({
                   </OverlayTrigger>
                 </span>
                 <span className="CompletionRatesModal__summaryValue">
-                  {trailStats.density} mi/mi²
+                  {trailStats.density != null ? `${trailStats.density} mi/mi²` : "—"}
                 </span>
                 <span className="CompletionRatesModal__summaryHint">
                   existing trails per sq mile

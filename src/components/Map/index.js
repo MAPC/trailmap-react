@@ -14,7 +14,6 @@ import CommunityIdentify from "./CommunityIdentify";
 import ShareModal from "../Modals/ShareModal";
 import { LayerContext } from "../../App";
 import EditModal from "../Modals/EditModal";
-import massachusettsData from "../../data/massachusetts.json";
 import { MAPC_OVERVIEW_VIEWPORT } from "../../utils/mapcBoundary";
 // Commuter rail and bike station data will be fetched when needed
 import SuccessModal from "../Modals/SuccessModal";

@@ -13,8 +13,8 @@ import CollapsibleTrailLegend from "./CollapsibleTrailLegend";
 import TrailLegend from "./TrailLegend";
 import BufferAnalysisWindow from "../BufferAnalysisWindow";
 import { LayerContext } from "../../App";
-import massachusettsData from "../../data/massachusetts.json";
 import { mapcTrailLayers } from "./constants/mapcTrailLayersConfig";
+import { useMunicipalBoundaries } from "../../utils/fetchMunicipalBoundaries";
 const DEFAULT_BUFFER_RADIUS = 1609; // 1 mile in meters
 import { queryMunicipalityTrails } from "./utils/trailQueries";
 import { calculateBufferAnalysis } from "./utils/bufferAnalysis";
@@ -83,6 +83,7 @@ const CommunityTrailsProfile = ({
     showTransitLandStops,
     setShowTransitLandStops,
   } = useContext(LayerContext);
+  const { data: massachusettsData } = useMunicipalBoundaries();
 
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
   const [identifyInfo, setIdentifyInfo] = useState(null);
@@ -701,7 +702,7 @@ const CommunityTrailsProfile = ({
                 if (selectedMunicipality?.name === muniName) {
                   return;
                 }
-                const fullFeature = massachusettsData.features.find((f) => {
+                const fullFeature = massachusettsData?.features?.find((f) => {
                   const name = (f.properties.town || f.properties.NAME || "").toLowerCase();
                   return name === muniName;
                 });

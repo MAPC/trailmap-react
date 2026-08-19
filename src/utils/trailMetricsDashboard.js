@@ -1,14 +1,8 @@
-import massachusettsData from "../data/massachusetts.json";
 import maMuniKeys from "../data/ma_muni_keys.json";
+import { fetchMunicipalBoundaries } from "./fetchMunicipalBoundaries";
 
-const BACKEND_URL = (
-  process.env.REACT_APP_BACKEND_URL ||
-  "https://trailmap-backend-d66ee5db7604.herokuapp.com"
-).replace(/\/$/, "");
 
-const TRAIL_METRICS_API_URL =
-  process.env.REACT_APP_TRAIL_METRICS_API_URL ||
-  `${BACKEND_URL}/api/trail-metrics?token=trailmap`;
+const TRAIL_METRICS_API_URL = `${process.env.REACT_APP_BACKEND_URL}/api/trail-metrics?token=trailmap`;
 
 const SPECIAL_MUNI_NAMES = {
   "-1": "Outside municipalities",
@@ -136,24 +130,33 @@ export const capitalizeWords = (value) => {
     .join(" ");
 };
 
-export const buildMunicipalityLookup = () => {
+export const buildMunicipalityLookup = (featureCollection) => {
   const byMuniId = new Map();
   const areaByMuniId = new Map();
   const slugByMuniId = new Map();
 
-  massachusettsData.features.forEach((feature) => {
-    const { town_id: townId, town, sum_square: sumSquare } = feature.properties;
-    if (townId == null) return;
+  (featureCollection?.features || []).forEach((feature) => {
+    const { town_id: townId, town, sum_square: sumSquare } = feature.properties || {};
+    const normalizedId = Number(townId);
+    if (!Number.isFinite(normalizedId)) return;
 
-    byMuniId.set(townId, capitalizeWords(town));
-    areaByMuniId.set(townId, Number(sumSquare) || 0);
+    byMuniId.set(normalizedId, capitalizeWords(town));
+    areaByMuniId.set(normalizedId, Number(sumSquare) || 0);
     if (town) {
-      slugByMuniId.set(townId, town.toLowerCase());
+      slugByMuniId.set(normalizedId, town.toLowerCase());
     }
   });
 
   return { byMuniId, areaByMuniId, slugByMuniId };
 };
+
+const EMPTY_MUNICIPALITY_LOOKUP = {
+  byMuniId: new Map(),
+  areaByMuniId: new Map(),
+  slugByMuniId: new Map(),
+};
+
+let municipalityLookupCache = EMPTY_MUNICIPALITY_LOOKUP;
 
 export const getCommunityProfileUrl = (muniId, lookup) => {
   const normalizedMuniId = Number(muniId);
@@ -171,7 +174,7 @@ export const getMunicipalityName = (muniId, lookup) => {
     return SPECIAL_MUNI_NAMES[muniId];
   }
 
-  return lookup.byMuniId.get(muniId) || `Municipality ${muniId}`;
+  return lookup.byMuniId.get(Number(muniId)) || `Municipality ${muniId}`;
 };
 
 export const enrichTrailMetricsRows = (rows, lookup) =>
@@ -180,7 +183,7 @@ export const enrichTrailMetricsRows = (rows, lookup) =>
     const plannedMiles = Number(row.total_planned_length_mi) || 0;
     const proposedMiles = Number(row.total_proposed_length_mi) || 0;
     const totalMiles = existingMiles + plannedMiles + proposedMiles;
-    const areaSqMi = lookup.areaByMuniId.get(row.muni_id) || 0;
+    const areaSqMi = lookup.areaByMuniId.get(Number(row.muni_id)) || 0;
     const density = areaSqMi > 0 ? existingMiles / areaSqMi : null;
 
     const byType = TRAIL_TYPE_GROUPS.map((group) => {
@@ -234,7 +237,7 @@ const getScopeMunicipalityIds = (scope) => {
 };
 
 export const getMunicipalitiesWithoutTrailData = (rows, scope) => {
-  const lookup = buildMunicipalityLookup();
+  const lookup = municipalityLookupCache;
   const trackedIds = new Set(
     rows
       .filter((row) => Number(row.muni_id) > 0)
@@ -336,15 +339,21 @@ const buildTrailMetricsRequestUrl = (scope) => {
 export const fetchTrailMetricsDashboardData = async (
   scope = DASHBOARD_SCOPES.MAPC
 ) => {
-  const response = await fetch(buildTrailMetricsRequestUrl(scope));
+  const [response, boundaries] = await Promise.all([
+    fetch(buildTrailMetricsRequestUrl(scope)),
+    fetchMunicipalBoundaries().catch((error) => {
+      console.error("Error fetching municipal boundaries:", error);
+      return { type: "FeatureCollection", features: [] };
+    }),
+  ]);
 
   if (!response.ok) {
     throw new Error("Unable to load trail metrics. Please try again later.");
   }
 
   const { fields = [], rows = [] } = await response.json();
-  const municipalityLookup = buildMunicipalityLookup();
-  const enrichedRows = enrichTrailMetricsRows(rows, municipalityLookup);
+  municipalityLookupCache = buildMunicipalityLookup(boundaries);
+  const enrichedRows = enrichTrailMetricsRows(rows, municipalityLookupCache);
 
   return {
     fields,

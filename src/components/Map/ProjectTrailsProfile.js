@@ -15,7 +15,7 @@ import OpenSpacePopupContent from "./tooltip/OpenSpacePopupContent";
 import TrailPopupContent from "./tooltip/TrailPopupContent";
 import MapToolbar from "./MapToolbar";
 import BoundaryLayers from "./layers/BoundaryLayers";
-import massachusettsData from "../../data/massachusetts.json";
+import { useMunicipalBoundaries } from "../../utils/fetchMunicipalBoundaries";
 import { queryFeatureAtPoint } from "./utils/arcgisPointQuery";
 import { getFeaturesAtPoint } from "./utils/mapQueryUtils";
 import { EJ2020_MAP_SERVER_URL } from "./constants/trailFacilityTypeLabels";
@@ -141,6 +141,7 @@ const ProjectTrailsProfile = ({
     showMaHouseDistricts,
     showMaSenateDistricts,
   } = useContext(LayerContext);
+  const { data: massachusettsData } = useMunicipalBoundaries();
 
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
   const [identifyInfo, setIdentifyInfo] = useState(null);

@@ -5,6 +5,7 @@ import {
   TRAIL_LAYER_CATEGORIES,
   getLandlineLegendItems,
   getLayerColor,
+  getTrailLayerLabel,
 } from "../ControlPanel/trailLayerConfig";
 
 const TrailSwatch = ({ color, dashed = false }) => (
@@ -75,14 +76,14 @@ const MapLegend = ({ controlPanelOpen = false, defaultOpen = true }) => {
         if (trailLayers.includes(item.existingId)) {
           existing.push({
             key: item.existingId,
-            label: item.label,
+            label: getTrailLayerLabel(item.existingId),
             color: getLayerColor(existingTrails, item.existingId),
           });
         }
         if (proposedLayers.includes(item.proposedId)) {
           planned.push({
             key: item.proposedId,
-            label: item.label,
+            label: getTrailLayerLabel(item.proposedId),
             color: getLayerColor(proposedTrails, item.proposedId),
           });
         }

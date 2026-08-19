@@ -1,8 +1,7 @@
 import React, { useContext } from "react";
 import { Source, Layer } from "react-map-gl";
 import { LayerContext } from "../../../App";
-import massachusettsData from "../../../data/massachusetts.json";
-import { mapcBoundaryData } from "../../../utils/mapcBoundary";
+import { useMunicipalBoundaries } from "../../../utils/fetchMunicipalBoundaries";
 
 const HOUSE_FILL_URL =
   "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/House2021/MapServer/1/query?where=1%3D1&outFields=*&f=geojson";
@@ -24,6 +23,7 @@ const BoundaryLayers = () => {
     showMaHouseDistricts,
     showMaSenateDistricts,
   } = useContext(LayerContext);
+  const { data: massachusettsData, mapcBoundaryData } = useMunicipalBoundaries();
 
   return (
     <>

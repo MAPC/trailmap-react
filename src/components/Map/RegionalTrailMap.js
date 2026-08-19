@@ -6,9 +6,9 @@ import ControlPanel from "../ControlPanel";
 import MapToolbar from "./MapToolbar";
 import MapLegend from "./MapLegend";
 import Identify from "./Identify";
+import MunicipalityPopupContent from "./tooltip/MunicipalityPopupContent";
 import { LayerContext } from "../../App";
-import massachusettsData from "../../data/massachusetts.json";
-import { mapcBoundaryData } from "../../utils/mapcBoundary";
+import { useMunicipalBoundaries } from "../../utils/fetchMunicipalBoundaries";
 import OriginalTrailsFilterLayers from "./layers/OriginalTrailsFilterLayers";
 import TrailsOverviewHighlightLayer from "./layers/TrailsOverviewHighlightLayer";
 import { getTrailFeatureAtEvent } from "./utils/mapQueryUtils";
@@ -68,6 +68,7 @@ const RegionalTrailMap = ({
     setSelectedMunicipality,
     showMunicipalityView,
   } = useContext(LayerContext);
+  const { data: massachusettsData, mapcBoundaryData } = useMunicipalBoundaries();
 
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
   const [identifyInfo, setIdentifyInfo] = useState(null);
@@ -885,23 +886,16 @@ const RegionalTrailMap = ({
       
       {(showMunicipalities || showMapcBoundary) && muniHoverFeature && muniHoverPoint && (
         <Popup
+          className="MapHoverPopup"
           longitude={muniHoverPoint.lng}
           latitude={muniHoverPoint.lat}
           closeButton={false}
           closeOnMove={true}
-          anchor="top"
-          offset={12}
+          anchor="bottom"
+          offset={14}
+          maxWidth="240px"
         >
-          {(() => {
-            const p = muniHoverFeature.properties || {};
-            const townName = p.town || "N/A";
-            const capitalizedTownName = townName && townName !== "N/A" ? townName.charAt(0).toUpperCase() + townName.slice(1).toLowerCase() : townName;
-            return (
-              <div style={{minWidth: 160, color: '#2774bd'}}>
-                {capitalizedTownName && <div style={{fontWeight: 400}}>Municipality: {capitalizedTownName}</div>}
-              </div>
-            );
-          })()}
+          <MunicipalityPopupContent properties={muniHoverFeature.properties} />
         </Popup>
       )}
 

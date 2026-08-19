@@ -2,6 +2,8 @@
  * MassGIS OpenSpace primary purpose codes → display labels.
  * source: https://www.mass.gov/info-details/massgis-data-protected-and-recreational-openspace
  */
+export const MASSGIS_OPEN_SPACE_URL =
+  "https://www.mass.gov/info-details/massgis-data-protected-and-recreational-openspace";
 export const openSpacePrimaryPurposeLabels = {
   R: "Recreation (activities are facility based)",
   C: "Conservation (activities are non-facility based)",
