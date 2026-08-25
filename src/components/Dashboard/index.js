@@ -125,12 +125,6 @@ const DashboardSkeleton = () => (
       <TypeBreakdownSkeleton />
     </section>
 
-    <section className="Dashboard__grid Dashboard__grid--three">
-      <RankedListSkeleton />
-      <RankedListSkeleton />
-      <RankedListSkeleton />
-    </section>
-
     <section className="Dashboard__grid Dashboard__grid--two">
       <RankedListSkeleton rows={5} />
       <RankedListSkeleton rows={5} />
@@ -682,7 +676,7 @@ const MetricsTable = ({ rows }) => {
 const RpaContactsTable = () => (
   <div className="Dashboard__card Dashboard__card--table Dashboard__card--contacts">
     <div className="Dashboard__tableHeader">
-      <h2 className="Dashboard__sectionTitle">RPA Contacts</h2>
+      <h2 className="Dashboard__sectionTitle">Regional Planning Agency GIS contacts</h2>
     </div>
     <div className="Dashboard__tableWrap Dashboard__tableWrap--contacts">
       <table className="Dashboard__table Dashboard__table--contacts">
@@ -843,30 +837,6 @@ const Dashboard = () => {
 
             <section className="Dashboard__fullRow">
               <TypeBreakdown items={insights.byTypeTotals} />
-            </section>
-
-            <section className="Dashboard__grid Dashboard__grid--three">
-              <RankedList
-                title="Top Communities by Existing Trail Miles"
-                items={insights.topByExisting}
-                valueKey="existingMiles"
-                valueLabel="mi"
-                formatValue={formatMiles}
-              />
-              <RankedList
-                title="Top Communities by Planned Trail Miles"
-                items={insights.topByPlanned}
-                valueKey="plannedMiles"
-                valueLabel="mi"
-                formatValue={formatMiles}
-              />
-              <RankedList
-                title="Top Communities by Proposed Trail Miles"
-                items={insights.topByProposed}
-                valueKey="proposedMiles"
-                valueLabel="mi"
-                formatValue={formatMiles}
-              />
             </section>
 
             <section className="Dashboard__grid Dashboard__grid--two">
