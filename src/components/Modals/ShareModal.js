@@ -32,7 +32,7 @@ const ShareModal = () => {
         {!isCommunityTrailsProfile && (
           <>
             <span>
-              To download the CSV and Shapefiles for these trails, visit{" "}
+              To download the CSV, Shapefiles, and GeoJSON for these trails, visit{" "}
               <a
                 href="https://datacommon.mapc.org/browser?geos=all&category=Transportation&q=lines"
                 target="_blank"
@@ -67,6 +67,13 @@ const ShareModal = () => {
                 >
                   <Button className="direct-download-link-btn">.shp</Button>
                 </a>
+                <a
+                  href="https://staging.datacommon-react.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_walking_trails&format=geojson&useMetadataColumns=true"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Button className="direct-download-link-btn">.geojson</Button>
+                </a>
               </div>
             </li>
             <li className="text-left direct-download-link">
@@ -87,6 +94,13 @@ const ShareModal = () => {
                   rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.shp</Button>
+                </a>
+                <a
+                  href="https://staging.datacommon-react.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_bike_facilities&format=geojson&useMetadataColumns=true"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Button className="direct-download-link-btn">.geojson</Button>
                 </a>
               </div>
             </li>
@@ -109,6 +123,13 @@ const ShareModal = () => {
                 >
                   <Button className="direct-download-link-btn">.shp</Button>
                 </a>
+                <a
+                  href="https://staging.datacommon-react.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_land_line_systems&format=geojson&useMetadataColumns=true"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Button className="direct-download-link-btn">.geojson</Button>
+                </a>
               </div>
             </li>
             <li className="text-left direct-download-link">
@@ -129,6 +150,13 @@ const ShareModal = () => {
                   rel="noreferrer"
                 >
                   <Button className="direct-download-link-btn">.shp</Button>
+                </a>
+                <a
+                  href="https://staging.datacommon-react.mapc.org/api/export?token=datacommon&database=gisdata&schema=mapc&table=trans_shared_use_paths&format=geojson&useMetadataColumns=true"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Button className="direct-download-link-btn">.geojson</Button>
                 </a>
               </div>
             </li>

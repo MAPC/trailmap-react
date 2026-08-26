@@ -232,7 +232,7 @@
   }
 
   &__statusBar,
-  &__typeBar {
+  &__typeBarTrack {
     display: flex;
     width: 100%;
     height: 14px;
@@ -240,6 +240,19 @@
     border-radius: 999px;
     background: #edf2f7;
     margin-bottom: 0.75rem;
+  }
+
+  &__typeBarTrack,
+  &__typeBar,
+  &__typeBarSegment {
+    cursor: pointer;
+  }
+
+  &__typeBar {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 999px;
   }
 
   &__statusBarSegment,
@@ -580,10 +593,18 @@
 
     thead th {
       position: sticky;
-      top: 0;
       z-index: 1;
       background: #f8fafc;
       box-shadow: inset 0 -1px 0 rgba($dark-blue, 0.08);
+    }
+
+    thead tr:first-child th {
+      top: 0;
+      z-index: 2;
+    }
+
+    thead tr:nth-child(2) th {
+      top: 2.5rem;
     }
 
     th {
@@ -595,6 +616,17 @@
     tbody tr:hover {
       background: rgba($dark-blue, 0.03);
     }
+  }
+
+  &__tableGroup {
+    text-align: center;
+    border-left: 1px solid rgba($dark-blue, 0.12);
+  }
+
+  &__tableSubhead {
+    font-weight: 500;
+    font-size: 0.82rem;
+    border-left: 1px solid rgba($dark-blue, 0.08);
   }
 
   &__sortButton {

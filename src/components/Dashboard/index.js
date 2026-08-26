@@ -68,7 +68,7 @@ const RankedListSkeleton = ({ rows = 6 }) => (
 );
 
 const METRICS_TABLE_SKELETON_ROW_COUNT = 8;
-const METRICS_TABLE_SKELETON_COLUMN_COUNT = 9;
+const METRICS_TABLE_SKELETON_COLUMN_COUNT = 15;
 
 const MetricsTableSkeleton = () => (
   <div className="Dashboard__card Dashboard__card--table Dashboard__card--skeleton">
@@ -185,7 +185,7 @@ const plannedTrailsTooltip = (
   <Tooltip id="dashboard-planned-trails-tooltip" className="Dashboard__summaryTooltip Dashboard__summaryTooltip--compact">
     <p className="Dashboard__summaryTooltipText">
       Total planned trail mileage aggregated across shared-use paths, footways, and bike
-      lanes.
+      facilities.
     </p>
   </Tooltip>
 );
@@ -194,7 +194,7 @@ const proposedTrailsTooltip = (
   <Tooltip id="dashboard-proposed-trails-tooltip" className="Dashboard__summaryTooltip Dashboard__summaryTooltip--compact">
     <p className="Dashboard__summaryTooltipText">
       Total proposed trail mileage aggregated across shared-use paths, footways, and bike
-      lanes.
+      facilities.
     </p>
   </Tooltip>
 );
@@ -279,7 +279,6 @@ const MunicipalityTrailTypeLeaderboard = ({ municipalities }) => {
     return [
       `Ranks the top 10 communities by ${statusOption.label.toLowerCase()} ${facilityGroup.label.toLowerCase()} mileage.`,
       compositionNote,
-      "Values come from the same trail-metrics totals used in the municipality table below.",
     ].filter(Boolean);
   }, [facilityGroup, statusKey, statusOption.label]);
 
@@ -398,18 +397,28 @@ const MunicipalityTrailTypeLeaderboard = ({ municipalities }) => {
   );
 };
 
+const formatPercent = (value) =>
+  `${(Number(value) || 0).toLocaleString("en-US", {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 0,
+  })}%`;
+
 const TypeBreakdown = ({ items }) => {
-  const total = items.reduce((sum, item) => sum + item.total, 0);
+  const maxTotal = items.reduce((max, item) => Math.max(max, item.total), 0);
 
   return (
     <div className="Dashboard__card">
       <h2 className="Dashboard__sectionTitle">Trail Network by Trail Type</h2>
+      <p className="Dashboard__sectionLead">
+        Each type is 100% existing, planned, and proposed. Bar length is scaled to
+        that type&apos;s total miles.
+      </p>
       <div className="Dashboard__typeList">
         {items.map((item) => {
-          const share = total > 0 ? (item.total / total) * 100 : 0;
           const existingShare = item.total > 0 ? (item.existing / item.total) * 100 : 0;
           const plannedShare = item.total > 0 ? (item.planned / item.total) * 100 : 0;
           const proposedShare = item.total > 0 ? (item.proposed / item.total) * 100 : 0;
+          const barWidth = maxTotal > 0 ? (item.total / maxTotal) * 100 : 0;
 
           return (
             <div key={item.key} className="Dashboard__typeRow">
@@ -417,26 +426,29 @@ const TypeBreakdown = ({ items }) => {
                 <span className="Dashboard__typeLabel">{item.label}</span>
                 <span className="Dashboard__typeValue">{formatMiles(item.total)} mi</span>
               </div>
-              <div
-                className="Dashboard__typeBar"
-                role="img"
-                aria-label={`${item.label}: ${formatMiles(item.existing)} existing miles, ${formatMiles(item.planned)} planned miles, and ${formatMiles(item.proposed)} proposed miles`}
-              >
+              <div className="Dashboard__typeBarTrack">
                 <div
-                  className="Dashboard__typeBarSegment Dashboard__typeBarSegment--existing"
-                  style={{ width: `${share * (existingShare / 100)}%` }}
-                  title={`Existing: ${formatMiles(item.existing)} mi`}
-                />
-                <div
-                  className="Dashboard__typeBarSegment Dashboard__typeBarSegment--planned"
-                  style={{ width: `${share * (plannedShare / 100)}%` }}
-                  title={`Planned: ${formatMiles(item.planned)} mi`}
-                />
-                <div
-                  className="Dashboard__typeBarSegment Dashboard__typeBarSegment--proposed"
-                  style={{ width: `${share * (proposedShare / 100)}%` }}
-                  title={`Proposed: ${formatMiles(item.proposed)} mi`}
-                />
+                  className="Dashboard__typeBar"
+                  style={{ width: `${barWidth}%` }}
+                  role="img"
+                  aria-label={`${item.label}: ${formatMiles(item.total)} mi total. ${formatMiles(item.existing)} mi existing (${formatPercent(existingShare)}), ${formatMiles(item.planned)} mi planned (${formatPercent(plannedShare)}), and ${formatMiles(item.proposed)} mi proposed (${formatPercent(proposedShare)})`}
+                >
+                  <div
+                    className="Dashboard__typeBarSegment Dashboard__typeBarSegment--existing"
+                    style={{ width: `${existingShare}%` }}
+                    title={`Existing: ${formatMiles(item.existing)} mi (${formatPercent(existingShare)})`}
+                  />
+                  <div
+                    className="Dashboard__typeBarSegment Dashboard__typeBarSegment--planned"
+                    style={{ width: `${plannedShare}%` }}
+                    title={`Planned: ${formatMiles(item.planned)} mi (${formatPercent(plannedShare)})`}
+                  />
+                  <div
+                    className="Dashboard__typeBarSegment Dashboard__typeBarSegment--proposed"
+                    style={{ width: `${proposedShare}%` }}
+                    title={`Proposed: ${formatMiles(item.proposed)} mi (${formatPercent(proposedShare)})`}
+                  />
+                </div>
               </div>
               <div className="Dashboard__typeMeta" role="list">
                 <span className="Dashboard__typeMetaItem" role="listitem">
@@ -444,21 +456,21 @@ const TypeBreakdown = ({ items }) => {
                     className="Dashboard__typeMetaSwatch Dashboard__typeMetaSwatch--existing"
                     aria-hidden="true"
                   />
-                  {formatMiles(item.existing)} mi existing
+                  {formatMiles(item.existing)} mi ({formatPercent(existingShare)}) existing
                 </span>
                 <span className="Dashboard__typeMetaItem" role="listitem">
                   <span
                     className="Dashboard__typeMetaSwatch Dashboard__typeMetaSwatch--planned"
                     aria-hidden="true"
                   />
-                  {formatMiles(item.planned)} mi planned
+                  {formatMiles(item.planned)} mi ({formatPercent(plannedShare)}) planned
                 </span>
                 <span className="Dashboard__typeMetaItem" role="listitem">
                   <span
                     className="Dashboard__typeMetaSwatch Dashboard__typeMetaSwatch--proposed"
                     aria-hidden="true"
                   />
-                  {formatMiles(item.proposed)} mi proposed
+                  {formatMiles(item.proposed)} mi ({formatPercent(proposedShare)}) proposed
                 </span>
               </div>
             </div>
@@ -494,8 +506,14 @@ const SortableHeader = ({ label, columnKey, sortKey, sortDirection, onSort }) =>
   );
 };
 
-const getTrailTypeExistingMiles = (row, groupKey) =>
-  row.byType.find((group) => group.key === groupKey)?.existing ?? 0;
+const getSortValue = (row, key) => {
+  if (key.includes(":")) {
+    const [groupKey, statusKey] = key.split(":");
+    return row.byType.find((group) => group.key === groupKey)?.[statusKey] ?? 0;
+  }
+
+  return row[key];
+};
 
 const MetricsTable = ({ rows }) => {
   const [query, setQuery] = useState("");
@@ -512,13 +530,8 @@ const MetricsTable = ({ rows }) => {
           : true
       )
       .sort((a, b) => {
-        const isTrailTypeSort = TRAIL_TYPE_GROUPS.some((group) => group.key === sortKey);
-        const left = isTrailTypeSort
-          ? getTrailTypeExistingMiles(a, sortKey)
-          : a[sortKey];
-        const right = isTrailTypeSort
-          ? getTrailTypeExistingMiles(b, sortKey)
-          : b[sortKey];
+        const left = getSortValue(a, sortKey);
+        const right = getSortValue(b, sortKey);
 
         if (typeof left === "string") {
           return sortDirection === "asc"
@@ -564,8 +577,8 @@ const MetricsTable = ({ rows }) => {
               municipality&apos;s land area (mi/mi²).
             </li>
             <li>
-              The final three columns show existing mileage by facility type: shared-use paths,
-              footways, and bike facilities.
+              The remaining columns show existing, planned, and proposed mileage for each
+              trail type: shared-use paths, footways, and bike facilities.
             </li>
           </ul>
         </div>
@@ -583,7 +596,7 @@ const MetricsTable = ({ rows }) => {
         <table className="Dashboard__table">
           <thead>
             <tr>
-              <th>
+              <th rowSpan={2}>
                 <SortableHeader
                   label="Municipality"
                   columnKey="municipalityName"
@@ -592,7 +605,7 @@ const MetricsTable = ({ rows }) => {
                   onSort={toggleSort}
                 />
               </th>
-              <th>
+              <th rowSpan={2}>
                 <SortableHeader
                   label="Existing"
                   columnKey="existingMiles"
@@ -601,7 +614,7 @@ const MetricsTable = ({ rows }) => {
                   onSort={toggleSort}
                 />
               </th>
-              <th>
+              <th rowSpan={2}>
                 <SortableHeader
                   label="Planned"
                   columnKey="plannedMiles"
@@ -610,7 +623,7 @@ const MetricsTable = ({ rows }) => {
                   onSort={toggleSort}
                 />
               </th>
-              <th>
+              <th rowSpan={2}>
                 <SortableHeader
                   label="Proposed"
                   columnKey="proposedMiles"
@@ -619,7 +632,7 @@ const MetricsTable = ({ rows }) => {
                   onSort={toggleSort}
                 />
               </th>
-              <th>
+              <th rowSpan={2}>
                 <SortableHeader
                   label="Total"
                   columnKey="totalMiles"
@@ -628,7 +641,7 @@ const MetricsTable = ({ rows }) => {
                   onSort={toggleSort}
                 />
               </th>
-              <th>
+              <th rowSpan={2}>
                 <SortableHeader
                   label="Density"
                   columnKey="density"
@@ -638,16 +651,32 @@ const MetricsTable = ({ rows }) => {
                 />
               </th>
               {TRAIL_TYPE_GROUPS.map((group) => (
-                <th key={group.key}>
-                  <SortableHeader
-                    label={group.existingLabel}
-                    columnKey={group.key}
-                    sortKey={sortKey}
-                    sortDirection={sortDirection}
-                    onSort={toggleSort}
-                  />
+                <th
+                  key={group.key}
+                  colSpan={TRAIL_STATUS_OPTIONS.length}
+                  className="Dashboard__tableGroup"
+                >
+                  {group.label}
                 </th>
               ))}
+            </tr>
+            <tr>
+              {TRAIL_TYPE_GROUPS.flatMap((group) =>
+                TRAIL_STATUS_OPTIONS.map((status) => (
+                  <th
+                    key={`${group.key}:${status.key}`}
+                    className="Dashboard__tableSubhead"
+                  >
+                    <SortableHeader
+                      label={status.label}
+                      columnKey={`${group.key}:${status.key}`}
+                      sortKey={sortKey}
+                      sortDirection={sortDirection}
+                      onSort={toggleSort}
+                    />
+                  </th>
+                ))
+              )}
             </tr>
           </thead>
           <tbody>
@@ -661,9 +690,13 @@ const MetricsTable = ({ rows }) => {
                 <td>{formatMiles(row.proposedMiles)}</td>
                 <td>{formatMiles(row.totalMiles)}</td>
                 <td>{row.density != null ? formatMiles(row.density) : "—"}</td>
-                {row.byType.map((group) => (
-                  <td key={`${row.muni_id}-${group.key}`}>{formatMiles(group.existing)}</td>
-                ))}
+                {row.byType.flatMap((group) =>
+                  TRAIL_STATUS_OPTIONS.map((status) => (
+                    <td key={`${row.muni_id}-${group.key}-${status.key}`}>
+                      {formatMiles(group[status.key])}
+                    </td>
+                  ))
+                )}
               </tr>
             ))}
           </tbody>

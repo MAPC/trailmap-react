@@ -181,33 +181,22 @@ const MunicipalityProfile = ({
       if (foundMuni && onMunicipalitySelectRef.current) {
         if (appliedSharedMuniRef.current === sharedMuniName) return;
         appliedSharedMuniRef.current = sharedMuniName;
-        // Small delay to ensure everything is loaded
-        setTimeout(() => {
-          onMunicipalitySelectRef.current(foundMuni);
-          
-          // If showCompletion parameter is present, open the completion modal
-          if (showCompletion === 'true') {
-            setTimeout(() => {
-              setShowCompletionModal(true);
-            }, 1000); // Additional delay to ensure municipality is selected and stats are calculated
-            
-            // Remove showCompletion from URL after processing
-            setTimeout(() => {
-              const params = new URLSearchParams(window.location.search);
-              params.delete('showCompletion');
-              const newUrl = params.toString() 
-                ? `${location.pathname}?${params.toString()}`
-                : location.pathname;
-              navigate(newUrl, { replace: true });
-            }, 1500); // Remove after modal opens
-          }
-          
-          // Update URL to include municipality parameter (but keep it in URL, don't clear)
-          if (isCommunityTrailsProfile && !sharedMuni) {
-            // If we're on the path but don't have muni param, add it
-            navigate(`/communityTrailsProfile?muni=${encodeURIComponent(foundMuni.name)}`, { replace: true });
-          }
-        }, 500);
+        onMunicipalitySelectRef.current(foundMuni);
+
+        if (showCompletion === "true") {
+          setTimeout(() => {
+            setShowCompletionModal(true);
+          }, 1000);
+
+          setTimeout(() => {
+            const params = new URLSearchParams(window.location.search);
+            params.delete("showCompletion");
+            const newUrl = params.toString()
+              ? `${location.pathname}?${params.toString()}`
+              : location.pathname;
+            navigate(newUrl, { replace: true });
+          }, 1500);
+        }
       }
     }
   }, [massachusettsData, location.pathname, location.search, navigate]);
@@ -615,13 +604,13 @@ const MunicipalityProfile = ({
           <div className="MunicipalityProfile__trailOverviewSection">
             <div className="MunicipalityProfile__trailOverviewHeading">
               <span className="MunicipalityProfile__trailOverviewEyebrow">
-                Total trail length
+                Total existing trails
               </span>
               <span className="MunicipalityProfile__trailOverviewTotal">
-                {formatLength(stats.totalLength)} mi
+                {formatLength(existingLength)} mi
               </span>
               <span className="MunicipalityProfile__trailOverviewHint">
-                existing + planned + proposed
+                existing trail miles
               </span>
             </div>
 
@@ -650,19 +639,7 @@ const MunicipalityProfile = ({
               )}
             </div>
 
-            <div className="MunicipalityProfile__trailBreakdown MunicipalityProfile__trailBreakdown--three">
-              <div className="MunicipalityProfile__trailBreakdownItem">
-                <span
-                  className="MunicipalityProfile__trailBreakdownSwatch MunicipalityProfile__trailBreakdownSwatch--existing"
-                  aria-hidden="true"
-                />
-                <div className="MunicipalityProfile__trailBreakdownCopy">
-                  <span className="MunicipalityProfile__trailBreakdownLabel">Existing</span>
-                  <span className="MunicipalityProfile__trailBreakdownValue">
-                    {formatLength(existingLength)} mi
-                  </span>
-                </div>
-              </div>
+            <div className="MunicipalityProfile__trailBreakdown">
               <div className="MunicipalityProfile__trailBreakdownItem">
                 <span
                   className="MunicipalityProfile__trailBreakdownSwatch MunicipalityProfile__trailBreakdownSwatch--planned"
@@ -1269,11 +1246,21 @@ const MunicipalityProfile = ({
 
   const isOverviewLoading =
     isLoadingMetrics || (selectedMunicipality && trailStats === null);
+  const pendingMuniFromUrl =
+    location.pathname === "/communityTrailsProfile"
+      ? new URLSearchParams(location.search).get("muni")
+      : null;
+  const isResolvingSharedMuni =
+    Boolean(pendingMuniFromUrl) &&
+    (!selectedMunicipality ||
+      selectedMunicipality.name.toLowerCase() !== pendingMuniFromUrl.toLowerCase());
 
   return (
     <div
       className={`MunicipalityProfile${
-        selectedMunicipality ? " MunicipalityProfile--hasSelection" : ""
+        selectedMunicipality || isResolvingSharedMuni
+          ? " MunicipalityProfile--hasSelection"
+          : ""
       }`}
     >
       <div className="MunicipalityProfile__topBar MunicipalityProfile__topBar--stacked">
@@ -1281,7 +1268,23 @@ const MunicipalityProfile = ({
         {renderCommunityPicker(false)}
       </div>
 
-      {!selectedMunicipality ? (
+      {!selectedMunicipality && isResolvingSharedMuni ? (
+        <div className="MunicipalityProfile__selected">
+          <div className="MunicipalityProfile__header">
+            <div className="MunicipalityProfile__titleRow">
+              <h2 className="MunicipalityProfile__muniName">
+                {capitalizeWords(pendingMuniFromUrl)}
+              </h2>
+            </div>
+          </div>
+          <div className="MunicipalityProfile__tabPanel">
+            <div className="MunicipalityProfile__content">
+              {renderOverviewSkeleton()}
+              {renderOverviewActionsSkeleton()}
+            </div>
+          </div>
+        </div>
+      ) : !selectedMunicipality ? (
         <div className="MunicipalityProfile__empty">
           <h2 className="MunicipalityProfile__heading">Explore a municipality</h2>
           <div className="MunicipalityProfile__empty-icon" aria-hidden="true">
@@ -1445,12 +1448,12 @@ const MunicipalityProfile = ({
           {trailStats && (
             <div className="CompletionRatesModal__summary">
               <div className="CompletionRatesModal__summaryItem">
-                <span className="CompletionRatesModal__summaryLabel">Total length</span>
+                <span className="CompletionRatesModal__summaryLabel">Total existing trails</span>
                 <span className="CompletionRatesModal__summaryValue">
-                  {formatLength(trailStats.totalLength)} mi
+                  {formatLength(trailStats.existingLength)} mi
                 </span>
                 <span className="CompletionRatesModal__summaryHint">
-                  existing + planned + proposed
+                  existing trail miles
                 </span>
               </div>
               <div className="CompletionRatesModal__summaryItem">

@@ -117,19 +117,64 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0.6rem 0 0.6rem 0;
 
   .direct-download-link-left {
-    float: left;
+    float: none;
     padding-left: 0.9rem;
     align-self: center;
+    color: $dark-blue;
+    font-family: $body-font;
+    font-size: 0.85rem;
   }
+
   .direct-download-link-right {
-    float: right;
+    float: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.3rem;
     margin-right: 0.9rem;
 
-    .direct-download-link-btn {
-      margin-left: 0.25rem;
+    a {
+      text-decoration: none;
+    }
+
+    .direct-download-link-btn.btn {
+      margin-left: 0;
+      padding: 0.28rem 0.62rem;
+      min-width: 3.35rem;
+      font-family: $body-font;
+      font-size: 0.72rem;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: 0.01em;
+      color: $dark-blue;
+      background: $white;
+      border: 1px solid $medium-blue;
+      border-radius: 999px;
+      box-shadow: none;
+
+      &:hover,
+      &:focus {
+        color: $dark-blue;
+        background: $light-blue;
+        border-color: $dark-blue;
+        box-shadow: none;
+      }
+
+      &:focus-visible {
+        outline: 2px solid $dark-blue;
+        outline-offset: 2px;
+      }
+
+      &:active {
+        color: $white;
+        background: $dark-blue;
+        border-color: $dark-blue;
+      }
     }
   }
 }
