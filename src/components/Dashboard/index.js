@@ -410,8 +410,9 @@ const TypeBreakdown = ({ items }) => {
     <div className="Dashboard__card">
       <h2 className="Dashboard__sectionTitle">Trail Network by Trail Type</h2>
       <p className="Dashboard__sectionLead">
-        Each type is 100% existing, planned, and proposed. Bar length is scaled to
-        that type&apos;s total miles.
+        Bar length shows each trail type&apos;s total mileage, with both the
+        actual mileage and the percentage of each trail status displayed within
+        the bar.
       </p>
       <div className="Dashboard__typeList">
         {items.map((item) => {
