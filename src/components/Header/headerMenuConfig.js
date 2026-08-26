@@ -23,7 +23,7 @@ export const HEADER_NAV_ITEMS = [
   },
   {
     id: "regional",
-    label: "Trails Profiles",
+    label: "Trail Profiles",
     path: "/projectTrailsProfile",
     icon: "bi-graph-up",
     hideOnMobile: true,
