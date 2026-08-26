@@ -17,6 +17,7 @@ import { mapcTrailLayers } from "./constants/mapcTrailLayersConfig";
 import { useMunicipalBoundaries } from "../../utils/fetchMunicipalBoundaries";
 const DEFAULT_BUFFER_RADIUS = 1609; // 1 mile in meters
 import { queryMunicipalityTrails } from "./utils/trailQueries";
+import { capitalizeWords } from "../../utils/trailMetricsDashboard";
 import { calculateBufferAnalysis } from "./utils/bufferAnalysis";
 import CommunityTrailsProfileLayers from "./layers/CommunityTrailsProfileLayers";
 import MunicipalityMapLayer from "./layers/MunicipalityMapLayer";
@@ -83,7 +84,8 @@ const CommunityTrailsProfile = ({
     showTransitLandStops,
     setShowTransitLandStops,
   } = useContext(LayerContext);
-  const { data: massachusettsData } = useMunicipalBoundaries();
+  const { data: massachusettsData, isLoading: isLoadingBoundaries } =
+    useMunicipalBoundaries();
 
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
   const [identifyInfo, setIdentifyInfo] = useState(null);
@@ -239,6 +241,11 @@ const CommunityTrailsProfile = ({
     }
 
     if (selectedMunicipality) {
+      if (lastQueriedMunicipality.current !== selectedMunicipality.name) {
+        setIsQueryingTrails(true);
+        setLoadingMessage("Loading trail data...");
+        setLoadingProgress(0);
+      }
       handleQueryMunicipalityTrails(selectedMunicipality);
     } else {
       setMunicipalityTrails([]);
@@ -426,12 +433,27 @@ const CommunityTrailsProfile = ({
     prevSelectedMunicipalityRef.current = selectedMunicipality;
   }, [selectedMunicipality, setViewport]);
 
+  const pendingMuniFromUrl = new URLSearchParams(location.search).get("muni");
+  const isResolvingSharedMuni =
+    Boolean(pendingMuniFromUrl) &&
+    (!selectedMunicipality ||
+      selectedMunicipality.name.toLowerCase() !== pendingMuniFromUrl.toLowerCase());
+  const isProfileLoading =
+    isQueryingTrails ||
+    isResolvingSharedMuni ||
+    (Boolean(pendingMuniFromUrl) && isLoadingBoundaries);
+  const profileLoadingMessage = isQueryingTrails
+    ? loadingMessage || "Loading trail data..."
+    : pendingMuniFromUrl
+      ? `Loading ${capitalizeWords(pendingMuniFromUrl)}...`
+      : "Loading...";
+
   return (
     <>
-      <LoadingBar 
-        isLoading={isQueryingTrails} 
-        progress={loadingProgress} 
-        message={loadingMessage} 
+      <LoadingBar
+        isLoading={isProfileLoading}
+        progress={isQueryingTrails ? loadingProgress : 0}
+        message={profileLoadingMessage}
       />
       
       <ReactMapGL
@@ -439,13 +461,7 @@ const CommunityTrailsProfile = ({
         {...viewport}
         width="100%"
         height="100%"
-        cursor={
-          isBufferActive
-            ? "crosshair"
-            : hoveredTrail || ejHoverInfo || openSpaceHoverInfo
-              ? "pointer"
-              : "default"
-        }
+        cursor={isBufferActive ? "crosshair" : "pointer"}
         transformRequest={(url, resourceType) => {
           // Use transformRequest to add API key header for Transit.land tiles
           // This is recommended by Transit.land documentation

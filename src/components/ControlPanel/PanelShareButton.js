@@ -17,7 +17,7 @@ const PanelShareButton = () => {
         </span>
         <span className="ControlPanelShare__text">
           <span className="ControlPanelShare__label">Share &amp; download</span>
-          <span className="ControlPanelShare__hint">Copy map link or get trail data files</span>
+          <span className="ControlPanelShare__hint">Get trail data files</span>
         </span>
         <i className="bi bi-chevron-right ControlPanelShare__arrow" aria-hidden="true" />
       </button>
