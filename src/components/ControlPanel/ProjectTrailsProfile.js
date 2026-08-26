@@ -433,7 +433,7 @@ const ProjectTrailsProfile = ({
 
   const renderListView = () => (
     <>
-      <span className="ProjectTrailsProfile__eyebrow">Trails Profiles</span>
+      <span className="ProjectTrailsProfile__eyebrow">Trail Profiles</span>
       <h2 className="ProjectTrailsProfile__heading">Named trail networks</h2>
 
       <div className="ProjectTrailsProfile__search">

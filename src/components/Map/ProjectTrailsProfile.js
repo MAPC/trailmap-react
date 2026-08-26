@@ -183,7 +183,7 @@ const ProjectTrailsProfile = ({
     }
     return ids;
   };  
-  // Listen for map context layer toggle events (Trails Profiles)
+  // Listen for map context layer toggle events (Trail Profiles)
   useEffect(() => {
     const handleToggleOpenSpace = (event) => {
       if (location.pathname === '/projectTrailsProfile') {

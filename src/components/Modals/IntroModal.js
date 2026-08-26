@@ -35,7 +35,7 @@ const INTRO_CARDS = [
   },
   {
     id: "regional",
-    title: "Trails Profiles",
+    title: "Trail Profiles",
     description:
       "Follow named trail networks like the Mass Central Rail Trail across community lines.",
     iconClass: "bi-signpost-split-fill",
