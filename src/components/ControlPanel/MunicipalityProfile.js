@@ -1457,6 +1457,24 @@ const MunicipalityProfile = ({
                 </span>
               </div>
               <div className="CompletionRatesModal__summaryItem">
+                <span className="CompletionRatesModal__summaryLabel">Total planned trails</span>
+                <span className="CompletionRatesModal__summaryValue">
+                  {formatLength(trailStats.plannedLength)} mi
+                </span>
+                <span className="CompletionRatesModal__summaryHint">
+                  planned trail miles
+                </span>
+              </div>
+              <div className="CompletionRatesModal__summaryItem">
+                <span className="CompletionRatesModal__summaryLabel">Total proposed trails</span>
+                <span className="CompletionRatesModal__summaryValue">
+                  {formatLength(trailStats.proposedLength)} mi
+                </span>
+                <span className="CompletionRatesModal__summaryHint">
+                  proposed trail miles
+                </span>
+              </div>
+              <div className="CompletionRatesModal__summaryItem">
                 <span className="CompletionRatesModal__summaryLabel">
                   Trail density
                   <OverlayTrigger
