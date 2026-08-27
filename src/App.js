@@ -101,7 +101,6 @@ const App = () => {
   const [showMuniOpenSpace, setShowMuniOpenSpace] = useState(false);
   const [showProjectOpenSpace, setShowProjectOpenSpace] = useState(false);
   const [showLandlinesFeatureService, setShowLandlinesFeatureService] = useState(false);
-  const [showTrailsRegNameSync, setShowTrailsRegNameSync] = useState(false);
   const [showTransitLandStops, setShowTransitLandStops] = useState(false);
   
   // Project trails profile state
@@ -224,8 +223,6 @@ const App = () => {
               setShowProjectOpenSpace,
               showLandlinesFeatureService,
               setShowLandlinesFeatureService,
-              showTrailsRegNameSync,
-              setShowTrailsRegNameSync,
               showTransitLandStops,
               setShowTransitLandStops,
               projectRegNames,

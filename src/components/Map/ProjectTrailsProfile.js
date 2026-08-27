@@ -126,8 +126,6 @@ const ProjectTrailsProfile = ({
   const navigate = useNavigate();
   const location = useLocation();
   const {
-    showTrailsRegNameSync,
-    setShowTrailsRegNameSync,
     basemaps,
     setProjectRegNames,
     setSelectedProjectRegName,
@@ -667,87 +665,6 @@ const ProjectTrailsProfile = ({
     ];
   };
 
-  // Ensure trails layers are always on top
-  useEffect(() => {
-    if (!mapRef?.current) return;
-    
-    const map = mapRef.current.getMap();
-    if (!map) return;
-
-    const ensureTrailsOnTop = () => {
-      if (!map.isStyleLoaded()) {
-        map.once('styledata', ensureTrailsOnTop);
-        return;
-      }
-
-      try {
-        // Complete list of all trail layer IDs that should be on top
-        const trailLayerIds = [
-          'other-regional-trails-layer',
-          'other-regional-trails-layer-hover',
-          'other-regional-trails-layer-click',
-          'gaps-other-regional-trails-layer',
-          'major-trails-layer',
-          'major-trails-layer-hover',
-          'major-trails-layer-click'
-        ];
-
-        // Get all layer IDs in the current style
-        const style = map.getStyle();
-        if (!style || !style.layers) return;
-
-        const allLayerIds = style.layers.map(layer => layer.id);
-        
-        // Filter to get only existing trail layers
-        const existingTrailLayers = trailLayerIds.filter(id => map.getLayer(id));
-        
-        if (existingTrailLayers.length === 0) return;
-
-        // Find all non-trail layer IDs
-        const nonTrailLayerIds = allLayerIds.filter(id => !trailLayerIds.includes(id));
-        
-        if (nonTrailLayerIds.length === 0) return;
-
-        // Find the last non-trail layer ID - we'll move all trail layers after this
-        const lastNonTrailLayerId = nonTrailLayerIds[nonTrailLayerIds.length - 1];
-        
-        // Move each trail layer to be after the last non-trail layer
-        // Process in order to maintain relative order among trail layers
-        existingTrailLayers.forEach(trailLayerId => {
-          try {
-            // Check current position
-            const currentBeforeId = map.getLayer(trailLayerId)?.metadata?.beforeId;
-            
-            // Only move if not already in correct position
-            // Move to be after the last non-trail layer
-            map.moveLayer(trailLayerId, lastNonTrailLayerId);
-          } catch (err) {
-            // Layer might not exist or already in correct position - ignore
-          }
-        });
-      } catch (err) {
-        // Silently fail if there's an error
-        console.warn('Error ensuring trails on top:', err);
-      }
-    };
-
-    // Wait a bit for layers to be added
-    const timeoutId = setTimeout(ensureTrailsOnTop, 500);
-    
-    // Also listen for style changes and map movements
-    map.on('styledata', ensureTrailsOnTop);
-    map.on('moveend', ensureTrailsOnTop);
-    map.on('zoomend', ensureTrailsOnTop);
-    
-    return () => {
-      clearTimeout(timeoutId);
-      if (map && map.off) {
-        map.off('styledata', ensureTrailsOnTop);
-        map.off('moveend', ensureTrailsOnTop);
-        map.off('zoomend', ensureTrailsOnTop);
-      }
-    };
-  }, [mapRef, selectedRegNames, selectedMajorTrails, showOpenSpace, showProjectOpenSpace, showEnvironmentalJustice]);
 
   // Ensure baseLayer and MAPBOX_TOKEN exist before rendering
   if (!baseLayer || !baseLayer.url || !MAPBOX_TOKEN) {
@@ -791,7 +708,7 @@ const ProjectTrailsProfile = ({
           return { url };
         }}
       >
-        {/* Municipality Map Layer - always visible */}
+        {/* Municipality outlines + Boundaries panel overlays stay under trails */}
         <Source 
           id="municipalities" 
           type="geojson" 
@@ -799,6 +716,7 @@ const ProjectTrailsProfile = ({
         >
           {municipalitiesLayers()}
         </Source>
+        <BoundaryLayers mapRef={mapRef} />
 
         {/* OpenSpace Layer - rendered before trails to ensure trails appear on top */}
         {showOpenSpace && (
@@ -872,7 +790,6 @@ const ProjectTrailsProfile = ({
 
         {/* other regional trails layer - rendered last to appear on top of all other layers */}
         <OtherRegionalTrailsLayer
-          showTrailsRegNameSync={true}
           showMunicipalityProfileMap={false}
           showProjectTrailsProfile={true}
           mapRef={mapRef}
@@ -965,9 +882,6 @@ const ProjectTrailsProfile = ({
               />
             </Popup>
           )}
-
-        {/* Boundary overlays above base municipality outlines */}
-        <BoundaryLayers />
 
         {/* Map controls */}
         <NavigationControl position="bottom-right" />

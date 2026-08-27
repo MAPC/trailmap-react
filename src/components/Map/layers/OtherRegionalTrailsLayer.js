@@ -47,7 +47,6 @@ const generateColorPalette = (regNames) => {
  * reg_names once for the Regional Profile project list.
  */
 const OtherRegionalTrailsLayer = ({ 
-  showTrailsRegNameSync, 
   showMunicipalityProfileMap, 
   showRegionalTrailsProfile,
   showProjectTrailsProfile,
@@ -81,7 +80,7 @@ const OtherRegionalTrailsLayer = ({
     : "";
 
   // Determine if layer should be shown
-  const shouldShow = showTrailsRegNameSync && (showMunicipalityProfileMap || showRegionalTrailsProfile || showProjectTrailsProfile);
+  const shouldShow = showMunicipalityProfileMap || showRegionalTrailsProfile || showProjectTrailsProfile;
 
   const publishRegNames = (names) => {
     const cb = onRegNamesChangeRef.current;

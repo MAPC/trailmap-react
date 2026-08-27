@@ -1,7 +1,8 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Source, Layer } from "react-map-gl";
 import { LayerContext } from "../../../App";
 import { useMunicipalBoundaries } from "../../../utils/fetchMunicipalBoundaries";
+import { attachBoundaryLayerOrder } from "../utils/boundaryLayerOrder";
 
 const HOUSE_FILL_URL =
   "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/House2021/MapServer/1/query?where=1%3D1&outFields=*&f=geojson";
@@ -15,8 +16,9 @@ const SENATE_LINES_URL =
 /**
  * Shared boundary overlays for Regional Map, Community Profile, and Trails Profile.
  * Driven by LayerContext toggles from the Boundaries panel.
+ * Always kept under trails and other map overlays.
  */
-const BoundaryLayers = () => {
+const BoundaryLayers = ({ mapRef }) => {
   const {
     showMunicipalities,
     showMapcBoundary,
@@ -24,6 +26,18 @@ const BoundaryLayers = () => {
     showMaSenateDistricts,
   } = useContext(LayerContext);
   const { data: massachusettsData, mapcBoundaryData } = useMunicipalBoundaries();
+
+  useEffect(() => {
+    return attachBoundaryLayerOrder(mapRef);
+  }, [
+    mapRef,
+    showMunicipalities,
+    showMapcBoundary,
+    showMaHouseDistricts,
+    showMaSenateDistricts,
+    massachusettsData,
+    mapcBoundaryData,
+  ]);
 
   return (
     <>

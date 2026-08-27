@@ -221,7 +221,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#00A884",
+        "line-color": "#00a884",
         "line-width": 3
       }
     },
@@ -261,7 +261,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#00A884",
+        "line-color": "#00a884",
         "line-width": 3
       }
     },
@@ -279,7 +279,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#00A884",
+        "line-color": "#00a884",
         "line-dasharray": [
           1.5,
           2
@@ -302,7 +302,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#C7D79E",
+        "line-color": "#c7d79e",
         "line-width": 3
       }
     },
@@ -340,7 +340,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#0070FF",
+        "line-color": "#0170ff",
         "line-width": 3
       }
     },
@@ -398,7 +398,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#0070FF",
+        "line-color": "#0170ff",
         "line-width": 3
       }
     },
@@ -417,7 +417,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#73B2FF",
+        "line-color": "#73b2ff",
         "line-width": 3
       }
     },
@@ -457,7 +457,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#73B2FF",
+        "line-color": "#73b2ff",
         "line-width": 3
       }
     },
@@ -495,7 +495,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#D7C29E",
+        "line-color": "#d7c29e",
         "line-width": 3
       }
     },
@@ -514,7 +514,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#D7C29E",
+        "line-color": "#d7c29e",
         "line-width": 3
       }
     },
@@ -532,7 +532,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#D7C29E",
+        "line-color": "#d7c29e",
         "line-dasharray": [
           1.66667,
           1
@@ -555,11 +555,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FFED7F",
-        "line-dasharray": [
-          2,
-          2
-        ],
+        "line-color": "#ffffcc",
         "line-width": 3
       }
     },
@@ -578,7 +574,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-width": 3
       }
     },
@@ -596,7 +592,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-dasharray": [
           2.5,
           1.5
@@ -618,7 +614,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-width": 1.5,
         "line-offset": 2.66667
       }
@@ -637,7 +633,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-width": 1.5,
         "line-offset": -1.73333
       }
@@ -656,7 +652,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-dasharray": [
           4.16667,
           4.16667
@@ -679,7 +675,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-dasharray": [
           4.16667,
           4.16667
