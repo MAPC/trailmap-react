@@ -11,6 +11,7 @@ import { LayerContext } from "../../App";
 import { useMunicipalBoundaries } from "../../utils/fetchMunicipalBoundaries";
 import OriginalTrailsFilterLayers from "./layers/OriginalTrailsFilterLayers";
 import TrailsOverviewHighlightLayer from "./layers/TrailsOverviewHighlightLayer";
+import LandlinesLayer from "./layers/LandlinesLayer";
 import { getTrailFeatureAtEvent } from "./utils/mapQueryUtils";
 import { identifyTrailSegmentsAtPoint } from "./utils/trailSegmentIdentify";
 import {
@@ -20,20 +21,19 @@ import {
   pickIdentifyResultForLayer,
 } from "./utils/trailHighlightUtils";
 import {
-  getLandlineLayerIds,
+  getLandlineHighlightFeature,
+  getLandlineObjectId,
   identifyLandlineAtPoint,
-  isLandlineLayerId,
+  landlineMapFeatureToIdentifyResult,
+  pickClosestLandlineFeature,
+  queryLandlineFeaturesAtEvent,
+  distanceToLandlineGeometry,
+  metersPerPixelAt,
 } from "./utils/landlineIdentify";
+import { attachBoundaryLayerOrder } from "./utils/boundaryLayerOrder";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
-const DEFAULT_LANDLINE_TILE_URL =
-  "https://tiles.arcgis.com/tiles/c5WwApDsDjRhIVkH/arcgis/rest/services/land_lines/VectorTileServer/tile/{z}/{y}/{x}.pbf";
-const LANDLINE_SOURCE =
-  process.env.REACT_APP_LANDLINE_TILE_URL &&
-  !process.env.REACT_APP_LANDLINE_TILE_URL.includes("mapc_trails_vector_tiles")
-    ? process.env.REACT_APP_LANDLINE_TILE_URL
-    : DEFAULT_LANDLINE_TILE_URL;
 const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL;
 
 
@@ -64,8 +64,6 @@ const RegionalTrailMap = ({
     showMunicipalities,
     showMapcBoundary,
     landlines,
-    selectedMunicipality,
-    setSelectedMunicipality,
     showMunicipalityView,
   } = useContext(LayerContext);
   const { data: massachusettsData, mapcBoundaryData } = useMunicipalBoundaries();
@@ -90,6 +88,8 @@ const RegionalTrailMap = ({
   const [isZooming, setIsZooming] = useState(false);
   const [hoveredTrailHighlight, setHoveredTrailHighlight] = useState(null);
   const [clickedTrailHighlight, setClickedTrailHighlight] = useState(null);
+  const [selectedLandlineFeature, setSelectedLandlineFeature] = useState(null);
+  const [mapCursor, setMapCursor] = useState("grab");
   const trailHoverRafRef = useRef(null);
   const hoverIdentifyTimerRef = useRef(null);
   const hoverIdentifyRequestIdRef = useRef(0);
@@ -104,11 +104,6 @@ const RegionalTrailMap = ({
     [trailLayers, proposedLayers, existingTrails, proposedTrails]
   );
 
-  const landlineLayerIds = useMemo(
-    () => (showLandlineLayer ? getLandlineLayerIds(landlines) : []),
-    [showLandlineLayer, landlines]
-  );
-
   const interactiveLayerIds = useMemo(() => {
     const ids = [];
     if (showMaHouseDistricts) ids.push("ma-house-districts-fill");
@@ -118,9 +113,6 @@ const RegionalTrailMap = ({
     if (activeTrailLayerIds.length > 0) {
       ids.push(...activeTrailLayerIds);
     }
-    if (landlineLayerIds.length > 0) {
-      ids.push(...landlineLayerIds);
-    }
     return ids;
   }, [
     showMaHouseDistricts,
@@ -128,7 +120,6 @@ const RegionalTrailMap = ({
     showMunicipalities,
     showMapcBoundary,
     activeTrailLayerIds,
-    landlineLayerIds,
   ]);
 
   const clearHoverIdentifyTimer = () => {
@@ -215,6 +206,16 @@ const RegionalTrailMap = ({
     if (!showIdentifyPopup || !identifyInfo?.length) return;
 
     const selectedResult = identifyInfo[pointIndex] || identifyInfo[0];
+    if (selectedResult?.layerId === "landline") {
+      setClickedTrailHighlight(null);
+      const highlightFeature = getLandlineHighlightFeature(selectedResult);
+      if (highlightFeature) {
+        setSelectedLandlineFeature(highlightFeature);
+      }
+      return;
+    }
+
+    setSelectedLandlineFeature(null);
     const identifyHighlight = buildTrailHighlightFromIdentify(
       selectedResult,
       existingTrails,
@@ -225,12 +226,51 @@ const RegionalTrailMap = ({
     }
   }, [showIdentifyPopup, identifyInfo, pointIndex, existingTrails, proposedTrails]);
 
+  useEffect(() => {
+    if (!showIdentifyPopup || !identifyInfo?.length) return;
+
+    const selectedResult = identifyInfo[pointIndex] || identifyInfo[0];
+    const isLandlinePopup = selectedResult?.layerId === "landline";
+    const trailLayerStillVisible =
+      selectedResult?.layerId != null &&
+      visibleEsriLayerIds.some(
+        (layerId) => String(layerId) === String(selectedResult.layerId)
+      );
+
+    if (
+      (isLandlinePopup && !showLandlineLayer) ||
+      (!isLandlinePopup && !trailLayerStillVisible)
+    ) {
+      toggleIdentifyPopup(false);
+      setIdentifyInfo(null);
+      setIdentifyPoint(null);
+    }
+  }, [
+    showLandlineLayer,
+    visibleEsriLayerIds,
+    showIdentifyPopup,
+    identifyInfo,
+    pointIndex,
+  ]);
+
   // Show notice when any one of the exclusive layers turns on
   React.useEffect(() => {
     if (showMunicipalities || showMapcBoundary || showMaHouseDistricts || showMaSenateDistricts) {
       setShowOneLayerNotice(true);
     }
   }, [showMunicipalities, showMapcBoundary, showMaHouseDistricts, showMaSenateDistricts]);
+
+  React.useEffect(() => {
+    return attachBoundaryLayerOrder(mapRef);
+  }, [
+    mapRef,
+    showMunicipalities,
+    showMapcBoundary,
+    showMaHouseDistricts,
+    showMaSenateDistricts,
+    massachusettsData,
+    mapcBoundaryData,
+  ]);
 
   // Auto-hide the one-layer notice after 2 seconds
   React.useEffect(() => {
@@ -280,26 +320,9 @@ const RegionalTrailMap = ({
       setMuniHoverFilterKey(null);
       setMuniHoverFilterValue(null);
       setClickedTrailHighlight(null);
+      setSelectedLandlineFeature(null);
     }
   }, [showIdentifyPopup]);
-
-  const landlineLayers = () => {
-    if (!showLandlineLayer) return [];
-
-    // Copy before reverse so we don't mutate LayerData.landline in place.
-    return [...landlines].reverse().map((layer) => (
-      <Layer
-        key={layer.id}
-        id={layer.id}
-        type={layer.type}
-        filter={layer.filter}
-        source="MAPC landline vector tiles"
-        source-layer={layer["source-layer"]}
-        paint={layer.paint}
-        layout={layer.layout}
-      />
-    ));
-  };
 
   const maHouseDistrictsLayers = () => {
     const visibleMaHouseDistrictsLayers = [];
@@ -478,7 +501,7 @@ const RegionalTrailMap = ({
       width="100%"
       height="100%"
       interactiveLayerIds={interactiveLayerIds}
-      cursor={interactiveLayerIds.length > 0 ? undefined : "default"}
+      cursor={mapCursor}
       onMove={(event) => {
         const newViewport = event.viewState;
         if (Math.abs(newViewport.zoom - viewport.zoom) > 0.01) {
@@ -487,45 +510,78 @@ const RegionalTrailMap = ({
         setViewport(newViewport);
       }}
       onClick={(event) => {
-        // Check if clicking on a municipality when municipalities or MAPC layer is visible
-        if ((showMunicipalities || showMapcBoundary) && event.features) {
-          const muniFeature = event.features.find(
-            (f) =>
-              f.layer &&
-              (f.layer.id === "municipalities-fill" || f.layer.id === "mapc-boundary-fill")
+        // LandLine vs existing/planned trails: pick the closest line, don't let
+        // a wide LandLine hit target swallow nearby trail clicks.
+        if (showLandlineLayer && event.lngLat) {
+          const currentMap = mapRef.current?.getMap?.();
+          const landlineHits = queryLandlineFeaturesAtEvent(currentMap, event);
+          const landlineFeature = pickClosestLandlineFeature(
+            landlineHits,
+            event.lngLat
           );
-          if (muniFeature) {
-            const townName = muniFeature.properties.town || muniFeature.properties.NAME;
-            if (townName) {
-              const muniName = townName.toLowerCase();
-              setSelectedMunicipality({
-                name: muniName,
-                properties: muniFeature.properties,
-                geometry: muniFeature.geometry
-              });
-              return;
-            }
-          }
-        }
+          const trailFeature =
+            currentMap && activeTrailLayerIds.length > 0
+              ? getTrailFeatureAtEvent(currentMap, event, activeTrailLayerIds)
+              : null;
+          const landlineDist = landlineFeature
+            ? distanceToLandlineGeometry(
+                event.lngLat.lng,
+                event.lngLat.lat,
+                landlineFeature.geometry
+              )
+            : Infinity;
+          const trailDist = trailFeature
+            ? distanceToLandlineGeometry(
+                event.lngLat.lng,
+                event.lngLat.lat,
+                trailFeature.geometry
+              )
+            : Infinity;
+          const metersPerPixel = metersPerPixelAt(
+            event.lngLat.lat,
+            currentMap?.getZoom?.() ?? 12
+          );
+          const landlinePx = landlineDist / metersPerPixel;
+          const trailPx = trailDist / metersPerPixel;
+          const preferLandline =
+            Boolean(landlineFeature) &&
+            landlinePx < 20 &&
+            landlinePx <= trailPx;
 
-        // LandLine segment identify popup
-        if (showLandlineLayer && event.features?.length) {
-          const landlineFeature = event.features.find(
-            (f) => f.layer && isLandlineLayerId(f.layer.id, landlines)
-          );
-          if (landlineFeature && event.lngLat) {
+          if (preferLandline) {
+            const identifyResult = landlineMapFeatureToIdentifyResult(
+              landlineFeature
+            );
+            setSelectedLandlineFeature({
+              type: "Feature",
+              geometry: landlineFeature.geometry,
+              properties: landlineFeature.properties || {},
+            });
+            setClickedTrailHighlight(null);
+            setIdentifyInfo([identifyResult]);
+            setPointIndex(0);
+            setIdentifyPoint(event.lngLat);
+            toggleIdentifyPopup(true);
+
+            const clickedOid = getLandlineObjectId(landlineFeature.properties);
             identifyLandlineAtPoint({
               lng: event.lngLat.lng,
               lat: event.lngLat.lat,
+              objectId: clickedOid,
+              distanceMeters: Math.max(25, metersPerPixel * 16),
             })
               .then((results) => {
-                if (results.length > 0) {
-                  setClickedTrailHighlight(null);
-                  setIdentifyInfo(results);
-                  setPointIndex(0);
-                  setIdentifyPoint(event.lngLat);
-                  toggleIdentifyPopup(true);
-                }
+                if (!results.length) return;
+                const rest = results.filter(
+                  (result) =>
+                    getLandlineObjectId(result.attributes) !== clickedOid
+                );
+                const matched =
+                  results.find(
+                    (result) =>
+                      getLandlineObjectId(result.attributes) === clickedOid
+                  ) || identifyResult;
+                setIdentifyInfo([matched, ...rest].slice(0, 5));
               })
               .catch((err) => {
                 console.error("Landline identify request failed:", err);
@@ -533,7 +589,9 @@ const RegionalTrailMap = ({
             return;
           }
         }
-        
+
+        setSelectedLandlineFeature(null);
+
         // Handle identify popup for trails
         if (!visibleEsriLayerIds.length) return;
 
@@ -700,12 +758,31 @@ const RegionalTrailMap = ({
           }
         }
 
-        if (boundaryHovered) {
+        const existingTrailIds = activeTrailLayerIds.filter((id) => map?.getLayer?.(id));
+        const overTrail =
+          existingTrailIds.length > 0 &&
+          Boolean(getTrailFeatureAtEvent(map, event, existingTrailIds));
+        const overLandline =
+          showLandlineLayer &&
+          Boolean(
+            pickClosestLandlineFeature(
+              queryLandlineFeaturesAtEvent(map, event),
+              event.lngLat
+            )
+          );
+        const overTrailOrLandline = overTrail || overLandline;
+
+        // Municipality / district fills cover the whole map. Don't let them
+        // swallow trail hover (click identify is handled in onClick).
+        if (boundaryHovered && !overTrailOrLandline) {
           clearHoverIdentifyTimer();
           hoverIdentifyRequestIdRef.current += 1;
           setHoveredTrailHighlight(null);
+          setMapCursor("pointer");
           return;
         }
+
+        setMapCursor(overTrailOrLandline ? "pointer" : "grab");
 
         if (trailHoverRafRef.current) {
           cancelAnimationFrame(trailHoverRafRef.current);
@@ -735,6 +812,7 @@ const RegionalTrailMap = ({
         setMuniHoverPoint(null);
         setMuniHoverFilterKey(null);
         setMuniHoverFilterValue(null);
+        setMapCursor("grab");
       }}
       mapboxAccessToken={MAPBOX_TOKEN}
       mapStyle={baseLayer.url}
@@ -743,6 +821,7 @@ const RegionalTrailMap = ({
     >
       {showIdentifyPopup && identifyInfo && identifyInfo.length > 0 && identifyPoint && (
         <Identify
+          key={`${identifyPoint.lng.toFixed(5)}-${identifyPoint.lat.toFixed(5)}`}
           point={identifyPoint}
           identifyResult={identifyInfo}
           showContribute={!identifyInfo.some((item) => item.layerId === "landline")}
@@ -765,25 +844,7 @@ const RegionalTrailMap = ({
         />
       )}
       
-      {/* Render vector tile source for original trails filters */}
-      <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
-        <OriginalTrailsFilterLayers
-          trailLayers={trailLayers}
-          proposedLayers={proposedLayers}
-          existingTrails={existingTrails}
-          proposedTrails={proposedTrails}
-        />
-      </Source>
-
-      <TrailsOverviewHighlightLayer
-        hovered={hoveredTrailHighlight}
-        clicked={clickedTrailHighlight}
-      />
-      
-      <Source id="MAPC landline vector tiles" type="vector" tiles={[LANDLINE_SOURCE]}>
-        {landlineLayers()}
-      </Source>
-      
+      {/* Boundaries under trails / LandLine */}
       <Source 
         id="ma-house-districts" 
         type="geojson" 
@@ -831,6 +892,29 @@ const RegionalTrailMap = ({
       >
         {mapcBoundaryLayers()}
       </Source>
+
+      {/* Render vector tile source for original trails filters */}
+      <Source id="MAPC trail vector tiles" type="vector" tiles={[TRAILMAP_SOURCE]}>
+        <OriginalTrailsFilterLayers
+          trailLayers={trailLayers}
+          proposedLayers={proposedLayers}
+          existingTrails={existingTrails}
+          proposedTrails={proposedTrails}
+        />
+      </Source>
+
+      <TrailsOverviewHighlightLayer
+        hovered={hoveredTrailHighlight}
+        clicked={clickedTrailHighlight}
+      />
+
+      {showLandlineLayer && (
+        <LandlinesLayer
+          showLandlines={showLandlineLayer}
+          mapRef={mapRef}
+          selectedFeature={selectedLandlineFeature}
+        />
+      )}
 
       <MapLegend controlPanelOpen={showControlPanel} />
 

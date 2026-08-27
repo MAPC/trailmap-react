@@ -21,7 +21,6 @@ export const resetSharedNavigationState = ({
   setShowMuniOpenSpace,
   setShowProjectOpenSpace,
   setShowLandlinesFeatureService,
-  setShowTrailsRegNameSync,
   setShowTransitLandStops,
   setProjectRegNames,
   setSelectedProjectRegName,
@@ -59,7 +58,6 @@ export const resetSharedNavigationState = ({
   if (setShowMuniOpenSpace) setShowMuniOpenSpace(false);
   if (setShowProjectOpenSpace) setShowProjectOpenSpace(false);
   setShowLandlinesFeatureService(false);
-  setShowTrailsRegNameSync(false);
   setShowTransitLandStops(false);
 
   window.dispatchEvent(new CustomEvent("resetMunicipalityProfile"));

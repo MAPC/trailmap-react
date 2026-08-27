@@ -31,7 +31,6 @@ import EnvironmentalJusticePopupContent from "./tooltip/EnvironmentalJusticePopu
 import { queryFeatureAtPoint } from "./utils/arcgisPointQuery";
 import { EJ2020_MAP_SERVER_URL } from "./constants/trailFacilityTypeLabels";
 import LandlinesLayer from "./layers/LandlinesLayer";
-import TrailsRegNameSyncLayer from "./layers/TrailsRegNameSyncLayer";
 import TransitLandStopsLayer from "./layers/TransitLandStopsLayer";
 import TransitLandRoutesLayer from "./layers/TransitLandRoutesLayer";
 import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
@@ -79,8 +78,6 @@ const CommunityTrailsProfile = ({
     setShowMuniOpenSpace,
     showLandlinesFeatureService,
     setShowLandlinesFeatureService,
-    showTrailsRegNameSync,
-    setShowTrailsRegNameSync,
     showTransitLandStops,
     setShowTransitLandStops,
   } = useContext(LayerContext);
@@ -268,7 +265,6 @@ const CommunityTrailsProfile = ({
     const handleToggleOpenSpace = (event) => setShowOpenSpace(event.detail.show);
     const handleToggleMuniOpenSpace = (event) => setShowMuniOpenSpace(event.detail.show);
     const handleToggleLandlinesFeatureService = (event) => setShowLandlinesFeatureService(event.detail.show);
-    const handleToggleTrailsRegNameSync = (event) => setShowTrailsRegNameSync(event.detail.show);
     const handleToggleTransitLandStops = (event) => setShowTransitLandStops(event.detail.show);
     
     const handleResetMunicipalityProfile = () => {
@@ -292,7 +288,6 @@ const CommunityTrailsProfile = ({
       setShowOpenSpace(false);
       setShowMuniOpenSpace(false);
       setShowLandlinesFeatureService(false);
-      setShowTrailsRegNameSync(false);
       setShowTransitLandStops(false);
       setShowBufferAnalysis(false);
       setIsBufferActive(false);
@@ -325,7 +320,6 @@ const CommunityTrailsProfile = ({
     window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
     window.addEventListener('toggleMuniOpenSpace', handleToggleMuniOpenSpace);
     window.addEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
-    window.addEventListener('toggleTrailsRegNameSync', handleToggleTrailsRegNameSync);
     window.addEventListener('toggleTransitLandStops', handleToggleTransitLandStops);
     window.addEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
@@ -342,7 +336,6 @@ const CommunityTrailsProfile = ({
       window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
       window.removeEventListener('toggleMuniOpenSpace', handleToggleMuniOpenSpace);
       window.removeEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
-      window.removeEventListener('toggleTrailsRegNameSync', handleToggleTrailsRegNameSync);
       window.removeEventListener('toggleTransitLandStops', handleToggleTransitLandStops);
       window.removeEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
       window.removeEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
@@ -952,6 +945,19 @@ const CommunityTrailsProfile = ({
           />
         )}
 
+        <Source
+          id="municipalities"
+          type="geojson"
+          data={massachusettsData}
+        >
+          <MunicipalityMapLayer
+            showMunicipalityProfileMap={true}
+            selectedMunicipality={selectedMunicipality}
+          />
+        </Source>
+
+        <BoundaryLayers mapRef={mapRef} />
+
         {/* Environmental Justice Tooltip */}
         {showEnvironmentalJustice && ejHoverPoint && ejHoverInfo && (
           <Popup
@@ -1081,16 +1087,6 @@ const CommunityTrailsProfile = ({
           />
         )}
 
-        {/* Trails Reg Name Sync Layer */}
-        {showTrailsRegNameSync && (
-          <TrailsRegNameSyncLayer
-            showTrailsRegNameSync={showTrailsRegNameSync}
-            showMunicipalityProfileMap={true}
-            showProjectTrailsProfile={false}
-            mapRef={mapRef}
-          />
-        )}
-
         {/* Transit.land Routes Layer - shown when stops are visible */}
         <TransitLandRoutesLayer
           showTransitLandRoutes={showTransitLandStops}
@@ -1103,19 +1099,6 @@ const CommunityTrailsProfile = ({
           showMunicipalityProfileMap={true}
           hoveredTransitStop={hoveredTransitStop}
         />
-        
-        <Source 
-          id="municipalities" 
-          type="geojson" 
-          data={massachusettsData}
-        >
-          <MunicipalityMapLayer
-            showMunicipalityProfileMap={true}
-            selectedMunicipality={selectedMunicipality}
-          />
-        </Source>
-
-        <BoundaryLayers />
         
         {/* Buffer Analysis Layers */}
         {renderBufferPreview(bufferPreviewCenter, isBufferActive, bufferRadius)}

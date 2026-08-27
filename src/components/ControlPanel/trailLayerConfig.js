@@ -1,4 +1,11 @@
 import LayerData from "../../data/LayerData";
+import {
+  LANDLINE_CASING_COLOR,
+  LANDLINE_FEATURE_COLORS,
+  LANDLINE_SWATCH_COLOR,
+} from "../Map/constants/landlineFeatureStyle";
+
+export { LANDLINE_CASING_COLOR, LANDLINE_SWATCH_COLOR };
 
 export const TRAIL_LAYER_CATEGORIES = [
   {
@@ -31,7 +38,7 @@ const LAYER_LABELS_BY_ID = Object.fromEntries(
 export const getTrailLayerLabel = (layerId, fallback = layerId) =>
   LAYER_LABELS_BY_ID[layerId] || fallback;
 
-export const LANDLINE_SWATCH_COLOR = "#00A884";
+const LANDLINE_CASING_EXTRA_WIDTH = 2;
 
 const getLandlineSymbol = (layer) => {
   const filter = layer?.filter;
@@ -51,12 +58,82 @@ const getLandlineLabel = (layerId = "") =>
     .replace(/^Facility Type\//, "")
     .replace(/\/\d+$/, "");
 
+const isLandlineGapLayer = (layer) => /gap/i.test(layer?.id || "");
+const isLandlineUnimprovedLayer = (layer) => /unimproved/i.test(layer?.id || "");
+
 const isWhiteColor = (color) => String(color || "").toUpperCase() === "#FFFFFF";
+
+const isLandlineCasingColor = (color) =>
+  String(color || "").toLowerCase() === LANDLINE_CASING_COLOR;
 
 const toSvgDasharray = (dashArray, width = 3) =>
   Array.isArray(dashArray)
     ? dashArray.map((value) => Math.max(1, value * width)).join(" ")
     : null;
+
+const withLandlineOutlineStroke = (stroke) => ({
+  ...stroke,
+  role: "outline",
+  color: LANDLINE_CASING_COLOR,
+  width: (Number(stroke.width) || 3) + LANDLINE_CASING_EXTRA_WIDTH,
+});
+
+const withLandlineOutlineStrokes = (strokes = []) => {
+  const outlined = [];
+  strokes.forEach((stroke) => {
+    if (
+      stroke.color &&
+      !isWhiteColor(stroke.color) &&
+      !isLandlineCasingColor(stroke.color)
+    ) {
+      outlined.push(withLandlineOutlineStroke(stroke));
+    }
+    outlined.push(stroke);
+  });
+  return outlined;
+};
+
+/**
+ * Draw outlines that the embedded LandLine map uses under fill colors.
+ * Gap gets a light-grey casing; unimproved shared-use gets a shared-use green casing.
+ */
+export const expandLandlineLayersWithCasing = (layers = []) => {
+  const result = [];
+
+  [...layers].reverse().forEach((layer) => {
+    const paint = layer.paint || {};
+    const width = Number(paint["line-width"]) || 3;
+    let outlineColor = null;
+    let copyDasharray = true;
+
+    if (isLandlineGapLayer(layer)) {
+      outlineColor = LANDLINE_CASING_COLOR;
+      copyDasharray = false;
+    } else if (isLandlineUnimprovedLayer(layer)) {
+      outlineColor = LANDLINE_FEATURE_COLORS.sharedUse;
+      copyDasharray = false;
+    }
+
+    if (outlineColor) {
+      const casingPaint = {
+        ...paint,
+        "line-color": outlineColor,
+        "line-width": width + LANDLINE_CASING_EXTRA_WIDTH,
+      };
+      if (!copyDasharray) {
+        delete casingPaint["line-dasharray"];
+      }
+      result.push({
+        ...layer,
+        id: `${layer.id}__casing`,
+        paint: casingPaint,
+      });
+    }
+    result.push(layer);
+  });
+
+  return result;
+};
 
 /**
  * Build LandLine legend entries from the same LayerData paints drawn on the map.
@@ -193,14 +270,18 @@ export const getLandlineLegendItems = (landlineLayers = []) => {
       ];
     }
 
+    const isGap = /gap/i.test(entry.label);
+
     return {
       key: entry.key,
       label: entry.label,
       color: primaryColored?.color || "#666666",
       dashed,
       doubleLine,
-      hasCasing,
-      previewStrokes,
+      hasCasing: hasCasing || isGap,
+      previewStrokes: isGap
+        ? withLandlineOutlineStrokes(previewStrokes)
+        : previewStrokes,
     };
   });
 };

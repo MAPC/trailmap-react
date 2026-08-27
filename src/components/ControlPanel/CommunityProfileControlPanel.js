@@ -44,8 +44,6 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
     setShowOpenSpace,
     showMuniOpenSpace,
     setShowMuniOpenSpace,
-    showTrailsRegNameSync,
-    setShowTrailsRegNameSync,
     showTransitLandStops,
     setShowTransitLandStops,
   } = useContext(LayerContext);
@@ -147,8 +145,6 @@ const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
         onToggleMuniOpenSpace={setShowMuniOpenSpace}
         showTransitLandStops={showTransitLandStops}
         onToggleTransitLandStops={setShowTransitLandStops}
-        showTrailsRegNameSync={showTrailsRegNameSync}
-        onToggleTrailsRegNameSync={setShowTrailsRegNameSync}
       />
     </div>
   );

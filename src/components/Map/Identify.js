@@ -60,16 +60,17 @@ const Identify = ({
   const identifyLength = [];
 
   identifyResult.forEach((element) => {
+    const attributes = element?.attributes || {};
     identifyLayer.push(element.layerName);
-    identifyAttributes.push(element.attributes);
-    identifyTrailName.push(getTrailName(element.attributes));
+    identifyAttributes.push(attributes);
+    identifyTrailName.push(getTrailName(attributes));
     identifyMunicipality.push(
       getMunicipalityName(
-        element.attributes["muni_id"] || element.attributes["Municipal ID"] || null
+        attributes["muni_id"] || attributes["Municipal ID"] || null
       ) ?? ""
     );
-    identifyDate.push(getOpeningDate(element.attributes));
-    identifyLength.push(getLengthFeet(element.attributes));
+    identifyDate.push(getOpeningDate(attributes));
+    identifyLength.push(getLengthFeet(attributes));
   });
   const carouselItems = [];
   for (let i = 0; i < identifyResult.length; i++) {
@@ -107,6 +108,7 @@ const Identify = ({
       className="Popup"
       latitude={point.lat}
       anchor="bottom"
+      closeOnClick={false}
       onClose={() => handleShowPopup(false)}
     >
       <Carousel
