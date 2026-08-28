@@ -10,7 +10,7 @@ const HeaderMenu = () => {
   const { toggleHeaderModal } = useContext(ModalContext);
   const { isActive, handleNavClick } = useHeaderNavigation();
   const isMobile = useIsMobileNav();
-  const navItems = getHeaderNavItems(isMobile);
+  const navItems = getHeaderNavItems();
   const regionRef = useRef(null);
   const probeRef = useRef(null);
   const menuRef = useRef(null);
@@ -39,10 +39,10 @@ const HeaderMenu = () => {
   }, []);
 
   useEffect(() => {
-    if (!useHamburger) {
+    if (!useHamburger && !isMobile) {
       setMenuOpen(false);
     }
-  }, [useHamburger]);
+  }, [useHamburger, isMobile]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -94,7 +94,7 @@ const HeaderMenu = () => {
         <HeaderActions showTooltips={false} />
       </div>
 
-      {useHamburger ? (
+      {useHamburger || isMobile ? (
         <div className="Header__hamburger" ref={menuRef}>
           <button
             type="button"

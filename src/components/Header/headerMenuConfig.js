@@ -12,26 +12,22 @@ export const HEADER_NAV_ITEMS = [
     label: "Dashboard",
     path: "/dashboard",
     icon: "bi-grid-fill",
-    hideOnMobile: true,
   },
   {
     id: "community",
     label: "Community Profiles",
     path: "/communityTrailsProfile",
     icon: "bi-person-fill",
-    hideOnMobile: true,
   },
   {
     id: "regional",
     label: "Trail Profiles",
     path: "/projectTrailsProfile",
     icon: "bi-graph-up",
-    hideOnMobile: true,
   },
 ];
 
-export const getHeaderNavItems = (isMobile) =>
-  HEADER_NAV_ITEMS.filter((item) => !isMobile || !item.hideOnMobile);
+export const getHeaderNavItems = () => HEADER_NAV_ITEMS;
 
 export const HEADER_ACTION_ITEMS = [
   {
