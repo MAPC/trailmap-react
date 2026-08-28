@@ -16,6 +16,8 @@ import {
   COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS,
   findMunicipalityTrailMetricsByTownId,
   fetchAllMunicipalityTrailMetrics,
+  PLANNED_TRAILS_EXPLANATION,
+  PROPOSED_TRAILS_EXPLANATION,
 } from "../../utils/trailMetricsDashboard";
 import {
   mapcTrailLayers,
@@ -1457,7 +1459,29 @@ const MunicipalityProfile = ({
                 </span>
               </div>
               <div className="CompletionRatesModal__summaryItem">
-                <span className="CompletionRatesModal__summaryLabel">Total planned trails</span>
+                <span className="CompletionRatesModal__summaryLabel">
+                  Total planned trails
+                  <OverlayTrigger
+                    placement="bottom"
+                    overlay={
+                      <Tooltip
+                        id="planned-modal-tooltip"
+                        className="MunicipalityProfile__tooltip MunicipalityProfile__tooltip--wide"
+                      >
+                        {PLANNED_TRAILS_EXPLANATION}
+                      </Tooltip>
+                    }
+                  >
+                    <span
+                      className="CompletionRatesModal__help"
+                      role="button"
+                      tabIndex={0}
+                      aria-label="About planned trails"
+                    >
+                      <i className="fas fa-question-circle" aria-hidden="true" />
+                    </span>
+                  </OverlayTrigger>
+                </span>
                 <span className="CompletionRatesModal__summaryValue">
                   {formatLength(trailStats.plannedLength)} mi
                 </span>
@@ -1466,7 +1490,29 @@ const MunicipalityProfile = ({
                 </span>
               </div>
               <div className="CompletionRatesModal__summaryItem">
-                <span className="CompletionRatesModal__summaryLabel">Total proposed trails</span>
+                <span className="CompletionRatesModal__summaryLabel">
+                  Total proposed trails
+                  <OverlayTrigger
+                    placement="bottom"
+                    overlay={
+                      <Tooltip
+                        id="proposed-modal-tooltip"
+                        className="MunicipalityProfile__tooltip MunicipalityProfile__tooltip--wide"
+                      >
+                        {PROPOSED_TRAILS_EXPLANATION}
+                      </Tooltip>
+                    }
+                  >
+                    <span
+                      className="CompletionRatesModal__help"
+                      role="button"
+                      tabIndex={0}
+                      aria-label="About proposed trails"
+                    >
+                      <i className="fas fa-question-circle" aria-hidden="true" />
+                    </span>
+                  </OverlayTrigger>
+                </span>
                 <span className="CompletionRatesModal__summaryValue">
                   {formatLength(trailStats.proposedLength)} mi
                 </span>

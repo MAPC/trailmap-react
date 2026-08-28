@@ -72,6 +72,17 @@ export const TRAIL_STATUS_OPTIONS = [
   { key: "proposed", label: "Proposed" },
 ];
 
+export const PLANNED_TRAILS_EXPLANATION =
+  "Planned Trails: Listed in a regional transportation plan, municipal transportation plan, or by an active advocate organization. The project is programmed in the Statewide Transportation Improvement Plan (STIP), has a feasibility study underway, or has local design funds encumbered or earmarked.";
+
+export const PROPOSED_TRAILS_EXPLANATION =
+  "Proposed Trails: An idea for a trail project proposed by MAPC, any of its member municipalities, or state agencies within the region. No funding has been expended to advance the project.";
+
+export const TRAIL_STATUS_EXPLANATIONS = {
+  planned: PLANNED_TRAILS_EXPLANATION,
+  proposed: PROPOSED_TRAILS_EXPLANATION,
+};
+
 const sumKeys = (row, keys) =>
   keys.reduce((total, key) => total + (Number(row[key]) || 0), 0);
 
