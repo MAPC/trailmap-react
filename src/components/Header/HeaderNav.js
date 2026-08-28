@@ -1,12 +1,10 @@
 import React from "react";
 import { getHeaderNavItems } from "./headerMenuConfig";
 import { useHeaderNavigation } from "./useHeaderNavigation";
-import { useIsMobileNav } from "../../hooks/useIsMobileNav";
 
 const HeaderNav = () => {
   const { isActive, handleNavClick } = useHeaderNavigation();
-  const isMobile = useIsMobileNav();
-  const navItems = getHeaderNavItems(isMobile);
+  const navItems = getHeaderNavItems();
 
   const navItemClass = (path) =>
     `Header__nav-item${isActive(path) ? " Header__nav-item--active" : ""}`;
