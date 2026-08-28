@@ -1548,6 +1548,10 @@
     box-shadow: 0 4px 12px rgba(15, 40, 70, 0.18);
   }
 
+  &.MunicipalityProfile__tooltip--wide .tooltip-inner {
+    max-width: 24rem;
+  }
+
   .tooltip-arrow::before {
     border-top-color: rgba(59, 131, 199, 0.92);
   }

@@ -10,6 +10,9 @@ import {
   getTopMunicipalitiesByTrailType,
   MAPC_MUNI_COUNT,
   MASSACHUSETTS_MUNI_COUNT,
+  PLANNED_TRAILS_EXPLANATION,
+  PROPOSED_TRAILS_EXPLANATION,
+  TRAIL_STATUS_EXPLANATIONS,
   TRAIL_STATUS_OPTIONS,
   TRAIL_TYPE_GROUPS,
 } from "../../utils/trailMetricsDashboard";
@@ -182,20 +185,26 @@ const existingTrailsTooltip = (
 );
 
 const plannedTrailsTooltip = (
-  <Tooltip id="dashboard-planned-trails-tooltip" className="Dashboard__summaryTooltip Dashboard__summaryTooltip--compact">
-    <p className="Dashboard__summaryTooltipText">
-      Total planned trail mileage aggregated across shared-use paths, footways, and bike
-      facilities.
-    </p>
+  <Tooltip id="dashboard-planned-trails-tooltip" className="Dashboard__summaryTooltip">
+    <div className="Dashboard__summaryTooltipContent">
+      <p className="Dashboard__summaryTooltipText">
+        Total planned trail mileage aggregated across shared-use paths, footways, and bike
+        facilities.
+      </p>
+      <p className="Dashboard__summaryTooltipText">{PLANNED_TRAILS_EXPLANATION}</p>
+    </div>
   </Tooltip>
 );
 
 const proposedTrailsTooltip = (
-  <Tooltip id="dashboard-proposed-trails-tooltip" className="Dashboard__summaryTooltip Dashboard__summaryTooltip--compact">
-    <p className="Dashboard__summaryTooltipText">
-      Total proposed trail mileage aggregated across shared-use paths, footways, and bike
-      facilities.
-    </p>
+  <Tooltip id="dashboard-proposed-trails-tooltip" className="Dashboard__summaryTooltip">
+    <div className="Dashboard__summaryTooltipContent">
+      <p className="Dashboard__summaryTooltipText">
+        Total proposed trail mileage aggregated across shared-use paths, footways, and bike
+        facilities.
+      </p>
+      <p className="Dashboard__summaryTooltipText">{PROPOSED_TRAILS_EXPLANATION}</p>
+    </div>
   </Tooltip>
 );
 
@@ -273,12 +282,14 @@ const MunicipalityTrailTypeLeaderboard = ({ municipalities }) => {
       return [
         compositionNote,
         `${facilityGroup.label} have no ${statusOption.label.toLowerCase()} mileage in the metrics table, so this ranking will be empty.`,
+        TRAIL_STATUS_EXPLANATIONS[statusKey],
       ].filter(Boolean);
     }
 
     return [
       `Ranks the top 10 communities by ${statusOption.label.toLowerCase()} ${facilityGroup.label.toLowerCase()} mileage.`,
       compositionNote,
+      TRAIL_STATUS_EXPLANATIONS[statusKey],
     ].filter(Boolean);
   }, [facilityGroup, statusKey, statusOption.label]);
 
