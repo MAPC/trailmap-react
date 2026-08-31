@@ -18,6 +18,34 @@ import {
 } from "../../utils/trailMetricsDashboard";
 import rpaContacts from "../../data/rpaContacts.json";
 
+const SUMMARY_TOOLTIP_POPPER_CONFIG = {
+  strategy: "fixed",
+  modifiers: [
+    {
+      name: "offset",
+      options: {
+        offset: [0, 8],
+      },
+    },
+    {
+      name: "preventOverflow",
+      options: {
+        padding: 12,
+        altAxis: true,
+        boundary: "viewport",
+        rootBoundary: "viewport",
+        tether: false,
+      },
+    },
+    {
+      name: "flip",
+      options: {
+        fallbackPlacements: ["bottom", "top-start", "top", "left"],
+      },
+    },
+  ],
+};
+
 const Skeleton = ({ className = "", style = {} }) => (
   <span
     className={`Dashboard__skeleton${className ? ` ${className}` : ""}`}
@@ -142,7 +170,12 @@ const SummaryCard = ({ label, value, helpTooltip }) => (
     <span className="Dashboard__eyebrow">
       {label}
       {helpTooltip ? (
-        <OverlayTrigger placement="right" overlay={helpTooltip}>
+        <OverlayTrigger
+          placement="bottom-start"
+          container={() => document.body}
+          popperConfig={SUMMARY_TOOLTIP_POPPER_CONFIG}
+          overlay={helpTooltip}
+        >
           <span
             className="Dashboard__summaryHelp"
             role="button"

@@ -701,43 +701,74 @@
 }
 
 .Dashboard__summaryTooltip.tooltip {
+  --bs-tooltip-bg: rgba(59, 131, 199, 0.92);
+  --bs-tooltip-color: #fff;
+  --bs-tooltip-opacity: 1;
+  --bs-tooltip-arrow-width: 20px;
+  --bs-tooltip-arrow-height: 12px;
+  width: max-content;
+  max-width: min(24rem, calc(100vw - 1.5rem));
+  z-index: 1080;
+
+  &.show {
+    opacity: 1;
+  }
+
   .tooltip-inner {
-    max-width: 24rem;
+    max-width: 100%;
+    max-height: min(70vh, 24rem);
+    overflow-x: hidden;
+    overflow-y: auto;
     text-align: left;
     padding: 0.65rem 0.75rem;
-    background-color: rgba(59, 131, 199, 0.92);
-    color: #fff;
+    background-color: var(--bs-tooltip-bg);
+    color: var(--bs-tooltip-color);
     border: none;
     border-radius: 8px;
-    overflow: visible;
+    overflow-wrap: anywhere;
+    box-sizing: border-box;
     box-shadow: 0 4px 12px rgba(15, 40, 70, 0.18);
   }
 
-  .tooltip-arrow::before {
-    border-top-color: rgba(59, 131, 199, 0.92);
-    border-bottom-color: rgba(59, 131, 199, 0.92);
-    border-left-color: rgba(59, 131, 199, 0.92);
-    border-right-color: rgba(59, 131, 199, 0.92);
+  .tooltip-arrow {
+    overflow: visible;
+
+    &::before {
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      border: 0 !important;
+      background-color: transparent !important;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 100% 100%;
+      clip-path: none !important;
+      transform: none !important;
+    }
   }
 
-  &[data-popper-placement^="top"] .tooltip-arrow::before {
-    border-top-color: rgba(59, 131, 199, 0.92);
+  &[data-popper-placement^="bottom"] .tooltip-arrow::before,
+  &.bs-tooltip-bottom .tooltip-arrow::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'%3E%3Cpolygon points='10,0 20,12 0,12' fill='%233b83c7'/%3E%3C/svg%3E");
   }
 
-  &[data-popper-placement^="bottom"] .tooltip-arrow::before {
-    border-bottom-color: rgba(59, 131, 199, 0.92);
+  &[data-popper-placement^="top"] .tooltip-arrow::before,
+  &.bs-tooltip-top .tooltip-arrow::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'%3E%3Cpolygon points='0,0 20,0 10,12' fill='%233b83c7'/%3E%3C/svg%3E");
   }
 
-  &[data-popper-placement^="left"] .tooltip-arrow::before {
-    border-left-color: rgba(59, 131, 199, 0.92);
+  &[data-popper-placement^="left"] .tooltip-arrow::before,
+  &.bs-tooltip-start .tooltip-arrow::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 20'%3E%3Cpolygon points='12,0 12,20 0,10' fill='%233b83c7'/%3E%3C/svg%3E");
   }
 
-  &[data-popper-placement^="right"] .tooltip-arrow::before {
-    border-right-color: rgba(59, 131, 199, 0.92);
+  &[data-popper-placement^="right"] .tooltip-arrow::before,
+  &.bs-tooltip-end .tooltip-arrow::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 20'%3E%3Cpolygon points='0,0 12,10 0,20' fill='%233b83c7'/%3E%3C/svg%3E");
   }
 
   &.Dashboard__summaryTooltip--compact .tooltip-inner {
-    max-width: 12.5rem;
+    max-width: min(12.5rem, 100%);
   }
 }
 
@@ -761,6 +792,10 @@
 
   li {
     break-inside: avoid;
+  }
+
+  @media (max-width: 1100px) {
+    columns: 1;
   }
 }
 
