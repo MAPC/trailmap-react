@@ -1,5 +1,18 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Source, Layer } from "react-map-gl";
+import { ARCGIS_TOKEN, withArcGisToken } from "../constants/arcgisConfig";
+
+const extractRegNamesFromFeatures = (features = []) => {
+  const regNames = new Set();
+  features.forEach((feature) => {
+    const regName =
+      feature.properties?.reg_name ?? feature.attributes?.reg_name;
+    if (regName && String(regName).trim() !== "") {
+      regNames.add(String(regName).trim());
+    }
+  });
+  return Array.from(regNames).sort();
+};
 
 /**
  * Generates a color palette for different reg_name values
@@ -29,12 +42,11 @@ const generateColorPalette = (regNames) => {
  * Renders Other Regional Trails layer using ArcGIS FeatureServer for data
  * Data source: https://services.arcgis.com/c5WwApDsDjRhIVkH/arcgis/rest/services/export_other_trails/FeatureServer
  * 
- * Uses FeatureServer queries to fetch GeoJSON data for rendering and data extraction (reg_names, metrics).
- * Renders trails as GeoJSON to support filtering by selectedRegNames and color coding.
- * Supports color coding by reg_name attribute when useColorCoding is true.
+ * Uses FeatureServer queries to fetch GeoJSON for selected reg_names only
+ * (no continuous viewport queries while panning). Also fetches distinct
+ * reg_names once for the Regional Profile project list.
  */
 const OtherRegionalTrailsLayer = ({ 
-  showTrailsRegNameSync, 
   showMunicipalityProfileMap, 
   showRegionalTrailsProfile,
   showProjectTrailsProfile,
@@ -47,70 +59,80 @@ const OtherRegionalTrailsLayer = ({
   clickedTrail = null // Clicked trail object with featureId
 }) => {
   const [trailsData, setTrailsData] = useState(null);
-  const updateTimeoutRef = useRef(null);
   const queryTimeoutRef = useRef(null);
   const accumulatedTrailsRef = useRef(new Map()); // Store trails by feature ID to avoid duplicates
+  const knownRegNamesRef = useRef(new Set());
+  const onTrailsDataChangeRef = useRef(onTrailsDataChange);
+  const onRegNamesChangeRef = useRef(onRegNamesChange);
+  const fetchedSelectionKeyRef = useRef(null);
+
+  useEffect(() => {
+    onTrailsDataChangeRef.current = onTrailsDataChange;
+  }, [onTrailsDataChange]);
+
+  useEffect(() => {
+    onRegNamesChangeRef.current = onRegNamesChange;
+  }, [onRegNamesChange]);
+
+  // Stable content key so parent Array.from(selectedRegNames) does not re-fetch
+  const selectedRegNamesKey = Array.isArray(selectedRegNames)
+    ? [...selectedRegNames].filter(Boolean).sort().join("\0")
+    : "";
 
   // Determine if layer should be shown
-  const shouldShow = showTrailsRegNameSync && (showMunicipalityProfileMap || showRegionalTrailsProfile || showProjectTrailsProfile);
+  const shouldShow = showMunicipalityProfileMap || showRegionalTrailsProfile || showProjectTrailsProfile;
 
-  // ArcGIS token for authentication
-  const ARCGIS_TOKEN = "AAPTaucDi8_DdZbjNjhaAYvWCQA..A05LEOZ-QCx9bKC21Tsk1K0A7Yoql8kZNK3V7F7COkFiE0vn0bVYZti5Eaq_Db7r4UqKV1Y02-9ilPUWjj0barvUV7sdmMM2AgnBJEYMapTJKRzGHJBBGfQV_8KlE5scYMM4iNUNpj7TVvKklvCfr764dCKDmt6ubnI2rW9mRBj7dGZLwbmbKMJFiNx2wAiZoDFGClDOcsxt83kCFCjoGug-Jhqwb0xdl_9lpX38IIoKJ0JAcmgkF6MmiwY9Zgm4Z23T_sSUdSo.AT1_U0702ST1";
-  
+  const publishRegNames = (names) => {
+    const cb = onRegNamesChangeRef.current;
+    if (!cb || !names?.length) return;
+    names.forEach((name) => knownRegNamesRef.current.add(name));
+    cb(Array.from(knownRegNamesRef.current).sort());
+  };
+
   // MapServer URL for tile display (tiles only, doesn't support queries)
   const MAP_SERVER_URL = "https://services.arcgis.com/c5WwApDsDjRhIVkH/arcgis/rest/services/export_other_trails_tiles/MapServer";
   
   // FeatureServer URL for data extraction (supports queries)
   const FEATURE_SERVER_URL = "https://services.arcgis.com/c5WwApDsDjRhIVkH/arcgis/rest/services/export_other_trails/FeatureServer/0";
 
-  // Initial query to get all reg_names for the project list (runs once)
+  // Initial query to get all reg_names for the project list (runs once when shown)
   useEffect(() => {
-    if (!shouldShow || !onRegNamesChange) {
+    if (!shouldShow || !onRegNamesChangeRef.current) {
       return;
     }
 
-    // Query for all reg_names - fetch all unique reg_names without geometry filter
     const fetchAllRegNames = async () => {
+      if (!ARCGIS_TOKEN) {
+        console.error("REACT_APP_ARCGIS_TOKEN is not configured");
+        return;
+      }
+
       try {
-        // Try querying without geometry first (faster and gets all reg_names)
-        // If that fails, fall back to geometry-based query with large bounds
-        let url = `${FEATURE_SERVER_URL}/query?where=reg_name IS NOT NULL&outFields=reg_name&returnGeometry=false&returnDistinctValues=true&f=geojson&maxRecordCount=10000&token=${ARCGIS_TOKEN}`;
-        
-        let response = await fetch(url);
+        const distinctUrl = `${FEATURE_SERVER_URL}/query?where=reg_name IS NOT NULL&outFields=reg_name&returnGeometry=false&returnDistinctValues=true&f=json&maxRecordCount=10000`;
+        let response = await fetch(withArcGisToken(distinctUrl));
         let data = await response.json();
-        
-        // If returnDistinctValues doesn't work, try without it
-        if (data.error || !data.features || data.features.length === 0) {
-          // Fallback: query with large bounds
-          const bbox = "-180,-90,180,90";
-          url = `${FEATURE_SERVER_URL}/query?where=reg_name IS NOT NULL&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=reg_name&returnGeometry=false&f=geojson&maxRecordCount=10000&token=${ARCGIS_TOKEN}`;
-          response = await fetch(url);
+
+        if (data.error || !data.features?.length) {
+          const bbox = "-73.5,41.0,-69.5,43.0";
+          const fallbackUrl = `${FEATURE_SERVER_URL}/query?where=reg_name IS NOT NULL&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=reg_name&returnGeometry=false&f=json&maxRecordCount=10000`;
+          response = await fetch(withArcGisToken(fallbackUrl));
           data = await response.json();
         }
-        
+
         if (data.error) {
           console.error("Error fetching reg_names from FeatureServer:", data.error);
           return;
         }
-        
-        if (data.features && data.features.length > 0) {
-          const regNames = new Set();
-          data.features.forEach(feature => {
-            const regName = feature.properties?.reg_name;
-            if (regName && regName.trim() !== "") {
-              regNames.add(regName);
-            }
-          });
-          const uniqueRegNames = Array.from(regNames).sort();
-          onRegNamesChange(uniqueRegNames);
-        }
+
+        publishRegNames(extractRegNamesFromFeatures(data.features));
       } catch (error) {
         console.error("Error fetching all reg_names from FeatureServer:", error);
       }
     };
 
+    knownRegNamesRef.current.clear();
     fetchAllRegNames();
-  }, [shouldShow, onRegNamesChange]);
+  }, [shouldShow]);
 
   // Note: reg_names list is populated by the initial query above
   // trailsData is only used for rendering and metrics, not for populating the project list
@@ -138,208 +160,111 @@ const OtherRegionalTrailsLayer = ({
     return generateColorPalette(uniqueRegNames);
   }, [useColorCoding, trailsData]);
 
+  // Fetch trail geometries once per selected project set, then stop.
   useEffect(() => {
-    if (!shouldShow || !mapRef?.current) {
+    if (!shouldShow) {
+      fetchedSelectionKeyRef.current = null;
       setTrailsData(null);
-      accumulatedTrailsRef.current.clear(); // Clear accumulated data when layer is hidden
+      accumulatedTrailsRef.current.clear();
+      onTrailsDataChangeRef.current?.(null);
       return;
     }
 
-    const updateLayer = () => {
-      const map = mapRef.current?.getMap();
-      if (!map) return;
-
-      let url;
-      
-      // If projects are selected, query all trails for those projects regardless of map bounds
-      if (selectedRegNames && selectedRegNames.length > 0) {
-        // Build WHERE clause to filter by selected reg_names
-        // Escape single quotes in reg_names and build OR conditions
-        const whereConditions = selectedRegNames.map(regName => {
-          const escapedName = (regName || "").replace(/'/g, "''"); // Escape single quotes for SQL
-          return `reg_name = '${escapedName}'`;
-        }).join(' OR ');
-        
-        const whereClause = `(${whereConditions})`;
-        
-        // Query all trails for selected projects (no geometry filter)
-        url = `${FEATURE_SERVER_URL}/query?where=${encodeURIComponent(whereClause)}&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=10000&token=${ARCGIS_TOKEN}`;
-      } else {
-        // No projects selected - use map bounds query for initial data loading
-        const zoom = map.getZoom();
-        const mapBounds = map.getBounds();
-        const sw = mapBounds.getSouthWest();
-        const ne = mapBounds.getNorthEast();
-
-        // Expand bounds at lower zoom levels to ensure we capture more trails
-        // At zoom < 10, expand by 50%, at zoom < 8, expand by 100%
-        const expansionFactor = zoom < 8 ? 1.0 : zoom < 10 ? 0.5 : 0;
-        const latRange = ne.lat - sw.lat;
-        const lngRange = ne.lng - sw.lng;
-        
-        const expandedSw = {
-          lat: sw.lat - (latRange * expansionFactor),
-          lng: sw.lng - (lngRange * expansionFactor)
-        };
-        const expandedNe = {
-          lat: ne.lat + (latRange * expansionFactor),
-          lng: ne.lng + (lngRange * expansionFactor)
-        };
-
-        // Use lat/lng directly (WGS84) for FeatureServer query
-        // Format: xmin,ymin,xmax,ymax (lng,lat,lng,lat) - ensure proper order
-        const xmin = Math.min(expandedSw.lng, expandedNe.lng);
-        const ymin = Math.min(expandedSw.lat, expandedNe.lat);
-        const xmax = Math.max(expandedSw.lng, expandedNe.lng);
-        const ymax = Math.max(expandedSw.lat, expandedNe.lat);
-        const bbox = `${xmin},${ymin},${xmax},${ymax}`;
-
-        // Query GeoJSON from FeatureServer with token authentication (for data extraction)
-        url = `${FEATURE_SERVER_URL}/query?where=1=1&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=2000&token=${ARCGIS_TOKEN}`;
-      }
-
-      // Debounce queries
-      if (queryTimeoutRef.current) {
-        clearTimeout(queryTimeoutRef.current);
-      }
-
-      queryTimeoutRef.current = setTimeout(async () => {
-        try {
-          const response = await fetch(url);
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`FeatureServer query failed (${response.status}):`, errorText);
-            // Don't clear accumulated data on error
-            if (accumulatedTrailsRef.current.size === 0) {
-              setTrailsData(null);
-            }
-            return;
-          }
-          
-          const data = await response.json();
-          
-          if (data.error) {
-            console.error("FeatureServer error:", data.error);
-            // Don't clear accumulated data on error
-            if (accumulatedTrailsRef.current.size === 0) {
-              setTrailsData(null);
-            }
-            return;
-          }
-          
-          if (data.features && data.features.length > 0) {
-            // If querying by selectedRegNames, replace data entirely (don't accumulate)
-            // If querying by bounds, accumulate data for panning
-            if (selectedRegNames && selectedRegNames.length > 0) {
-              // Replace data for selected projects
-              const featureCollection = {
-                type: "FeatureCollection",
-                features: data.features
-              };
-              accumulatedTrailsRef.current.clear();
-              data.features.forEach(feature => {
-                const featureId = feature.properties?.OBJECTID || 
-                                 feature.properties?.objectid || 
-                                 feature.id || 
-                                 JSON.stringify(feature.geometry);
-                accumulatedTrailsRef.current.set(featureId, feature);
-              });
-              setTrailsData(featureCollection);
-              
-              // Notify parent component of trail data changes
-              if (onTrailsDataChange) {
-                onTrailsDataChange(featureCollection);
-              }
-            } else {
-              // Accumulate data for bounds-based queries (when panning)
-              data.features.forEach(feature => {
-                const featureId = feature.properties?.OBJECTID || 
-                                 feature.properties?.objectid || 
-                                 feature.id || 
-                                 JSON.stringify(feature.geometry);
-                accumulatedTrailsRef.current.set(featureId, feature);
-              });
-              
-              // Convert accumulated features back to FeatureCollection
-              const allFeatures = Array.from(accumulatedTrailsRef.current.values());
-              const featureCollection = {
-                type: "FeatureCollection",
-                features: allFeatures
-              };
-              setTrailsData(featureCollection);
-              
-              // Notify parent component of trail data changes
-              if (onTrailsDataChange) {
-                onTrailsDataChange(featureCollection);
-              }
-            }
-          } else {
-            // No features returned
-            if (selectedRegNames && selectedRegNames.length > 0) {
-              // For selected projects, clear data if no results
-              accumulatedTrailsRef.current.clear();
-              setTrailsData(null);
-              if (onTrailsDataChange) {
-                onTrailsDataChange(null);
-              }
-            } else if (accumulatedTrailsRef.current.size === 0) {
-              // Only set to null if we have no accumulated data
-              setTrailsData(null);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching export_other_trails FeatureServer data:", error);
-          // Don't clear accumulated data on error
-          if (accumulatedTrailsRef.current.size === 0) {
-            setTrailsData(null);
-          }
-        }
-      }, 300);
-    };
-
-    // Clear accumulated data when selectedRegNames changes
-    accumulatedTrailsRef.current.clear();
-    
-    // Initial update
-    updateLayer();
-
-    // Only update on map move if no projects are selected (when using bounds-based query)
-    // If projects are selected, we've already fetched all trails, so no need to update on move
-    const map = mapRef.current?.getMap();
-    if (map && (!selectedRegNames || selectedRegNames.length === 0)) {
-      const handleMoveEnd = () => {
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-        updateTimeoutRef.current = setTimeout(updateLayer, 300);
-      };
-
-      map.on('moveend', handleMoveEnd);
-      map.on('zoomend', handleMoveEnd);
-
-      return () => {
-        map.off('moveend', handleMoveEnd);
-        map.off('zoomend', handleMoveEnd);
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-        if (queryTimeoutRef.current) {
-          clearTimeout(queryTimeoutRef.current);
-        }
-      };
-    } else {
-      // Cleanup timeouts if no map move listeners
-      return () => {
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-        if (queryTimeoutRef.current) {
-          clearTimeout(queryTimeoutRef.current);
-        }
-      };
+    if (!selectedRegNamesKey) {
+      fetchedSelectionKeyRef.current = null;
+      setTrailsData(null);
+      accumulatedTrailsRef.current.clear();
+      onTrailsDataChangeRef.current?.(null);
+      return;
     }
-  }, [shouldShow, mapRef, selectedRegNames]);
+
+    // Already fetched this exact selection — do not call the API again
+    if (fetchedSelectionKeyRef.current === selectedRegNamesKey) {
+      return;
+    }
+
+    const selectedNames = selectedRegNamesKey.split("\0").filter(Boolean);
+    const whereConditions = selectedNames
+      .map((regName) => {
+        const escapedName = regName.replace(/'/g, "''");
+        return `reg_name = '${escapedName}'`;
+      })
+      .join(" OR ");
+
+    const url = withArcGisToken(
+      `${FEATURE_SERVER_URL}/query?where=${encodeURIComponent(
+        `(${whereConditions})`
+      )}&outFields=*&outSR=4326&f=geojson&returnGeometry=true&maxRecordCount=10000`
+    );
+
+    let cancelled = false;
+    if (queryTimeoutRef.current) clearTimeout(queryTimeoutRef.current);
+
+    queryTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(url);
+        if (cancelled) return;
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`FeatureServer query failed (${response.status}):`, errorText);
+          fetchedSelectionKeyRef.current = null;
+          setTrailsData(null);
+          accumulatedTrailsRef.current.clear();
+          onTrailsDataChangeRef.current?.(null);
+          return;
+        }
+
+        const data = await response.json();
+        if (cancelled) return;
+
+        if (data.error) {
+          console.error("FeatureServer error:", data.error);
+          fetchedSelectionKeyRef.current = null;
+          setTrailsData(null);
+          accumulatedTrailsRef.current.clear();
+          onTrailsDataChangeRef.current?.(null);
+          return;
+        }
+
+        const features = data.features || [];
+        accumulatedTrailsRef.current.clear();
+        features.forEach((feature) => {
+          const featureId =
+            feature.properties?.OBJECTID ||
+            feature.properties?.objectid ||
+            feature.id ||
+            JSON.stringify(feature.geometry);
+          accumulatedTrailsRef.current.set(featureId, feature);
+        });
+
+        const featureCollection = {
+          type: "FeatureCollection",
+          features,
+        };
+        fetchedSelectionKeyRef.current = selectedRegNamesKey;
+        setTrailsData(features.length > 0 ? featureCollection : null);
+        if (features.length > 0) {
+          publishRegNames(extractRegNamesFromFeatures(features));
+        }
+        onTrailsDataChangeRef.current?.(
+          features.length > 0 ? featureCollection : null
+        );
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Error fetching export_other_trails FeatureServer data:", error);
+        fetchedSelectionKeyRef.current = null;
+        setTrailsData(null);
+        accumulatedTrailsRef.current.clear();
+        onTrailsDataChangeRef.current?.(null);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      if (queryTimeoutRef.current) clearTimeout(queryTimeoutRef.current);
+    };
+  }, [shouldShow, selectedRegNamesKey]);
 
   // Render GeoJSON from MapServer queries (data extraction happens separately)
   // trailsData is needed for reg_names extraction, metrics, and rendering

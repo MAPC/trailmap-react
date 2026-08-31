@@ -1,13 +1,469 @@
 .MunicipalityProfile {
-  background-color: rgba(255, 255, 255, 0.02);
-  border-radius: 6px;
-  padding: 0.5rem;
+  padding: 0.5rem 0.35rem 1rem;
+
+  &__intro {
+    margin-bottom: 1.35rem;
+  }
+
+  &__eyebrow {
+    display: block;
+    font-family: $body-bold-font;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $dark-medium-blue;
+    margin-bottom: 0.5rem;
+  }
+
+  &__heading {
+    font-family: $title-font;
+    font-size: 1.85rem;
+    font-weight: 500;
+    line-height: 1.15;
+    color: #1e4a72;
+    margin: 0;
+  }
+
+  &__picker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.42rem 0.65rem;
+    border: 1px solid #d8dde0;
+    border-radius: 10px;
+    background: $white;
+    margin-bottom: 1.25rem;
+    box-shadow: none;
+    min-height: 2rem;
+
+    &--compact {
+      flex: 1;
+      max-width: 10.5rem;
+      margin-bottom: 0;
+      min-height: 1.75rem;
+      padding: 0.3rem 0.55rem;
+      border-radius: 999px;
+
+      .MunicipalityProfile__picker-input {
+        font-size: 0.76rem;
+      }
+
+      .MunicipalityProfile__picker-icon {
+        font-size: 0.68rem;
+      }
+    }
+
+    &--open {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom-color: rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  &__picker-icon {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: #8a9196;
+  }
+
+  &__picker-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: $body-font;
+    font-size: 0.82rem;
+    line-height: 1.25;
+    color: $dark-grey;
+
+    &::placeholder {
+      color: #8a9196;
+    }
+  }
+
+  &__picker-chevron {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: #8a9196;
+    cursor: pointer;
+    line-height: 1;
+
+    .fas {
+      font-size: 0.62rem;
+    }
+  }
+
+  &__picker-list {
+    position: absolute;
+    top: 100%;
+    left: -1px;
+    right: -1px;
+    z-index: 20;
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0;
+    max-height: 220px;
+    overflow-y: auto;
+    background: $white;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  &__picker-option {
+    display: block;
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0.35rem 0.75rem;
+    text-align: left;
+    font-family: $body-font;
+    font-size: 0.8rem;
+    color: $dark-grey;
+    cursor: pointer;
+
+    &:hover,
+    &[aria-selected="true"] {
+      background: $light-blue;
+      color: $dark-blue;
+    }
+  }
+
+  &__picker-empty {
+    padding: 0.55rem 0.85rem;
+    font-family: $body-font;
+    font-size: 0.82rem;
+    color: rgba(80, 81, 80, 0.75);
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0.25rem 1rem 2rem;
+
+    .MunicipalityProfile__heading {
+      margin-bottom: 1rem;
+    }
+  }
+
+  &__empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: #e8f4fc;
+    color: $dark-medium-blue;
+    margin-bottom: 1.15rem;
+
+    .fas {
+      font-size: 1.5rem;
+    }
+  }
+
+  &__empty-text {
+    margin: 0;
+    max-width: 16.5rem;
+    font-family: $body-font;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: #6b7280;
+  }
+
+  &__selected {
+    margin-top: 0;
+  }
+
+  &__topBar {
+    margin-bottom: 0.9rem;
+
+    &--stacked {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+
+      .MunicipalityProfile__eyebrow {
+        margin-bottom: 0;
+      }
+
+      .MunicipalityProfile__picker {
+        margin-bottom: 0;
+      }
+    }
+  }
 
   &__header {
-    p {
-      margin-bottom: 0.5rem;
-      color: #212529;
-      line-height: 1.4;
+    margin-bottom: 1rem;
+  }
+
+  &__titleRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  &__muniName {
+    font-family: $title-font;
+    font-size: 1.75rem;
+    font-weight: 500;
+    line-height: 1.15;
+    color: #1e4a72;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__rankBadge {
+    flex-shrink: 0;
+    margin-top: 0.3rem;
+    padding: 0.3rem 0.55rem;
+    border-radius: 999px;
+    background: $dark-blue;
+    color: $white;
+    font-family: $body-font;
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    margin: 0.4rem 0 0;
+    font-family: $body-font;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: #6b7280;
+  }
+
+  &__metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+  }
+
+  &__metric {
+    background: $white;
+    border: 1px solid #e8ecef;
+    border-radius: 10px;
+    padding: 0.6rem 0.35rem;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  &__metric-value {
+    font-family: $title-font;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: $dark-blue;
+    line-height: 1.1;
+  }
+
+  &__metric-label {
+    font-family: $body-font;
+    font-size: 0.52rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-top: 0.3rem;
+    line-height: 1.2;
+  }
+
+  &__tabs {
+    display: flex;
+    align-items: center;
+    background: #eef1f3;
+    border-radius: 999px;
+    padding: 0.22rem;
+    margin-bottom: 1rem;
+    gap: 0.1rem;
+  }
+
+  &__tab {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.42rem 0.3rem;
+    font-family: $body-font;
+    font-size: 0.72rem;
+    color: $dark-grey;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    line-height: 1.2;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+
+    &--active {
+      background: $white;
+      color: $dark-blue;
+      font-weight: 600;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  &__tabBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.05rem;
+    height: 1.05rem;
+    padding: 0 0.28rem;
+    border-radius: 999px;
+    background: $dark-blue;
+    color: $white;
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  &__tabPanel {
+    animation: fadeIn 0.2s ease-in;
+  }
+
+  &__compare {
+    padding: 0.5rem 0.15rem 1rem;
+    text-align: center;
+  }
+
+  &__compare-text {
+    margin: 0 0 0.35rem;
+    font-family: $body-font;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: $dark-grey;
+  }
+
+  &__compare-note {
+    margin: 0;
+    font-family: $body-font;
+    font-size: 0.75rem;
+    color: #8a9196;
+  }
+
+  &__mapLayers {
+    padding-bottom: 0.5rem;
+  }
+
+  &__mapLayersCard {
+    background: $white;
+    border: 1px solid #e3e7ea;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  &__mapLayersCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.85rem 0.95rem 0.7rem;
+    border-bottom: 1px solid #e8ecef;
+  }
+
+  &__mapLayersCardTitle {
+    margin: 0;
+    font-family: $title-font;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #1e4a72;
+    line-height: 1.2;
+  }
+
+  &__mapLayersInfo {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: #b0b8bf;
+    cursor: help;
+    line-height: 1;
+
+    .fas {
+      font-size: 0.85rem;
+    }
+
+    &:hover {
+      color: $dark-medium-blue;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $dark-blue;
+      outline-offset: 2px;
+      border-radius: 50%;
+    }
+  }
+
+  &__mapLayersList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.75rem 0.85rem 0.9rem;
+  }
+
+  &__mapLayerRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.55rem 0.75rem;
+    background: #eef4f8;
+    border-radius: 999px;
+
+    &--nested {
+      margin-left: 0.35rem;
+      padding-left: 1rem;
+      background: #f5f9fc;
+    }
+  }
+
+  &__mapLayerLabel {
+    flex: 1;
+    min-width: 0;
+    font-family: $body-font;
+    font-size: 0.78rem;
+    line-height: 1.3;
+    color: $dark-grey;
+  }
+
+  &__mapLayerSwitch {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    min-height: 0;
+
+    .form-check-input {
+      width: 2.1rem;
+      height: 1.15rem;
+      margin: 0;
+      cursor: pointer;
+      border: none;
+      background-color: #c5d0d8;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+      transition: background-color 0.15s ease-in-out;
+
+      &:focus {
+        box-shadow: 0 0 0 0.15rem rgba(39, 116, 189, 0.25);
+      }
+
+      &:checked {
+        background-color: $dark-blue;
+        border-color: $dark-blue;
+      }
     }
   }
 
@@ -24,6 +480,282 @@
 
   &__content {
     animation: fadeIn 0.3s ease-in;
+  }
+
+  &__summaryCard {
+    background: $white;
+    border: 1px solid #e8ecef;
+    border-radius: 8px;
+    padding: 0.85rem 0.9rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  &__openSpaceCard {
+    background: $white;
+    border: 1px solid #e8ecef;
+    border-radius: 8px;
+    padding: 0.85rem 0.9rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  &__openSpaceHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+  }
+
+  &__openSpaceSwitch {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-left: 0;
+    flex-shrink: 0;
+
+    .form-check-input {
+      cursor: pointer;
+      float: none;
+      margin-left: 0;
+      margin-top: 0;
+    }
+
+    .form-check-label {
+      font-size: 0.72rem;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+  }
+
+  &__openSpaceCount {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    font-family: $title-font;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2f6f3e;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  &__openSpaceUnit {
+    font-family: $body-font;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #2f6f3e;
+  }
+
+  &__openSpaceSource {
+    margin-left: auto;
+    font-family: $body-font;
+    font-size: 0.65rem;
+    font-weight: 400;
+    line-height: 1.3;
+    color: #9ca3af;
+
+    a {
+      color: $dark-blue;
+      text-decoration: underline;
+      text-underline-offset: 0.12em;
+
+      &:hover {
+        color: $dark-medium-blue;
+      }
+    }
+  }
+
+  &__openSpaceStatus {
+    font-size: 0.8rem;
+    color: #6b7280;
+    padding: 0.25rem 0;
+
+    &--error {
+      color: #b42318;
+    }
+  }
+
+  &__trailOverview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  &__trailOverviewSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+
+    &--density {
+      gap: 0.2rem;
+    }
+  }
+
+  &__trailOverviewHeading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  &__trailOverviewEyebrow {
+    font-family: $body-font;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #6b7280;
+    line-height: 1.2;
+  }
+
+  &__trailOverviewTotal {
+    font-family: $title-font;
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: $dark-blue;
+    line-height: 1.1;
+  }
+
+  &__trailOverviewHint {
+    font-family: $body-font;
+    font-size: 0.68rem;
+    color: #9ca3af;
+    line-height: 1.25;
+  }
+
+  &__trailBar {
+    display: flex;
+    width: 100%;
+    height: 0.45rem;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #eef1f3;
+  }
+
+  &__trailBarSegment {
+    min-width: 0;
+    height: 100%;
+    transition: width 0.25s ease;
+
+    &--existing {
+      background: #2774bd;
+    }
+
+    &--planned {
+      background: #f0ad4e;
+    }
+
+    &--proposed {
+      background: #c5c9cc;
+    }
+
+    &--empty {
+      width: 100%;
+      background: #eef1f3;
+    }
+  }
+
+  &__trailBreakdown {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+
+    &--three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  &__trailBreakdownItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.45rem 0.5rem;
+    border: 1px solid #e8ecef;
+    border-radius: 8px;
+    background: #f8fafb;
+  }
+
+  &__trailBreakdownSwatch {
+    flex-shrink: 0;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 2px;
+    margin-top: 0.2rem;
+
+    &--existing {
+      background: #2774bd;
+    }
+
+    &--planned {
+      background: #f0ad4e;
+    }
+
+    &--proposed {
+      background: #c5c9cc;
+    }
+  }
+
+  &__trailBreakdownCopy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    min-width: 0;
+  }
+
+  &__trailBreakdownLabel {
+    font-family: $body-font;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6b7280;
+    line-height: 1.2;
+  }
+
+  &__trailBreakdownValue {
+    font-family: $body-font;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #111;
+    line-height: 1.2;
+  }
+
+  &__trailOverviewDivider {
+    height: 1px;
+    background: #e8ecef;
+  }
+
+  &__trailDensityHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  &__trailDensityValue {
+    font-family: $title-font;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: $dark-blue;
+    line-height: 1.15;
+  }
+
+  &__summaryInfo {
+    cursor: help;
+    color: $dark-blue;
+    font-size: 0.72rem;
+    line-height: 1;
+  }
+
+  &__summaryButton {
+    margin-top: 0;
+    font-size: 0.72rem;
+    line-height: 1.3;
+    padding: 0.45rem 0.5rem;
+    white-space: normal;
   }
 
   &__overview {
@@ -168,6 +900,42 @@
       }
     }
   }
+
+  &__skeleton {
+    display: inline-block;
+    border-radius: 4px;
+    background-color: #eef1f3;
+    background-image: linear-gradient(
+      90deg,
+      #eef1f3 0%,
+      #f8fafb 20%,
+      #eef1f3 40%,
+      #eef1f3 100%
+    );
+    background-size: 200% 100%;
+    animation: muniSkeletonShimmer 1.4s ease-in-out infinite;
+  }
+
+  &__skeletonBar {
+    display: block;
+    border-radius: 999px;
+  }
+
+  &__skeletonButton {
+    display: block;
+    border-radius: 8px;
+  }
+
+  &__summaryCard--skeleton {
+    pointer-events: none;
+  }
+
+  &__actionsSkeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 0.15rem;
+  }
 }
 
 @keyframes fadeIn {
@@ -181,144 +949,226 @@
   }
 }
 
-// Completion Rates Modal Styles
-.CompletionRatesModal {
-  .modal-header {
-    border-bottom: 2px solid #dee2e6;
-    
-    .modal-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-    }
+@keyframes muniSkeletonShimmer {
+  0% {
+    background-position: 200% 0;
   }
-
-  .modal-body {
-    padding: 1.5rem;
-    
-    // Smooth scroll
-    scroll-behavior: smooth;
-    
-    // Custom scrollbar
-    &::-webkit-scrollbar {
-      width: 10px;
-    }
-    
-    &::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 5px;
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 5px;
-    }
-    
-    &::-webkit-scrollbar-thumb:hover {
-      background: #555;
-    }
-  }
-
-  .modal-footer {
-    border-top: 2px solid #dee2e6;
-  }
-
-  // Card styles
-  .card {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-    background-color: #ffffff;
-    margin-bottom: 0;
-    
-    &:hover {
-      cursor: default;
-    }
-  }
-
-  // Completion Rate Card with hover effect - compact horizontal layout
-  .completion-rate-card {
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    overflow: hidden;
-    background-color: #ffffff;
-    
-    &:hover {
-      transform: translateX(4px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
-    }
-
-    .card-body {
-      padding: 0.75rem !important;
-    }
-
-    // Progress bar
-    .progress {
-      background-color: #e9ecef;
-    }
-
-    // Ensure text doesn't wrap awkwardly
-    .text-truncate {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-
-  // Compact row spacing
-  .row.g-2 {
-    margin-left: -0.25rem;
-    margin-right: -0.25rem;
-
-    > [class*="col-"] {
-      padding-left: 0.25rem;
-      padding-right: 0.25rem;
-    }
-  }
-
-  // Progress bar animation
-  .progress-bar {
-    animation: progressAnimation 1s ease-in-out;
-  }
-
-  @keyframes progressAnimation {
-    from {
-      width: 0;
-    }
-  }
-
-  // Alert styling
-  .alert {
-    border-radius: 8px;
-    border: none;
-    
-    &.alert-info {
-      background-color: #cfe2ff;
-      color: #084298;
-    }
-    
-    &.alert-warning {
-      background-color: #fff3cd;
-      color: #664d03;
-    }
-  }
-
-  // Statistics cards alignment
-  .alert-light {
-    .row.g-3 {
-      .col-md-4 {
-        .text-center {
-          .fw-bold.fs-5 {
-            font-family: 'Courier New', monospace; // Use monospace font for numbers
-            text-align: center;
-            display: block;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-        }
-      }
-    }
+  100% {
+    background-position: -200% 0;
   }
 }
 
-// Responsive adjustments
+// Completion Rates Modal Styles
+.CompletionRatesModal {
+  .modal-dialog {
+    width: min(1100px, calc(100vw - 2rem)) !important;
+    max-width: min(1100px, calc(100vw - 2rem));
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .modal-header {
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid #e5e7eb;
+
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+  }
+
+  &__body {
+    padding: 0.9rem 1.1rem 1rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f3f4f6;
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #9ca3af;
+      border-radius: 4px;
+    }
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 1.1rem;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  &__summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 0.85rem;
+  }
+
+  &__summaryItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.55rem 0.7rem;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+
+  &__summaryLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+
+  &__summaryValue {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__summaryHint {
+    font-size: 0.7rem;
+    color: #9ca3af;
+  }
+
+  &__help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #0070cd;
+    cursor: help;
+    font-size: 0.85em;
+    line-height: 1;
+  }
+
+  &__sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.45rem;
+  }
+
+  &__sectionTitle {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  &__tableWrap {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  &__table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    table-layout: auto;
+
+    th,
+    td {
+      padding: 0.45rem 0.55rem;
+      border-bottom: 1px solid #eef2f7;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    thead th {
+      background: #f8fafc;
+      color: #6b7280;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover td {
+      background: #f9fafb;
+    }
+
+    td:first-child,
+    th:first-child {
+      text-align: left;
+      white-space: nowrap;
+      width: 1%;
+      max-width: none;
+      min-width: 0;
+    }
+  }
+
+  &__swatch {
+    display: inline-block;
+    width: 0.35rem;
+    height: 0.9rem;
+    margin-right: 0.45rem;
+    border-radius: 2px;
+    vertical-align: middle;
+  }
+
+  &__num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: #374151;
+
+    &--strong {
+      font-weight: 700;
+      color: #111827;
+    }
+  }
+
+  &__rate {
+    font-weight: 700;
+
+    &--high {
+      color: #198754;
+    }
+
+    &--mid {
+      color: #d97706;
+    }
+
+    &--low {
+      color: #dc3545;
+    }
+  }
+
+  &__unitsNote {
+    margin: 0.4rem 0 0;
+    font-size: 0.68rem;
+    color: #9ca3af;
+  }
+}
+
 @media (max-width: 768px) {
   .MunicipalityProfile {
     &__trail-list {
@@ -328,26 +1178,30 @@
 
   .CompletionRatesModal {
     .modal-dialog {
+      width: calc(100vw - 1rem) !important;
+      max-width: calc(100vw - 1rem);
       margin: 0.5rem;
     }
-    
-    .modal-body {
-      padding: 1rem;
+
+    &__summary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    
-    // Stack cards on mobile
-    .col-md-6 {
-      margin-bottom: 1rem;
+
+    &__body {
+      padding: 0.75rem;
+      max-height: 65vh;
     }
-    
-    // Adjust card font sizes on mobile
-    .card {
-      .card-title {
-        font-size: 0.85rem !important;
-      }
-      
-      .fw-bold {
-        font-size: 1.5rem !important;
+
+    &__tableWrap {
+      overflow-x: auto;
+    }
+
+    &__table {
+      font-size: 0.74rem;
+
+      th,
+      td {
+        padding: 0.4rem 0.45rem;
       }
     }
   }
@@ -356,74 +1210,11 @@
 @media (max-width: 576px) {
   .CompletionRatesModal {
     .modal-title {
-      font-size: 1rem !important;
-      
-      span:first-child {
-        font-size: 1.2rem;
-      }
+      font-size: 0.95rem !important;
     }
-    
-    .modal-body {
-      padding: 0.75rem;
-      max-height: 60vh !important;
-    }
-    
-    // Full width cards on small mobile
-    .col-12 {
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
-    }
-    
-    .card-body {
-      padding: 0.75rem !important;
-    }
-  }
-}
 
-// Large screen adjustments
-@media (min-width: 1200px) {
-  .CompletionRatesModal {
-    .modal-dialog {
-      max-width: 90vw;
-      width: 90vw;
-    }
-    
-    .modal-body {
-      padding: 2rem;
-    }
-    
-    // Keep 2 columns on large screens for better readability
-    .col-md-6 {
-      flex: 0 0 50%;
-      max-width: 50%;
-    }
-  }
-}
-
-// Extra large screen adjustments
-@media (min-width: 1400px) {
-  .CompletionRatesModal {
-    .modal-dialog {
-      max-width: 85vw;
-      width: 85vw;
-    }
-    
-    .modal-body {
-      padding: 2.5rem;
-    }
-  }
-}
-
-// Ultra wide screen adjustments
-@media (min-width: 1600px) {
-  .CompletionRatesModal {
-    .modal-dialog {
-      max-width: 80vw;
-      width: 80vw;
-    }
-    
-    .modal-body {
-      padding: 3rem;
+    &__body {
+      max-height: 60vh;
     }
   }
 }
@@ -734,40 +1525,51 @@
   }
 }
 
-// Custom tooltip styles to match website theme
-.tooltip {
+// Scoped so dashboard / other tooltips keep their own styles.
+// Must sit above .modal (z-index: 1200 in Models.scss) so help icons
+// inside Completion Rates / other modals are visible.
+.tooltip.MunicipalityProfile__tooltip {
+  z-index: 1300;
+
   &.show {
     opacity: 1;
   }
-  
+
   .tooltip-inner {
-    background-color: rgba(59, 131, 199, 0.75) !important;
-    color: white !important;
-    font-size: 0.875rem;
-    padding: 8px 12px;
-    border-radius: 5px;
-    max-width: 300px;
-    border: none !important;
+    background-color: rgba(59, 131, 199, 0.92);
+    color: #fff;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    max-width: 12.5rem;
+    text-align: left;
+    border: none;
+    box-shadow: 0 4px 12px rgba(15, 40, 70, 0.18);
   }
-  
+
+  &.MunicipalityProfile__tooltip--wide .tooltip-inner {
+    max-width: 24rem;
+  }
+
   .tooltip-arrow::before {
-    border-top-color: rgba(59, 131, 199, 0.75) !important;
+    border-top-color: rgba(59, 131, 199, 0.92);
   }
-  
+
   &[data-popper-placement^="top"] .tooltip-arrow::before {
-    border-top-color: rgba(59, 131, 199, 0.75) !important;
+    border-top-color: rgba(59, 131, 199, 0.92);
   }
-  
+
   &[data-popper-placement^="bottom"] .tooltip-arrow::before {
-    border-bottom-color: rgba(59, 131, 199, 0.75) !important;
+    border-bottom-color: rgba(59, 131, 199, 0.92);
   }
-  
+
   &[data-popper-placement^="left"] .tooltip-arrow::before {
-    border-left-color: rgba(59, 131, 199, 0.75) !important;
+    border-left-color: rgba(59, 131, 199, 0.92);
   }
-  
+
   &[data-popper-placement^="right"] .tooltip-arrow::before {
-    border-right-color: rgba(59, 131, 199, 0.75) !important;
+    border-right-color: rgba(59, 131, 199, 0.92);
   }
 }
 

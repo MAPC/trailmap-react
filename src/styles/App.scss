@@ -1,9 +1,10 @@
 @import "~bootstrap/scss/bootstrap";
 @import "~mapbox-gl/dist/mapbox-gl.css";
-@import "~react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
 @import "./Colors.scss";
 @import "./Typography.scss";
 @import "./BasemapPanel.scss";
+@import "./MapToolbar.scss";
+@import "./MapLegend.scss";
 @import "./LegislativeDistrictsButton.scss";
 @import "./MunicipalitiesButton.scss";
 @import "./MASenateDistrictsButton.scss";
@@ -12,9 +13,13 @@
 @import "./Legend.scss";
 @import "./Popup.scss";
 @import "./Map.scss";
+@import "./MapTrailLegend.scss";
 @import "./Models.scss";
 @import "./MunicipalityProfile.scss";
+@import "./ProjectTrailsProfile.scss";
 @import "./LoadingBar.scss";
 @import "./TrailListWindow.scss";
 @import "./BufferAnalysisWindow.scss";
 @import "../components/Map/ProjectMetricsPanel.scss";
+@import "./Dashboard.scss";
+@import "./IntroModal.scss";

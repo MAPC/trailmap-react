@@ -1,4 +1,3 @@
-import BasemapIcon from "../../assets/icons/basemap-icon.svg";
 import FilterIcon from "../../assets/icons/filter-icon.svg";
 import Button from "react-bootstrap/Button";
 import CloseButton from "react-bootstrap/CloseButton";
@@ -10,20 +9,12 @@ import bbox from "@turf/bbox";
 import LoadingBar from "../LoadingBar";
 import TrailListWindow from "../TrailListWindow";
 import BasemapPanel from "../BasemapPanel";
-import Control from "./Control";
-import ControlPanel from "../ControlPanel";
-import MAhouseDistrictsButton from '../MAhouseDistrictsButton';
-import MASenateDistrictsButton from '../MASenateDistrictsButton';
-import MunicipalitiesButton from '../MunicipalitiesButton';
-import GeocoderPanel from "../Geocoder/GeocoderPanel";
-import GlossaryModal from "../Modals/GlossaryModal";
 import Identify from "./Identify";
 import CommunityIdentify from "./CommunityIdentify";
 import ShareModal from "../Modals/ShareModal";
-import { ModalContext } from "../../App";
 import { LayerContext } from "../../App";
 import EditModal from "../Modals/EditModal";
-import massachusettsData from "../../data/massachusetts.json";
+import { MAPC_OVERVIEW_VIEWPORT } from "../../utils/mapcBoundary";
 // Commuter rail and bike station data will be fetched when needed
 import SuccessModal from "../Modals/SuccessModal";
 import FailModal from "../Modals/FailModal";
@@ -32,11 +23,8 @@ import TrailLegend from "./TrailLegend";
 import * as turf from "@turf/turf";
 // Extracted components
 import CommunityTrailsProfile from "./CommunityTrailsProfile";
-import OriginalTrailsMap from "./OriginalTrailsMap";
+import RegionalTrailMap from "./RegionalTrailMap";
 import ProjectTrailsProfile from "./ProjectTrailsProfile";
-// Extracted constants
-import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
-
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const TRAILMAP_SOURCE = process.env.REACT_APP_TRAIL_MAP_TILE_URL;
 const LANDLINE_SOURCE = process.env.REACT_APP_LANDLINE_TILE_URL;
@@ -45,7 +33,6 @@ const TRAILMAP_IDENTIFY_SOURCE = process.env.REACT_APP_TRAIL_MAP_IDENTIFY_URL;
 const Map = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { showShareModal, toggleShareModal } = useContext(ModalContext);
   const {
     trailLayers,
     setTrailLayers,
@@ -80,12 +67,10 @@ const Map = () => {
   } = useContext(LayerContext);
 
   const [viewport, setViewport] = useState({
-    latitude: 42.3772,
-    longitude: -71.0244,
-    zoom: 10,
-    transitionDuration: 1000,
+    ...MAPC_OVERVIEW_VIEWPORT,
   });
   const [showBasemapPanel, toggleBasemapPanel] = useState(false);
+  const [showBoundariesPanel, toggleBoundariesPanel] = useState(false);
   const [showControlPanel, toggleControlPanel] = useState(true);
   // Shared state for modals (EditModal needs identifyInfo)
   const [identifyInfo, setIdentifyInfo] = useState(null);
@@ -136,15 +121,9 @@ const Map = () => {
     }
   }, [showMunicipalityProfileMap, showProjectTrailsProfileMap, basemaps, baseLayer, setBaseLayer]);
 
-  const generateShareUrl = () => {
-    return `${window.location.href.split("?")[0]}?baseLayer=${baseLayer.id}&trailLayers=${trailLayers.join(
-      ","
-    )}&centroid=${viewport.latitude},${viewport.longitude}&zoom=${viewport.zoom}`;
-  };
   return (
     <>
-      <ShareModal url={generateShareUrl()} />
-      <GlossaryModal />
+      <ShareModal />
       <EditModal trailObj={identifyInfo !== null ? identifyInfo[pointIndex] : null} />
       <SuccessModal />
       <FailModal />
@@ -157,6 +136,8 @@ const Map = () => {
             baseLayer={baseLayer}
             showBasemapPanel={showBasemapPanel}
             toggleBasemapPanel={toggleBasemapPanel}
+            showBoundariesPanel={showBoundariesPanel}
+            toggleBoundariesPanel={toggleBoundariesPanel}
             showControlPanel={showControlPanel}
             toggleControlPanel={toggleControlPanel}
             mapRef={mapRef}
@@ -168,17 +149,21 @@ const Map = () => {
             baseLayer={baseLayer}
             showBasemapPanel={showBasemapPanel}
             toggleBasemapPanel={toggleBasemapPanel}
+            showBoundariesPanel={showBoundariesPanel}
+            toggleBoundariesPanel={toggleBoundariesPanel}
             showControlPanel={showControlPanel}
             toggleControlPanel={toggleControlPanel}
             mapRef={mapRef}
               />
             ) : (
-          <OriginalTrailsMap
+          <RegionalTrailMap
             viewport={viewport}
             setViewport={setViewport}
             baseLayer={baseLayer}
             showBasemapPanel={showBasemapPanel}
             toggleBasemapPanel={toggleBasemapPanel}
+            showBoundariesPanel={showBoundariesPanel}
+            toggleBoundariesPanel={toggleBoundariesPanel}
             showControlPanel={showControlPanel}
             toggleControlPanel={toggleControlPanel}
             mapRef={mapRef}
@@ -188,16 +173,6 @@ const Map = () => {
             proposedTrails={proposedTrails}
             />
           )}
-        
-        {/* Share Control Button - hidden in community trails profile */}
-        {!showMunicipalityProfileMap && (
-          <Control
-            style={"Map_share d-block position-absolute m-0 p-0"}
-            iconClass="fa-solid fa-file-arrow-down"
-            alt={"Download map data"}
-            clickHandler={() => toggleShareModal(!showShareModal)}
-          />
-        )}
                   </div>
     </>
   );

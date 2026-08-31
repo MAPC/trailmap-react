@@ -5,19 +5,19 @@ import axios from "axios";
 import bbox from "@turf/bbox";
 import * as turf from "@turf/turf";
 import LoadingBar from "../LoadingBar";
-import BasemapPanel from "../BasemapPanel";
-import Control from "./Control";
-import ControlPanel from "../ControlPanel";
-import FilterIcon from "../../assets/icons/filter-icon.svg";
-import GeocoderPanel from "../Geocoder/GeocoderPanel";
+import ControlPanelShell from "../ControlPanel/ControlPanelShell";
+import CommunityProfileControlPanel from "../ControlPanel/CommunityProfileControlPanel";
+import MapToolbar from "./MapToolbar";
 import CommunityIdentify from "./CommunityIdentify";
+import CollapsibleTrailLegend from "./CollapsibleTrailLegend";
 import TrailLegend from "./TrailLegend";
 import BufferAnalysisWindow from "../BufferAnalysisWindow";
 import { LayerContext } from "../../App";
-import massachusettsData from "../../data/massachusetts.json";
-import { geojsonTrailLayers } from "./constants/geojsonTrailLayers";
+import { mapcTrailLayers } from "./constants/mapcTrailLayersConfig";
+import { useMunicipalBoundaries } from "../../utils/fetchMunicipalBoundaries";
 const DEFAULT_BUFFER_RADIUS = 1609; // 1 mile in meters
 import { queryMunicipalityTrails } from "./utils/trailQueries";
+import { capitalizeWords } from "../../utils/trailMetricsDashboard";
 import { calculateBufferAnalysis } from "./utils/bufferAnalysis";
 import CommunityTrailsProfileLayers from "./layers/CommunityTrailsProfileLayers";
 import MunicipalityMapLayer from "./layers/MunicipalityMapLayer";
@@ -26,11 +26,15 @@ import SubwayStationsLayers from "./layers/SubwayStationsLayers";
 import BlueBikeStationsLayers from "./layers/BlueBikeStationsLayers";
 import EnvironmentalJusticeLayer from "./layers/EnvironmentalJusticeLayer";
 import OpenSpaceLayer from "./layers/OpenSpaceLayer";
+import OpenSpacePopupContent from "./tooltip/OpenSpacePopupContent";
+import EnvironmentalJusticePopupContent from "./tooltip/EnvironmentalJusticePopupContent";
+import { queryFeatureAtPoint } from "./utils/arcgisPointQuery";
+import { EJ2020_MAP_SERVER_URL } from "./constants/trailFacilityTypeLabels";
 import LandlinesLayer from "./layers/LandlinesLayer";
-import TrailsRegNameSyncLayer from "./layers/TrailsRegNameSyncLayer";
 import TransitLandStopsLayer from "./layers/TransitLandStopsLayer";
 import TransitLandRoutesLayer from "./layers/TransitLandRoutesLayer";
 import { renderBufferCircle, renderBufferPreview, renderBufferCenter } from "./layers/BufferLayers";
+import BoundaryLayers from "./layers/BoundaryLayers";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 
@@ -40,6 +44,8 @@ const CommunityTrailsProfile = ({
   baseLayer, 
   showBasemapPanel, 
   toggleBasemapPanel,
+  showBoundariesPanel,
+  toggleBoundariesPanel,
   showControlPanel,
   toggleControlPanel,
   mapRef
@@ -58,19 +64,25 @@ const CommunityTrailsProfile = ({
     setShowStationLabels,
     showBlueBikeStations,
     setShowBlueBikeStations,
+    showBlueBikeStationLabels,
+    setShowBlueBikeStationLabels,
     showSubwayStations,
     setShowSubwayStations,
+    showSubwayStationLabels,
+    setShowSubwayStationLabels,
     showEnvironmentalJustice,
     setShowEnvironmentalJustice,
     showOpenSpace,
     setShowOpenSpace,
+    showMuniOpenSpace,
+    setShowMuniOpenSpace,
     showLandlinesFeatureService,
     setShowLandlinesFeatureService,
-    showTrailsRegNameSync,
-    setShowTrailsRegNameSync,
     showTransitLandStops,
     setShowTransitLandStops,
   } = useContext(LayerContext);
+  const { data: massachusettsData, isLoading: isLoadingBoundaries } =
+    useMunicipalBoundaries();
 
   const [showIdentifyPopup, toggleIdentifyPopup] = useState(false);
   const [identifyInfo, setIdentifyInfo] = useState(null);
@@ -78,6 +90,15 @@ const CommunityTrailsProfile = ({
   const [pointIndex, setPointIndex] = useState(0);
   const [isQueryingTrails, setIsQueryingTrails] = useState(false);
   const lastQueriedMunicipality = useRef(null);
+  const prevSelectedMunicipalityRef = useRef(null);
+  const lastOpenSpaceMuniKeyRef = useRef(null);
+
+  const COMMUNITY_PROFILE_DEFAULT_VIEWPORT = {
+    latitude: 42.3772,
+    longitude: -71.0244,
+    zoom: 10,
+    transitionDuration: 1000,
+  };
   const [selectedTrailFromList, setSelectedTrailFromList] = useState(null);
   const [highlightedTrail, setHighlightedTrail] = useState(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -90,13 +111,30 @@ const CommunityTrailsProfile = ({
   const [hoveredTransitStop, setHoveredTransitStop] = useState(null);
   const [ejHoverPoint, setEjHoverPoint] = useState(null);
   const [ejHoverInfo, setEjHoverInfo] = useState(null);
+  const [showOneLayerNotice, setShowOneLayerNotice] = useState(false);
   const ejIdentifyTimeoutRef = useRef(null);
+  const ejHoverQueryIdRef = useRef(0);
+  const ejLastQueryAtRef = useRef(0);
+  const ejPendingPointRef = useRef(null);
   
   // OpenSpace hover state
   const [openSpaceHoverInfo, setOpenSpaceHoverInfo] = useState(null);
   
   // OpenSpace click state
   const [openSpaceClickInfo, setOpenSpaceClickInfo] = useState(null);
+
+  const isAnyOpenSpaceVisible = showOpenSpace || showMuniOpenSpace;
+  const openSpaceInteractiveLayerIds = [
+    ...(showOpenSpace ? ["openspace-layer", "openspace-outline"] : []),
+    ...(showMuniOpenSpace ? ["muni-openspace-layer", "muni-openspace-outline"] : []),
+  ];
+  const isOpenSpaceLayerId = (layerId) =>
+    layerId === "openspace-layer" ||
+    layerId === "openspace-outline" ||
+    layerId === "muni-openspace-layer" ||
+    layerId === "muni-openspace-outline";
+  const getExistingOpenSpaceLayerIds = (map) =>
+    openSpaceInteractiveLayerIds.filter((id) => map?.getLayer?.(id));
   
   // Handle OpenSpace hover
   const handleOpenSpaceHover = (hoverInfo) => {
@@ -107,7 +145,7 @@ const CommunityTrailsProfile = ({
   const [visibleTrailTypes, setVisibleTrailTypes] = useState(() => {
     // Initialize all trail types as visible by default
     const initialVisibility = {};
-    geojsonTrailLayers.forEach(layer => {
+    mapcTrailLayers.forEach(layer => {
       initialVisibility[layer.id] = true;
     });
     return initialVisibility;
@@ -183,9 +221,28 @@ const CommunityTrailsProfile = ({
     }
   };
 
-  // Query trails when municipality is selected
+  // Query trails when municipality is selected.
+  // Only clear Overview open-space map toggle when the municipality actually changes.
   useEffect(() => {
+    setOpenSpaceHoverInfo(null);
+    setOpenSpaceClickInfo(null);
+
+    const nextKey =
+      selectedMunicipality?.name ??
+      selectedMunicipality?.properties?.town_id ??
+      null;
+
+    if (lastOpenSpaceMuniKeyRef.current !== nextKey) {
+      setShowMuniOpenSpace(false);
+      lastOpenSpaceMuniKeyRef.current = nextKey;
+    }
+
     if (selectedMunicipality) {
+      if (lastQueriedMunicipality.current !== selectedMunicipality.name) {
+        setIsQueryingTrails(true);
+        setLoadingMessage("Loading trail data...");
+        setLoadingProgress(0);
+      }
       handleQueryMunicipalityTrails(selectedMunicipality);
     } else {
       setMunicipalityTrails([]);
@@ -197,26 +254,40 @@ const CommunityTrailsProfile = ({
   useEffect(() => {
     const handleToggleCommuterRail = (event) => setShowCommuterRail(event.detail.show);
     const handleToggleStationLabels = (event) => setShowStationLabels(event.detail.show);
+    const handleToggleBlueBikeStationLabels = (event) =>
+      setShowBlueBikeStationLabels(event.detail.show);
     const handleOpenBufferAnalysis = () => setShowBufferAnalysis(true);
     const handleToggleBlueBikeStations = (event) => setShowBlueBikeStations(event.detail.show);
     const handleToggleSubwayStations = (event) => setShowSubwayStations(event.detail.show);
+    const handleToggleSubwayStationLabels = (event) =>
+      setShowSubwayStationLabels(event.detail.show);
     const handleToggleEnvironmentalJustice = (event) => setShowEnvironmentalJustice(event.detail.show);
     const handleToggleOpenSpace = (event) => setShowOpenSpace(event.detail.show);
+    const handleToggleMuniOpenSpace = (event) => setShowMuniOpenSpace(event.detail.show);
     const handleToggleLandlinesFeatureService = (event) => setShowLandlinesFeatureService(event.detail.show);
-    const handleToggleTrailsRegNameSync = (event) => setShowTrailsRegNameSync(event.detail.show);
     const handleToggleTransitLandStops = (event) => setShowTransitLandStops(event.detail.show);
     
     const handleResetMunicipalityProfile = () => {
       setIntersectedTrails([]);
       setHoveredTrail(null);
+      setHoveredBlueBikeStation(null);
+      setHoveredCommuterRailStation(null);
+      setHoveredSubwayStation(null);
+      setHoveredTransitStop(null);
+      setOpenSpaceHoverInfo(null);
+      setOpenSpaceClickInfo(null);
+      setEjHoverPoint(null);
+      setEjHoverInfo(null);
       setShowCommuterRail(false);
       setShowStationLabels(false);
       setShowBlueBikeStations(false);
+      setShowBlueBikeStationLabels(false);
       setShowSubwayStations(false);
+      setShowSubwayStationLabels(false);
       setShowEnvironmentalJustice(false);
       setShowOpenSpace(false);
+      setShowMuniOpenSpace(false);
       setShowLandlinesFeatureService(false);
-      setShowTrailsRegNameSync(false);
       setShowTransitLandStops(false);
       setShowBufferAnalysis(false);
       setIsBufferActive(false);
@@ -225,7 +296,7 @@ const CommunityTrailsProfile = ({
       setBufferPreviewCenter(null);
       // Reset trail type visibility to all visible
       const resetVisibility = {};
-      geojsonTrailLayers.forEach(layer => {
+      mapcTrailLayers.forEach(layer => {
         resetVisibility[layer.id] = true;
       });
       setVisibleTrailTypes(resetVisibility);
@@ -241,12 +312,14 @@ const CommunityTrailsProfile = ({
     
     window.addEventListener('toggleCommuterRail', handleToggleCommuterRail);
     window.addEventListener('toggleStationLabels', handleToggleStationLabels);
+    window.addEventListener('toggleBlueBikeStationLabels', handleToggleBlueBikeStationLabels);
     window.addEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
     window.addEventListener('toggleSubwayStations', handleToggleSubwayStations);
+    window.addEventListener('toggleSubwayStationLabels', handleToggleSubwayStationLabels);
     window.addEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
     window.addEventListener('toggleOpenSpace', handleToggleOpenSpace);
+    window.addEventListener('toggleMuniOpenSpace', handleToggleMuniOpenSpace);
     window.addEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
-    window.addEventListener('toggleTrailsRegNameSync', handleToggleTrailsRegNameSync);
     window.addEventListener('toggleTransitLandStops', handleToggleTransitLandStops);
     window.addEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
     window.addEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
@@ -255,12 +328,14 @@ const CommunityTrailsProfile = ({
     return () => {
       window.removeEventListener('toggleCommuterRail', handleToggleCommuterRail);
       window.removeEventListener('toggleStationLabels', handleToggleStationLabels);
+      window.removeEventListener('toggleBlueBikeStationLabels', handleToggleBlueBikeStationLabels);
       window.removeEventListener('toggleBlueBikeStations', handleToggleBlueBikeStations);
       window.removeEventListener('toggleSubwayStations', handleToggleSubwayStations);
+      window.removeEventListener('toggleSubwayStationLabels', handleToggleSubwayStationLabels);
       window.removeEventListener('toggleEnvironmentalJustice', handleToggleEnvironmentalJustice);
       window.removeEventListener('toggleOpenSpace', handleToggleOpenSpace);
+      window.removeEventListener('toggleMuniOpenSpace', handleToggleMuniOpenSpace);
       window.removeEventListener('toggleLandlinesFeatureService', handleToggleLandlinesFeatureService);
-      window.removeEventListener('toggleTrailsRegNameSync', handleToggleTrailsRegNameSync);
       window.removeEventListener('toggleTransitLandStops', handleToggleTransitLandStops);
       window.removeEventListener('openBufferAnalysis', handleOpenBufferAnalysis);
       window.removeEventListener('resetMunicipalityProfile', handleResetMunicipalityProfile);
@@ -334,12 +409,44 @@ const CommunityTrailsProfile = ({
     }
   }, [selectedMunicipality]);
 
+  // Reset map to regional view when municipality selection is cleared
+  useEffect(() => {
+    const hadSelection = prevSelectedMunicipalityRef.current !== null;
+    const hasSelection = selectedMunicipality !== null;
+
+    if (hadSelection && !hasSelection) {
+      setViewport((prev) => ({
+        ...prev,
+        ...COMMUNITY_PROFILE_DEFAULT_VIEWPORT,
+      }));
+      setIntersectedTrails([]);
+      setHoveredTrail(null);
+    }
+
+    prevSelectedMunicipalityRef.current = selectedMunicipality;
+  }, [selectedMunicipality, setViewport]);
+
+  const pendingMuniFromUrl = new URLSearchParams(location.search).get("muni");
+  const isResolvingSharedMuni =
+    Boolean(pendingMuniFromUrl) &&
+    (!selectedMunicipality ||
+      selectedMunicipality.name.toLowerCase() !== pendingMuniFromUrl.toLowerCase());
+  const isProfileLoading =
+    isQueryingTrails ||
+    isResolvingSharedMuni ||
+    (Boolean(pendingMuniFromUrl) && isLoadingBoundaries);
+  const profileLoadingMessage = isQueryingTrails
+    ? loadingMessage || "Loading trail data..."
+    : pendingMuniFromUrl
+      ? `Loading ${capitalizeWords(pendingMuniFromUrl)}...`
+      : "Loading...";
+
   return (
     <>
-      <LoadingBar 
-        isLoading={isQueryingTrails} 
-        progress={loadingProgress} 
-        message={loadingMessage} 
+      <LoadingBar
+        isLoading={isProfileLoading}
+        progress={isQueryingTrails ? loadingProgress : 0}
+        message={profileLoadingMessage}
       />
       
       <ReactMapGL
@@ -347,7 +454,7 @@ const CommunityTrailsProfile = ({
         {...viewport}
         width="100%"
         height="100%"
-        cursor={isBufferActive ? "crosshair" : "default"}
+        cursor={isBufferActive ? "crosshair" : "pointer"}
         transformRequest={(url, resourceType) => {
           // Use transformRequest to add API key header for Transit.land tiles
           // This is recommended by Transit.land documentation
@@ -364,10 +471,14 @@ const CommunityTrailsProfile = ({
           return { url };
         }}
         interactiveLayerIds={[
-          ...(showOpenSpace ? ['openspace-layer', 'openspace-outline'] : []),
           ...(showTransitLandStops ? ['transit-land-stops'] : []),
           "municipality-profile-base",
-          ...geojsonTrailLayers.map(layer => `geojson-trail-${layer.id}`)
+          ...mapcTrailLayers.flatMap((layer) => [
+            `geojson-trail-${layer.id}`,
+            `geojson-trail-hover-${layer.id}`,
+          ]),
+          // Open space after trails so trail segments stay interactive on top
+          ...openSpaceInteractiveLayerIds,
         ]}
         onMove={(event) => {
           setViewport(event.viewState);
@@ -558,15 +669,24 @@ const CommunityTrailsProfile = ({
               }
             }
             
-            // Check for OpenSpace clicks
-            if (showOpenSpace) {
-              const openSpaceFeature = event.features.find((f) => 
-                f.layer && (f.layer.id === 'openspace-layer' || f.layer.id === 'openspace-outline')
+            // Prefer trails over open space when both are under the cursor
+            const clickedTrailFeature = event.features.find((f) => {
+              const layerId = f.layer?.id;
+              return (
+                layerId?.startsWith("geojson-trail-") &&
+                layerId !== "highlighted-trail"
               );
-              
+            });
+
+            // Check for OpenSpace clicks (only when not clicking a trail)
+            if (isAnyOpenSpaceVisible && !clickedTrailFeature) {
+              const openSpaceFeature = event.features.find((f) =>
+                f.layer && isOpenSpaceLayerId(f.layer.id)
+              );
+
               if (openSpaceFeature && event.lngLat) {
                 // If clicking on the same OpenSpace feature, close the popup
-                if (openSpaceClickInfo && 
+                if (openSpaceClickInfo &&
                     openSpaceClickInfo.feature.properties?.OBJECTID === openSpaceFeature.properties?.OBJECTID) {
                   setOpenSpaceClickInfo(null);
                 } else {
@@ -578,17 +698,27 @@ const CommunityTrailsProfile = ({
                 return;
               }
             }
-            
+
             // Check for municipality clicks
             const muniFeature = event.features.find((f) => f.layer && f.layer.id === "municipality-profile-base");
             if (muniFeature) {
               const townName = muniFeature.properties.town || muniFeature.properties.NAME;
               if (townName) {
                 const muniName = townName.toLowerCase();
+                // Ignore re-clicks on the same municipality. Mapbox returns
+                // tile-clipped geometry from queryRenderedFeatures, which would
+                // otherwise thrash selection state while inspecting trails.
+                if (selectedMunicipality?.name === muniName) {
+                  return;
+                }
+                const fullFeature = massachusettsData?.features?.find((f) => {
+                  const name = (f.properties.town || f.properties.NAME || "").toLowerCase();
+                  return name === muniName;
+                });
                 setSelectedMunicipality({
                   name: muniName,
-                  properties: muniFeature.properties,
-                  geometry: muniFeature.geometry
+                  properties: fullFeature?.properties || muniFeature.properties,
+                  geometry: fullFeature?.geometry || muniFeature.geometry,
                 });
                 if (showMunicipalityView && location.pathname === '/communityTrailsProfile') {
                   navigate(`/communityTrailsProfile?muni=${encodeURIComponent(muniName)}`, { replace: true });
@@ -599,12 +729,12 @@ const CommunityTrailsProfile = ({
           }
           
           // If clicking on empty space (not on any feature), close popups
-          if (showOpenSpace && openSpaceClickInfo) {
+          if (isAnyOpenSpaceVisible && openSpaceClickInfo) {
             const map = mapRef.current?.getMap();
-            if (map && event.lngLat) {
-              const point = [event.lngLat.lng, event.lngLat.lat];
-              const queriedFeatures = map.queryRenderedFeatures(point, {
-                layers: ['openspace-layer', 'openspace-outline']
+            const existingOpenSpaceLayers = getExistingOpenSpaceLayerIds(map);
+            if (map && event.lngLat && existingOpenSpaceLayers.length > 0) {
+              const queriedFeatures = map.queryRenderedFeatures(event.point, {
+                layers: existingOpenSpaceLayers
               });
               if (queriedFeatures.length === 0) {
                 setOpenSpaceClickInfo(null);
@@ -627,31 +757,44 @@ const CommunityTrailsProfile = ({
             setBufferPreviewCenter(null);
           }
 
-          // Handle OpenSpace layer hover FIRST (before other features)
-          if (showOpenSpace && event.lngLat) {
+          // Prefer trail hover over open space (trails render above open space)
+          const trailHoverFeature = features.find((f) => {
+            const layerId = f.layer?.id;
+            return (
+              layerId?.startsWith("geojson-trail-") &&
+              layerId !== "highlighted-trail"
+            );
+          });
+
+          if (isAnyOpenSpaceVisible && event.lngLat && !trailHoverFeature) {
             const map = mapRef.current?.getMap();
             if (map) {
-              // First check event.features
-              const openSpaceFeature = features.find(f => 
-                f.layer && (f.layer.id === 'openspace-layer' || f.layer.id === 'openspace-outline')
+              const openSpaceFeature = features.find(f =>
+                f.layer && isOpenSpaceLayerId(f.layer.id)
               );
-              
+
               if (openSpaceFeature) {
                 setOpenSpaceHoverInfo({
                   point: event.lngLat,
                   feature: openSpaceFeature
                 });
               } else {
-                // If not in event.features, query the map directly
-                const queriedFeatures = map.queryRenderedFeatures(event.point, {
-                  layers: ['openspace-layer', 'openspace-outline']
-                });
-                if (queriedFeatures.length > 0) {
-                  const feature = queriedFeatures.find(f => f.layer.id === 'openspace-layer') || queriedFeatures[0];
-                  setOpenSpaceHoverInfo({
-                    point: event.lngLat,
-                    feature: feature
+                const existingOpenSpaceLayers = getExistingOpenSpaceLayerIds(map);
+                if (existingOpenSpaceLayers.length > 0) {
+                  const queriedFeatures = map.queryRenderedFeatures(event.point, {
+                    layers: existingOpenSpaceLayers
                   });
+                  if (queriedFeatures.length > 0) {
+                    const feature =
+                      queriedFeatures.find((f) => f.layer.id.endsWith("-layer")) ||
+                      queriedFeatures[0];
+                    setOpenSpaceHoverInfo({
+                      point: event.lngLat,
+                      feature: feature
+                    });
+                  } else {
+                    setOpenSpaceHoverInfo(null);
+                  }
                 } else {
                   setOpenSpaceHoverInfo(null);
                 }
@@ -663,12 +806,17 @@ const CommunityTrailsProfile = ({
 
           // Handle trail hover
           if (features.length > 0) {
-            const trailFeature = features.find((f) => 
-              f.layer && f.layer.id.startsWith("geojson-trail-") && !f.layer.id.includes("hover")
-            );
-            
+            const trailFeature = trailHoverFeature || features.find((f) => {
+              const layerId = f.layer?.id;
+              return (
+                layerId?.startsWith("geojson-trail-") && layerId !== "highlighted-trail"
+              );
+            });
+
             if (trailFeature) {
-              const layerId = trailFeature.layer.id.replace("geojson-trail-", "");
+              const layerId = trailFeature.layer.id
+                .replace("geojson-trail-hover-", "")
+                .replace("geojson-trail-", "");
               const clickedObjectId = trailFeature.properties?.objectid || trailFeature.properties?.OBJECTID;
               
               const trailData = intersectedTrails.find(trail => {
@@ -721,58 +869,46 @@ const CommunityTrailsProfile = ({
             setHoveredTransitStop(null);
           }
 
-          // Handle Environmental Justice layer hover
-          // Note: Raster layers don't appear in features, so we query identify endpoint when layer is visible
-          if (showEnvironmentalJustice && event.lngLat) {
-            setEjHoverPoint(event.lngLat);
-            
-            // Debounce identify requests to avoid too many API calls
-            if (ejIdentifyTimeoutRef.current) {
-              clearTimeout(ejIdentifyTimeoutRef.current);
-            }
-            
-            ejIdentifyTimeoutRef.current = setTimeout(() => {
-              const EJ2020_IDENTIFY_URL = "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/EJ2020/MapServer/identify";
-              const map = mapRef.current?.getMap();
-              
-              if (map) {
-                const mapBounds = map.getBounds();
-                const sw = mapBounds.getSouthWest();
-                const ne = mapBounds.getNorthEast();
-                
-                axios
-                  .get(EJ2020_IDENTIFY_URL, {
-                    params: {
-                      geometry: `${event.lngLat.lng},${event.lngLat.lat}`,
-                      geometryType: "esriGeometryPoint",
-                      sr: 4326,
-                      layers: "all:0",
-                      tolerance: 5,
-                      mapExtent: `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`,
-                      imageDisplay: `${map.getContainer().clientWidth || 1024},${map.getContainer().clientHeight || 768},96`,
-                      returnGeometry: false,
-                      f: "pjson",
-                    },
-                  })
-                  .then((res) => {
-                    if (res.data.results && res.data.results.length > 0) {
-                      setEjHoverInfo(res.data.results[0]);
-                    } else {
-                      setEjHoverInfo(null);
-                    }
-                  })
-                  .catch((error) => {
-                    console.error("Error identifying EJ feature:", error);
-                    setEjHoverInfo(null);
-                  });
+          // EJ is a raster overlay — throttle attribute queries so the tooltip
+          // follows the cursor instead of only appearing after you pause.
+          if (showEnvironmentalJustice && event.lngLat && EJ2020_MAP_SERVER_URL) {
+            const { lng, lat } = event.lngLat;
+            setEjHoverPoint({ lng, lat });
+            ejPendingPointRef.current = { lng, lat };
+
+            const runEjQuery = () => {
+              const point = ejPendingPointRef.current;
+              if (!point) return;
+              const queryId = ++ejHoverQueryIdRef.current;
+              ejLastQueryAtRef.current = Date.now();
+              queryFeatureAtPoint(`${EJ2020_MAP_SERVER_URL}/0`, point.lng, point.lat).then(
+                (ejFeature) => {
+                  if (queryId !== ejHoverQueryIdRef.current) return;
+                  setEjHoverInfo(ejFeature || null);
+                }
+              );
+            };
+
+            const elapsed = Date.now() - ejLastQueryAtRef.current;
+            if (elapsed >= 80) {
+              if (ejIdentifyTimeoutRef.current) {
+                clearTimeout(ejIdentifyTimeoutRef.current);
+                ejIdentifyTimeoutRef.current = null;
               }
-            }, 200);
+              runEjQuery();
+            } else if (!ejIdentifyTimeoutRef.current) {
+              ejIdentifyTimeoutRef.current = setTimeout(() => {
+                ejIdentifyTimeoutRef.current = null;
+                runEjQuery();
+              }, 80 - elapsed);
+            }
           } else {
-            // Clear EJ hover when layer is not visible
             setEjHoverPoint(null);
             setEjHoverInfo(null);
+            ejPendingPointRef.current = null;
             if (ejIdentifyTimeoutRef.current) {
               clearTimeout(ejIdentifyTimeoutRef.current);
+              ejIdentifyTimeoutRef.current = null;
             }
           }
         }}
@@ -785,8 +921,10 @@ const CommunityTrailsProfile = ({
           setOpenSpaceHoverInfo(null);
           setEjHoverPoint(null);
           setEjHoverInfo(null);
+          ejPendingPointRef.current = null;
           if (ejIdentifyTimeoutRef.current) {
             clearTimeout(ejIdentifyTimeoutRef.current);
+            ejIdentifyTimeoutRef.current = null;
           }
         }}
         mapboxAccessToken={MAPBOX_TOKEN}
@@ -807,48 +945,38 @@ const CommunityTrailsProfile = ({
           />
         )}
 
+        <Source
+          id="municipalities"
+          type="geojson"
+          data={massachusettsData}
+        >
+          <MunicipalityMapLayer
+            showMunicipalityProfileMap={true}
+            selectedMunicipality={selectedMunicipality}
+          />
+        </Source>
+
+        <BoundaryLayers mapRef={mapRef} />
+
         {/* Environmental Justice Tooltip */}
         {showEnvironmentalJustice && ejHoverPoint && ejHoverInfo && (
           <Popup
             longitude={ejHoverPoint.lng}
             latitude={ejHoverPoint.lat}
             closeButton={false}
-            closeOnMove={true}
+            closeOnMove={false}
             anchor="top"
             offset={12}
+            maxWidth="340px"
           >
-            {(() => {
-              const attributes = ejHoverInfo.attributes || {};
-              const layerName = ejHoverInfo.layerName || "Environmental Justice";
-              
-              // Extract relevant EJ attributes
-              const geographicAreaName = attributes["Geographic Area Name"] || attributes.Geographic_Area_Name || null;
-              const totalHouseholds = attributes["Total Number of Households"] || attributes.Total_Number_of_Households || null;
-              const totalPopulation = attributes["Total Poputation"] || attributes.Total_Poputation || attributes["Total Population"] || attributes.Total_Population || null;
-              
-              return (
-                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                  <div style={{fontWeight: 600, marginBottom: '6px'}}>{layerName}</div>
-                  {geographicAreaName && (
-                    <div style={{marginBottom: '4px', fontWeight: 500}}>{geographicAreaName}</div>
-                  )}
-                  {totalHouseholds !== null && (
-                    <div style={{marginBottom: '2px'}}>Total Number of Households: {totalHouseholds}</div>
-                  )}
-                  {totalPopulation !== null && (
-                    <div style={{marginBottom: '2px'}}>Total Population: {totalPopulation}</div>
-                  )}
-                  {!geographicAreaName && !totalHouseholds && totalPopulation === null && (
-                    <div>No data available</div>
-                  )}
-                </div>
-              );
-            })()}
+            <EnvironmentalJusticePopupContent
+              properties={ejHoverInfo.properties || ejHoverInfo.attributes || {}}
+            />
           </Popup>
         )}
 
         {/* OpenSpace Hover Tooltip */}
-        {showOpenSpace && openSpaceHoverInfo && openSpaceHoverInfo.point && openSpaceHoverInfo.feature && !openSpaceClickInfo && (
+        {isAnyOpenSpaceVisible && openSpaceHoverInfo && openSpaceHoverInfo.point && openSpaceHoverInfo.feature && !openSpaceClickInfo && (
           <Popup
             longitude={openSpaceHoverInfo.point.lng}
             latitude={openSpaceHoverInfo.point.lat}
@@ -857,41 +985,12 @@ const CommunityTrailsProfile = ({
             anchor="top"
             offset={12}
           >
-            {(() => {
-              const properties = openSpaceHoverInfo.feature.properties || {};
-              
-              return (
-                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                  <div style={{fontWeight: 600, marginBottom: '6px'}}>OpenSpace</div>
-                  {properties.SITE_NAME && (
-                    <div style={{marginBottom: '4px', fontWeight: 500}}>{properties.SITE_NAME}</div>
-                  )}
-                  {properties.FEE_OWNER && (
-                    <div style={{marginBottom: '2px'}}>Owner: {properties.FEE_OWNER}</div>
-                  )}
-                  {properties.OWNER_TYPE && (
-                    <div style={{marginBottom: '2px'}}>Owner Type: {properties.OWNER_TYPE}</div>
-                  )}
-                  {properties.PRIM_PURP && (
-                    <div style={{marginBottom: '2px'}}>Primary Purpose: {properties.PRIM_PURP}</div>
-                  )}
-                  {properties.PUB_ACCESS && (
-                    <div style={{marginBottom: '2px'}}>Public Access: {properties.PUB_ACCESS}</div>
-                  )}
-                  {properties.GIS_ACRES !== null && properties.GIS_ACRES !== undefined && (
-                    <div style={{marginBottom: '2px'}}>Acres: {parseFloat(properties.GIS_ACRES).toFixed(2)}</div>
-                  )}
-                  {!properties.SITE_NAME && !properties.FEE_OWNER && (
-                    <div>No data available</div>
-                  )}
-                </div>
-              );
-            })()}
+            <OpenSpacePopupContent properties={openSpaceHoverInfo.feature.properties} />
           </Popup>
         )}
         
         {/* OpenSpace Click Popup */}
-        {showOpenSpace && openSpaceClickInfo && openSpaceClickInfo.point && openSpaceClickInfo.feature && (
+        {isAnyOpenSpaceVisible && openSpaceClickInfo && openSpaceClickInfo.point && openSpaceClickInfo.feature && (
           <Popup
             longitude={openSpaceClickInfo.point.lng}
             latitude={openSpaceClickInfo.point.lat}
@@ -900,48 +999,49 @@ const CommunityTrailsProfile = ({
             anchor="top"
             offset={12}
           >
-            {(() => {
-              const properties = openSpaceClickInfo.feature.properties || {};
-              
-              return (
-                <div style={{minWidth: 200, color: '#2774bd', fontSize: '12px'}}>
-                  <div style={{fontWeight: 600, marginBottom: '6px'}}>OpenSpace</div>
-                  {properties.SITE_NAME && (
-                    <div style={{marginBottom: '4px', fontWeight: 500}}>{properties.SITE_NAME}</div>
-                  )}
-                  {properties.FEE_OWNER && (
-                    <div style={{marginBottom: '2px'}}>Owner: {properties.FEE_OWNER}</div>
-                  )}
-                  {properties.OWNER_TYPE && (
-                    <div style={{marginBottom: '2px'}}>Owner Type: {properties.OWNER_TYPE}</div>
-                  )}
-                  {properties.PRIM_PURP && (
-                    <div style={{marginBottom: '2px'}}>Primary Purpose: {properties.PRIM_PURP}</div>
-                  )}
-                  {properties.PUB_ACCESS && (
-                    <div style={{marginBottom: '2px'}}>Public Access: {properties.PUB_ACCESS}</div>
-                  )}
-                  {properties.GIS_ACRES !== null && properties.GIS_ACRES !== undefined && (
-                    <div style={{marginBottom: '2px'}}>Acres: {parseFloat(properties.GIS_ACRES).toFixed(2)}</div>
-                  )}
-                  {!properties.SITE_NAME && !properties.FEE_OWNER && (
-                    <div>No data available</div>
-                  )}
-                </div>
-              );
-            })()}
+            <OpenSpacePopupContent properties={openSpaceClickInfo.feature.properties} />
           </Popup>
         )}
         
-        {showControlPanel && (
-          <div>
-            <ControlPanel />
-          </div>
+        {/* Open space beneath trail segments */}
+        {showOpenSpace && (
+          <OpenSpaceLayer
+            showOpenSpace={showOpenSpace}
+            showMunicipalityProfileMap={true}
+            idPrefix="openspace"
+            beforeId={
+              intersectedTrails[0]
+                ? `geojson-trail-${intersectedTrails[0].layerId}`
+                : undefined
+            }
+            mapRef={mapRef}
+          />
         )}
 
-        {showBasemapPanel && <BasemapPanel />}
-        
-        {/* Render GeoJSON sources for community trails profile */}
+        {showMuniOpenSpace && selectedMunicipality && (
+          <OpenSpaceLayer
+            showOpenSpace={showMuniOpenSpace}
+            showMunicipalityProfileMap={true}
+            townId={selectedMunicipality.properties?.town_id}
+            idPrefix="muni-openspace"
+            beforeId={
+              intersectedTrails[0]
+                ? `geojson-trail-${intersectedTrails[0].layerId}`
+                : undefined
+            }
+            mapRef={mapRef}
+            fitBoundsOnLoad
+          />
+        )}
+
+        {/* Environmental Justice 2020 Layer */}
+        <EnvironmentalJusticeLayer
+          showEnvironmentalJustice={showEnvironmentalJustice}
+          showMunicipalityProfileMap={true}
+          mapRef={mapRef}
+        />
+
+        {/* Trail segments on top of open space */}
         <CommunityTrailsProfileLayers
           showMunicipalityProfileMap={true}
           intersectedTrails={intersectedTrails}
@@ -965,6 +1065,7 @@ const CommunityTrailsProfile = ({
           showBlueBikeStations={showBlueBikeStations}
           showMunicipalityProfileMap={true}
           blueBikeStationsData={blueBikeStationsData}
+          showStationLabels={showBlueBikeStationLabels}
           hoveredBlueBikeStation={hoveredBlueBikeStation}
         />
         
@@ -973,40 +1074,15 @@ const CommunityTrailsProfile = ({
           showSubwayStations={showSubwayStations}
           showMunicipalityProfileMap={true}
           subwayStationsData={subwayStationsData}
+          showStationLabels={showSubwayStationLabels}
           hoveredSubwayStation={hoveredSubwayStation}
         />
-        
-        {/* Environmental Justice 2020 Layer */}
-        <EnvironmentalJusticeLayer
-          showEnvironmentalJustice={showEnvironmentalJustice}
-          showMunicipalityProfileMap={true}
-          mapRef={mapRef}
-        />
-
-        {/* OpenSpace Layer */}
-        {showOpenSpace && (
-          <OpenSpaceLayer
-            showOpenSpace={showOpenSpace}
-            showMunicipalityProfileMap={true}
-            mapRef={mapRef}
-          />
-        )}
 
         {/* Landlines Feature Service Layer */}
         {showLandlinesFeatureService && (
           <LandlinesLayer
             showLandlines={showLandlinesFeatureService}
             showMunicipalityProfileMap={true}
-            mapRef={mapRef}
-          />
-        )}
-
-        {/* Trails Reg Name Sync Layer */}
-        {showTrailsRegNameSync && (
-          <TrailsRegNameSyncLayer
-            showTrailsRegNameSync={showTrailsRegNameSync}
-            showMunicipalityProfileMap={true}
-            showProjectTrailsProfile={false}
             mapRef={mapRef}
           />
         )}
@@ -1024,23 +1100,10 @@ const CommunityTrailsProfile = ({
           hoveredTransitStop={hoveredTransitStop}
         />
         
-        <Source 
-          id="municipalities" 
-          type="geojson" 
-          data={massachusettsData}
-        >
-          <MunicipalityMapLayer
-            showMunicipalityProfileMap={true}
-            selectedMunicipality={selectedMunicipality}
-          />
-        </Source>
-        
         {/* Buffer Analysis Layers */}
         {renderBufferPreview(bufferPreviewCenter, isBufferActive, bufferRadius)}
         {renderBufferCircle(bufferCenter, bufferRadius)}
         {renderBufferCenter(bufferCenter)}
-        
-        <GeocoderPanel MAPBOX_TOKEN={MAPBOX_TOKEN} />
         
         <ScaleControl position="bottom-right" />
         <NavigationControl className="map_navigation" position="bottom-right" />
@@ -1054,23 +1117,35 @@ const CommunityTrailsProfile = ({
           position="bottom-right"
         />
         
-        {/* Trail Legend */}
         {showMunicipalityView && selectedMunicipality && (
-          <TrailLegend 
-            visibleTrailTypes={visibleTrailTypes}
-            onToggleTrailType={handleToggleTrailType}
-          />
+          <CollapsibleTrailLegend controlPanelOpen={showControlPanel}>
+            <TrailLegend
+              visibleTrailTypes={visibleTrailTypes}
+              onToggleTrailType={handleToggleTrailType}
+              hideHeader
+            />
+          </CollapsibleTrailLegend>
         )}
-        
-        {/* Control Panel Toggle Button */}
-        <Control
-          style={"Map_filter d-block position-absolute m-0 p-0"}
-          icon={FilterIcon}
-          alt={"Show Control Panel"}
-          clickHandler={() => toggleControlPanel(!showControlPanel)}
-        />
       </ReactMapGL>
-      
+
+      <MapToolbar
+        showBasemapPanel={showBasemapPanel}
+        toggleBasemapPanel={toggleBasemapPanel}
+        showBoundariesPanel={showBoundariesPanel}
+        toggleBoundariesPanel={toggleBoundariesPanel}
+        onBoundaryLayerToggle={() => setShowOneLayerNotice(true)}
+        onBoundaryPanelOpen={() => setShowOneLayerNotice(true)}
+        showOneLayerNotice={showOneLayerNotice}
+        onDismissOneLayerNotice={() => setShowOneLayerNotice(false)}
+      />
+
+      <ControlPanelShell
+        showControlPanel={showControlPanel}
+        toggleControlPanel={toggleControlPanel}
+      >
+        <CommunityProfileControlPanel isLoadingTrails={isQueryingTrails} />
+      </ControlPanelShell>
+
       {/* Buffer Analysis Window */}
       <BufferAnalysisWindow
         show={showBufferAnalysis}

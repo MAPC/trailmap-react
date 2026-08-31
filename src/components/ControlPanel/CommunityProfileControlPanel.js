@@ -1,0 +1,153 @@
+import React, { useContext, useState, useEffect, useRef } from "react";
+import MunicipalityProfile from "./MunicipalityProfile";
+import { LayerContext } from "../../App";
+import { useLocation } from "react-router-dom";
+
+const CommunityProfileControlPanel = ({ isLoadingTrails = false }) => {
+  const location = useLocation();
+  const {
+    existingTrails,
+    proposedTrails,
+    selectedMunicipality,
+    setSelectedMunicipality,
+    municipalityTrails,
+    trailLayers,
+    setTrailLayers,
+    proposedLayers,
+    setProposedLayers,
+    showMunicipalities,
+    toggleMunicipalities,
+    showMapcBoundary,
+    toggleMapcBoundary,
+    showMaHouseDistricts,
+    toggleMaHouseDistricts,
+    showMaSenateDistricts,
+    toggleMaSenateDistricts,
+    showMunicipalityView,
+    setShowMunicipalityView,
+    setShowMunicipalityProfileMap,
+    showCommuterRail,
+    setShowCommuterRail,
+    showStationLabels,
+    setShowStationLabels,
+    showBlueBikeStations,
+    setShowBlueBikeStations,
+    showBlueBikeStationLabels,
+    setShowBlueBikeStationLabels,
+    showSubwayStations,
+    setShowSubwayStations,
+    showSubwayStationLabels,
+    setShowSubwayStationLabels,
+    showEnvironmentalJustice,
+    setShowEnvironmentalJustice,
+    showOpenSpace,
+    setShowOpenSpace,
+    showMuniOpenSpace,
+    setShowMuniOpenSpace,
+    showTransitLandStops,
+    setShowTransitLandStops,
+  } = useContext(LayerContext);
+
+  const isNavigatingRef = useRef(false);
+  const prevMunicipalityNameRef = useRef(null);
+
+  useEffect(() => {
+    if (isNavigatingRef.current) {
+      isNavigatingRef.current = false;
+      return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedView = urlParams.get("view");
+    const currentPath = location.pathname;
+    const isCommunityPath =
+      sharedView === "municipality" || currentPath === "/communityTrailsProfile";
+
+    if (isCommunityPath && !showMunicipalityView) {
+      setTrailLayers([]);
+      setProposedLayers([]);
+      if (showMaHouseDistricts) toggleMaHouseDistricts(false);
+      if (showMaSenateDistricts) toggleMaSenateDistricts(false);
+      if (showMunicipalities) toggleMunicipalities(false);
+      if (showMapcBoundary) toggleMapcBoundary(false);
+      setShowMunicipalityProfileMap(true);
+      setSelectedMunicipality(null);
+      setShowMunicipalityView(true);
+    } else if (!isCommunityPath && showMunicipalityView) {
+      setShowMunicipalityProfileMap(false);
+      setSelectedMunicipality(null);
+      setShowMunicipalityView(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (
+      showMunicipalityView &&
+      selectedMunicipality &&
+      municipalityTrails &&
+      municipalityTrails.length > 0
+    ) {
+      if (prevMunicipalityNameRef.current !== selectedMunicipality.name) {
+        const trailLayerIds = new Set();
+        const proposedLayerIds = new Set();
+
+        municipalityTrails.forEach((trail) => {
+          const existingLayer = existingTrails.find((l) => l.label === trail.layerName);
+          const proposedLayer = proposedTrails.find((l) => l.label === trail.layerName);
+
+          if (existingLayer) trailLayerIds.add(existingLayer.id);
+          if (proposedLayer) proposedLayerIds.add(proposedLayer.id);
+        });
+
+        setTrailLayers(Array.from(trailLayerIds));
+        setProposedLayers(Array.from(proposedLayerIds));
+        prevMunicipalityNameRef.current = selectedMunicipality.name;
+      }
+    } else if (!selectedMunicipality && showMunicipalityView) {
+      setTrailLayers([]);
+      setProposedLayers([]);
+      prevMunicipalityNameRef.current = null;
+    }
+  }, [selectedMunicipality, municipalityTrails, showMunicipalityView]);
+
+  return (
+    <div className="ControlPanel ControlPanel--community text-left pt-3 pb-5 ps-2 pe-2 position-absolute overflow-auto">
+      <MunicipalityProfile
+        isLoadingTrails={isLoadingTrails}
+        selectedMunicipality={selectedMunicipality}
+        onMunicipalitySelect={setSelectedMunicipality}
+        municipalityTrails={municipalityTrails}
+        onTrailClick={(trail) => {
+          window.dispatchEvent(
+            new CustomEvent("trailSelected", {
+              detail: { trail },
+            })
+          );
+        }}
+        showCommuterRail={showCommuterRail}
+        onToggleCommuterRail={setShowCommuterRail}
+        showStationLabels={showStationLabels}
+        onToggleStationLabels={setShowStationLabels}
+        showBlueBikeStations={showBlueBikeStations}
+        onToggleBlueBikeStations={setShowBlueBikeStations}
+        showBlueBikeStationLabels={showBlueBikeStationLabels}
+        onToggleBlueBikeStationLabels={setShowBlueBikeStationLabels}
+        showSubwayStations={showSubwayStations}
+        onToggleSubwayStations={setShowSubwayStations}
+        showSubwayStationLabels={showSubwayStationLabels}
+        onToggleSubwayStationLabels={setShowSubwayStationLabels}
+        showEnvironmentalJustice={showEnvironmentalJustice}
+        onToggleEnvironmentalJustice={setShowEnvironmentalJustice}
+        showOpenSpace={showOpenSpace}
+        onToggleOpenSpace={setShowOpenSpace}
+        showMuniOpenSpace={showMuniOpenSpace}
+        onToggleMuniOpenSpace={setShowMuniOpenSpace}
+        showTransitLandStops={showTransitLandStops}
+        onToggleTransitLandStops={setShowTransitLandStops}
+      />
+    </div>
+  );
+};
+
+export default CommunityProfileControlPanel;

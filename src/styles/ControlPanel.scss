@@ -8,7 +8,7 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
   }
-  background-color: $lighter-blue;
+  background-color: $white;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 10px 2px;
   font-size: $body-font-size;
   height: 100vh;
@@ -16,19 +16,10 @@
   top: 60px;
   z-index: 6;
 
+  width: $control-panel-width;
+
   @media only screen and (max-height: 920px) and (min-width: 1000px) {
-    width: 275px;
-  }
-
-  width: 260px;
-
-  &_opacity {
-    background-color: $lighter-blue;
-    height: 3rem;
-    margin-top: -3rem;
-    opacity: 0.8;
-    width: 245px;
-    z-index: 500;
+    width: $control-panel-width-lg;
   }
 
   &__title {
@@ -37,11 +28,16 @@
   }
 
   &__glossary {
+    border: none;
+    background: none;
+    padding: 0;
     color: $dark-blue;
     cursor: pointer;
+    text-decoration: underline;
+    font: inherit;
 
     &:hover {
-      text-decoration: underline;
+      color: $dark-medium-blue;
     }
   }
 
@@ -236,10 +232,428 @@
       margin-left: 0.5rem;
     }
   }
-  div.ButtonGroup{
+  div.ButtonGroup {
     display: flex;
     flex-wrap: wrap;
-    width: 260px;
+    width: 100%;
     min-width: 260px;
+  }
+}
+
+.ControlPanelShell {
+  --panel-width: #{$control-panel-width};
+  --toggle-width: 1.5rem;
+  --toggle-height: 3.25rem;
+  --header-offset: 60px;
+
+  position: fixed;
+  top: var(--header-offset);
+  left: 0;
+  z-index: 6;
+  height: calc(100vh - var(--header-offset));
+  width: calc(var(--panel-width) + var(--toggle-width));
+  pointer-events: none;
+
+  @media only screen and (max-height: 920px) and (min-width: 1000px) {
+    --panel-width: #{$control-panel-width-lg};
+  }
+
+  &__drawer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--panel-width);
+    height: 100%;
+    overflow: hidden;
+    transform: translateX(0);
+    transition: transform 0.22s ease;
+    pointer-events: auto;
+  }
+
+  &--closed &__drawer {
+    transform: translateX(calc(-1 * var(--panel-width)));
+    pointer-events: none;
+  }
+
+  &__drawer .ControlPanel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--panel-width);
+    height: 100%;
+    box-shadow: rgba(0, 0, 0, 0.1) 0 0 10px 2px;
+  }
+
+  &__toggle {
+    position: absolute;
+    top: 50%;
+    left: var(--panel-width);
+    transform: translateY(-50%);
+    width: var(--toggle-width);
+    height: var(--toggle-height);
+    padding: 0;
+    border: 1px solid $medium-grey;
+    border-left: none;
+    background: $white;
+    color: $dark-grey;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 10px 10px 0;
+    box-shadow: rgba(0, 0, 0, 0.12) 0 2px 8px;
+    transition: left 0.22s ease, background-color 0.15s ease;
+    pointer-events: auto;
+
+    .fas,
+    .bi {
+      font-size: 0.75rem;
+      line-height: 1;
+    }
+
+    &:hover {
+      background: $light-grey;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $dark-blue;
+      outline-offset: 2px;
+    }
+  }
+
+  &--closed &__toggle {
+    left: 0;
+    border-left: 1px solid $medium-grey;
+  }
+}
+
+.ControlPanelShare {
+  margin-bottom: 1rem;
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    border: 1px solid $medium-grey;
+    border-radius: 8px;
+    background: $white;
+    padding: 0.6rem 0.7rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      background: $light-blue;
+      border-color: $medium-blue;
+      box-shadow: rgba(0, 0, 0, 0.06) 0 2px 6px;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $dark-blue;
+      outline-offset: 2px;
+    }
+  }
+
+  &__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 8px;
+    background: $light-blue;
+    color: $dark-blue;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    .bi {
+      font-size: 1rem;
+      line-height: 1;
+    }
+  }
+
+  &__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__label {
+    display: block;
+    font-family: $body-bold-font;
+    font-size: 0.85rem;
+    color: $dark-blue;
+    line-height: 1.25;
+  }
+
+  &__hint {
+    display: block;
+    font-family: $body-font;
+    font-size: 0.72rem;
+    color: $dark-grey;
+    line-height: 1.3;
+    margin-top: 0.1rem;
+  }
+
+  &__arrow {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    color: $dark-grey;
+  }
+}
+
+.TrailsOverviewPanel {
+  padding: 0 0.15rem 1.5rem;
+
+  &__intro {
+    margin-bottom: 1rem;
+  }
+
+  &__heading {
+    font-family: $title-font;
+    font-size: 1.35rem;
+    line-height: 1.25;
+    color: $dark-blue;
+    margin: 0 0 0.5rem;
+  }
+
+  &__lead {
+    font-family: $body-font;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: $dark-grey;
+    margin: 0;
+  }
+
+  &__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    background: $light-blue;
+    border-radius: 8px;
+    padding: 0.55rem 0.65rem;
+    margin-bottom: 1rem;
+    font-family: $body-font;
+    font-size: 0.85rem;
+    color: $dark-grey;
+  }
+
+  &__summary-text {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  &__clear {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: $body-bold-font;
+    font-size: 0.85rem;
+    color: $dark-blue;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $dark-blue;
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+
+  &__summary-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: $dark-blue;
+    flex-shrink: 0;
+  }
+
+  &__landline {
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid $medium-grey;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  &__landline-link {
+    display: inline-block;
+    margin-top: 0.35rem;
+    margin-left: 1.85rem;
+    font-family: $body-font;
+    font-size: 0.8rem;
+    color: $dark-blue;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.TrailLayerSection {
+  margin-bottom: 1rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  &__header-main {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  &__title {
+    font-family: $title-font;
+    font-size: 1.05rem;
+    line-height: 1.2;
+    color: $dark-blue;
+  }
+
+  &__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: $dark-blue;
+    color: $white;
+    font-family: $body-bold-font;
+    font-size: 0.72rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  &__collapse-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    border-radius: 50%;
+    background: $light-grey;
+    color: $dark-grey;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+
+    .bi {
+      font-size: 0.8rem;
+    }
+
+    &:hover {
+      background: $medium-grey;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $dark-blue;
+      outline-offset: 2px;
+    }
+  }
+
+  &__master-switch {
+    margin: 0;
+    flex-shrink: 0;
+
+    .form-check-input {
+      cursor: pointer;
+      width: 2rem;
+      height: 1.1rem;
+    }
+  }
+
+  &__note {
+    font-family: $body-font;
+    font-size: 0.78rem;
+    font-style: italic;
+    color: $dark-grey;
+    margin: 0 0 0.65rem;
+  }
+
+  &__category {
+    margin-bottom: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__category-title {
+    display: block;
+    font-family: $body-bold-font;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    color: $dark-grey;
+    margin-bottom: 0.35rem;
+  }
+}
+
+.TrailLayerRow {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  background-color: #f0f7ff;
+  border-radius: 8px;
+
+  &__swatch {
+    display: block;
+    width: 1.5rem;
+    height: 0.3rem;
+    border-radius: 1px;
+    background-color: var(--swatch-color);
+
+    &--dashed {
+      height: 0;
+      border-top: 3px dashed var(--swatch-color);
+      background: none;
+      border-radius: 0;
+    }
+  }
+
+  &__label {
+    font-family: $body-font;
+    font-size: 0.82rem;
+    color: $dark-grey;
+    line-height: 1.25;
+  }
+
+  &__switch {
+    margin: 0;
+
+    .form-check-input {
+      cursor: pointer;
+      width: 2rem;
+      height: 1.1rem;
+    }
   }
 }

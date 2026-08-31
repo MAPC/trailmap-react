@@ -284,83 +284,31 @@ const BufferAnalysisWindow = ({
               {/* Summary Stats */}
               <div className="BufferAnalysisWindow__summary mb-3 p-2 border rounded">
                 <div className="row g-2 small">
-                  <div className="col-2 text-center">
-                    <div className="text-muted" style={{ fontSize: '0.7rem' }}>Trails</div>
-                    <div className="fw-bold fs-5">
-                      {bufferResults.trails.length}
-                    </div>
-                  </div>
-                  <div className="col-2 text-center">
+                  <div className="col-3 text-center">
                     <div className="text-muted" style={{ fontSize: '0.7rem' }}>Rail Stations</div>
                     <div className="fw-bold fs-5">
                       {bufferResults.stations.length}
                     </div>
                   </div>
-                  <div className="col-2 text-center">
+                  <div className="col-3 text-center">
                     <div className="text-muted" style={{ fontSize: '0.7rem', lineHeight: '1.0' }}>Blue Bike<br/>Stations</div>
                     <div className="fw-bold fs-5">
                       {bufferResults.bikeStations ? bufferResults.bikeStations.length : 0}
                     </div>
                   </div>
-                  <div className="col-2 text-center">
+                  <div className="col-3 text-center">
                     <div className="text-muted" style={{ fontSize: '0.7rem' }}>Subway Stations</div>
                     <div className="fw-bold fs-5">
                       {bufferResults.subwayStations ? bufferResults.subwayStations.length : 0}
                     </div>
                   </div>
-                  <div className="col-2 text-center">
+                  <div className="col-3 text-center">
                     <div className="text-muted" style={{ fontSize: '0.7rem' }}>Area</div>
                     <div className="fw-bold" style={{ fontSize: '0.8rem' }}>
                       {(Math.PI * Math.pow(metersToMiles(bufferRadius), 2)).toFixed(2)} mi²
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Trails by Type */}
-              <div className="mb-3">
-                <div className="small fw-semibold mb-2">Trail Types (Counts)</div>
-                {bufferResults.trails.length === 0 ? (
-                  <div className="small text-muted text-center p-2 border rounded">
-                    No trails found
-                  </div>
-                ) : (
-                  <div className="BufferAnalysisWindow__trail-types">
-                    {(() => {
-                      // Group trails by type
-                      const trailsByType = {};
-                      bufferResults.trails.forEach((trail) => {
-                        if (!trailsByType[trail.type]) {
-                          trailsByType[trail.type] = {
-                            count: 0,
-                            color: trail.color
-                          };
-                        }
-                        trailsByType[trail.type].count++;
-                      });
-
-                      return Object.entries(trailsByType)
-                        .sort(([, a], [, b]) => b.count - a.count)
-                        .map(([type, data]) => (
-                          <div key={type} className="BufferAnalysisWindow__type-badge">
-                            <div className="type-name small text-muted mb-1" title={type}>
-                              {type}
-                            </div>
-                            <div 
-                              className="type-circle d-flex align-items-center justify-content-center fw-bold"
-                              style={{ 
-                                backgroundColor: data.color || '#6c757d',
-                                color: '#ffffff'
-                              }}
-                              title={`${data.count} ${type} trails`}
-                            >
-                              {data.count}
-                            </div>
-                          </div>
-                        ));
-                    })()}
-                  </div>
-                )}
               </div>
 
               {/* Commuter Rail Stations in Buffer */}

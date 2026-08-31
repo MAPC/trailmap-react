@@ -6,22 +6,51 @@ import editIcon from "../../assets/icons/edit-icon.svg";
 import { ModalContext } from "../../App";
 import muniKeys from "../../data/ma_muni_keys.json";
 
-const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) => {
+const Identify = ({
+  point,
+  identifyResult,
+  handleShowPopup,
+  handleCarousel,
+  showContribute = true,
+}) => {
   const { showEditModal, toggleEditModal } = useContext(ModalContext);
   const [carouselIndex, setCarouselIndex] = useState(0);
 
   // Function to get municipality name by muni_id
   const getMunicipalityName = (muniId) => {
-    if (!muniId || muniId === "Null" || muniId === "") return "";
-    
-    // Handle both string and numeric muni_id
-    const municipality = muniKeys.find(muni => 
-      muni.muni_id === parseInt(muniId) || 
-      muni.muni_id === muniId ||
-      muni.muni_id.toString() === muniId.toString()
+    if (muniId == null || muniId === "" || muniId === "Null") return "";
+
+    const municipality = muniKeys.find(
+      (muni) => String(muni.muni_id) === String(muniId)
     );
     return municipality ? municipality.muni_name : "";
   };
+
+  const getAttributeValue = (attributes, keys) => {
+    for (const key of keys) {
+      const value = attributes[key];
+      if (value != null && value !== "" && value !== "Null" && value !== " ") {
+        return value;
+      }
+    }
+    return "";
+  };
+
+  const getTrailName = (attributes) =>
+    getAttributeValue(attributes, ["local_name", "Local Name"]) ||
+    getAttributeValue(attributes, ["reg_name", "Regional Name"]) ||
+    getAttributeValue(attributes, ["prop_name", "Property Name"]);
+
+  const getLengthFeet = (attributes) => {
+    const raw = getAttributeValue(attributes, ["length_ft", "Facility Length in Feet"]);
+    if (raw === "") return "";
+
+    const parsed = parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed.toFixed(2) : "";
+  };
+
+  const getOpeningDate = (attributes) =>
+    getAttributeValue(attributes, ["open_date", "Facility Opening Date"]);
 
   const identifyLayer = [];
   const identifyAttributes = [];
@@ -31,54 +60,38 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
   const identifyLength = [];
 
   identifyResult.forEach((element) => {
+    const attributes = element?.attributes || {};
     identifyLayer.push(element.layerName);
-    identifyAttributes.push(element.attributes);
-    identifyTrailName.push(
-      element.attributes["Local Name"] !== "Null" && element.attributes["Local Name"] !== " "
-        ? element.attributes["Local Name"]
-        : element.attributes["Regional Name"] !== "Null" && element.attributes["Regional Name"] !== " "
-        ? element.attributes["Regional Name"]
-        : element.attributes["Property Name"] !== "Null" && element.attributes["Property Name"] !== " "
-        ? element.attributes["Property Name"]
-        : ""
-    );
+    identifyAttributes.push(attributes);
+    identifyTrailName.push(getTrailName(attributes));
     identifyMunicipality.push(
-      getMunicipalityName(element.attributes["muni_id"] || element.attributes["Municipal ID"])
-      
+      getMunicipalityName(
+        attributes["muni_id"] || attributes["Municipal ID"] || null
+      ) ?? ""
     );
-    identifyDate.push(
-      element.attributes["Facility Opening Date"] !== "Null" ? element.attributes["Facility Opening Date"] : ""
-    );
-    const rawLengthFeet =
-      element.attributes["Facility Length in Feet"] ?? element.attributes["length_ft"];
-    const normalizedLengthFeet =
-      rawLengthFeet !== undefined && rawLengthFeet !== null && rawLengthFeet !== "Null" && rawLengthFeet !== " "
-        ? rawLengthFeet
-        : "";
-    identifyLength.push(normalizedLengthFeet);
-    
+    identifyDate.push(getOpeningDate(attributes));
+    identifyLength.push(getLengthFeet(attributes));
   });
-
   const carouselItems = [];
   for (let i = 0; i < identifyResult.length; i++) {
+    const isLandline = identifyResult[i]?.layerId === "landline";
     carouselItems.push(
       <Carousel.Item key={i}>
         {(identifyTrailName[i] && <span className="Popup__name ">Name: {identifyTrailName[i]}</span>) ||
           (!identifyTrailName[i] && <span className="Popup__name">Name: N/A</span>)}
         {(identifyLayer[i] && (
           <span className="Popup__layer Popup__section">
-            Type:{" "}
-            {identifyLayer[i].split(" ")[0] != "Existing"
-              ? identifyLayer[i]
-              : identifyLayer[i].split(" ").slice(1, identifyLayer[i].split(" ").length).join(" ")}
+            Type: {identifyLayer[i]}
           </span>
         )) ||
           (!identifyLayer[i] && <span className="Popup__layer Popup__section">Type: N/A</span>)}
         {(identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: {identifyMunicipality[i]}</span>) ||
           (!identifyMunicipality[i] && <span className="Popup__info Popup__section">Municipality: N/A</span>)}
-        {(identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
-          (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)}
-        {(identifyLength[i] && <span className="Popup__info Popup__section">Length: {parseFloat(identifyLength[i]).toFixed(2)} ft</span>) ||
+        {!isLandline && (
+          (identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: {identifyDate[i]}</span>) ||
+          (!identifyDate[i] && <span className="Popup__info Popup__section">Opening Date: N/A</span>)
+        )}
+        {(identifyLength[i] && <span className="Popup__info Popup__section">Length: {identifyLength[i]} ft</span>) ||
            (!identifyLength[i] && <span className="Popup__info Popup__section">Length: N/A</span>)}
       </Carousel.Item>
     );
@@ -95,6 +108,7 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
       className="Popup"
       latitude={point.lat}
       anchor="bottom"
+      closeOnClick={false}
       onClose={() => handleShowPopup(false)}
     >
       <Carousel
@@ -107,14 +121,16 @@ const Identify = ({ point, identifyResult, handleShowPopup, handleCarousel }) =>
       >
         {carouselItems}
       </Carousel>
-      <Button
-        className="identify-contribute-btn"
-        onClick={() => {
-          toggleEditModal(true);
-        }}
-      >
-        <img src={editIcon} alt={"Contribute Data"}></img>
-      </Button>
+      {showContribute && (
+        <Button
+          className="identify-contribute-btn"
+          onClick={() => {
+            toggleEditModal(true);
+          }}
+        >
+          <img src={editIcon} alt={"Contribute Data"}></img>
+        </Button>
+      )}
     </Popup>
   );
 };

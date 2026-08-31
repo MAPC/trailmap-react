@@ -272,54 +272,6 @@
   &__results {
     animation: fadeIn 0.3s ease-in;
   }
-
-  &__trail-types {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    justify-items: center;
-  }
-
-  &__type-badge {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 110px;
-
-    .type-name {
-      text-align: center;
-      font-size: 0.65rem;
-      line-height: 1.2;
-      height: 2.4rem;
-      max-width: 100%;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      word-wrap: break-word;
-      hyphens: auto;
-      padding: 0 4px;
-      margin-bottom: 4px;
-    }
-
-    .type-circle {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      font-size: 1.1rem;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-      transition: all 0.2s ease;
-
-      &:hover {
-        transform: scale(1.1);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      }
-    }
-  }
 }
 
 @keyframes fadeIn {

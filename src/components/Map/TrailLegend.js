@@ -1,6 +1,8 @@
 import React from 'react';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import Tooltip from 'react-bootstrap/Tooltip';
 import '../../styles/TrailLegend.scss';
-import { geojsonTrailLayers } from './constants/geojsonTrailLayers';
+import { mapcTrailLayers, TRAIL_STATUS } from './constants/mapcTrailLayersConfig';
 
 const TrailLegend = ({
   visibleTrailTypes,
@@ -19,9 +21,15 @@ const TrailLegend = ({
     onToggleTrailType(layerId);
   };
 
-  // Separate trails into existing and planned
-  const existingTrails = geojsonTrailLayers.filter(layer => !layer.name.includes('Planned'));
-  const plannedTrails = geojsonTrailLayers.filter(layer => layer.name.includes('Planned'));
+  const existingTrails = mapcTrailLayers.filter(
+    (layer) => layer.status === TRAIL_STATUS.EXISTING
+  );
+  const plannedTrails = mapcTrailLayers.filter(
+    (layer) => layer.status === TRAIL_STATUS.PLANNED
+  );
+  const proposedTrails = mapcTrailLayers.filter(
+    (layer) => layer.status === TRAIL_STATUS.PROPOSED
+  );
 
   const renderTrailItem = (layer) => {
     const visible = readOnly ? true : isVisible(layer.id);
@@ -46,25 +54,34 @@ const TrailLegend = ({
         }}
       >
         {!readOnly && (
-          <div 
-            className="TrailLegend__icon"
-            style={{
-              width: '20px',
-              height: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              cursor: 'pointer',
-              color: visible ? '#666' : '#999'
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClick(layer.id);
-            }}
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id={`trail-legend-eye-${layer.id}`}>
+                {visible ? "Hide on map" : "Show on map"}
+              </Tooltip>
+            }
           >
-            <i className={visible ? "fas fa-eye" : "fas fa-eye-slash"}></i>
-          </div>
+            <div 
+              className="TrailLegend__icon"
+              style={{
+                width: '20px',
+                height: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                cursor: 'pointer',
+                color: visible ? '#666' : '#999'
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick(layer.id);
+              }}
+            >
+              <i className={visible ? "fas fa-eye" : "fas fa-eye-slash"} aria-hidden="true" />
+            </div>
+          </OverlayTrigger>
         )}
         <div className="TrailLegend__line-container">
           <svg width="40" height="3" className="TrailLegend__line">
@@ -81,7 +98,7 @@ const TrailLegend = ({
           </svg>
         </div>
         <span className="TrailLegend__label" style={{ opacity: visible ? 1 : 0.4 }}>
-          {layer.name.replace('Planned ', '')}
+          {layer.name.replace(/^(Existing|Planned|Proposed)\s+/, "")}
         </span>
       </div>
     );
@@ -106,14 +123,28 @@ const TrailLegend = ({
       </div>
 
       {/* Planned Trails Section */}
-      <div className="TrailLegend__section">
-        <div className="TrailLegend__section-header">
-          <strong style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase' }}>Planned</strong>
+      {plannedTrails.length > 0 && (
+        <div className="TrailLegend__section">
+          <div className="TrailLegend__section-header">
+            <strong style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase' }}>Planned</strong>
+          </div>
+          <div className="TrailLegend__items">
+            {plannedTrails.map(layer => renderTrailItem(layer))}
+          </div>
         </div>
-        <div className="TrailLegend__items">
-          {plannedTrails.map(layer => renderTrailItem(layer))}
+      )}
+
+      {/* Proposed Trails Section */}
+      {proposedTrails.length > 0 && (
+        <div className="TrailLegend__section">
+          <div className="TrailLegend__section-header">
+            <strong style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase' }}>Proposed</strong>
+          </div>
+          <div className="TrailLegend__items">
+            {proposedTrails.map(layer => renderTrailItem(layer))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

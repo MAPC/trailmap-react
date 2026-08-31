@@ -52,3 +52,31 @@ export const getFeaturesAtPoint = (map, event, layerIds, options = {}) => {
 
   return options.returnAll ? [] : null;
 };
+
+/**
+ * Query vector trail layers at the pointer position (pixel box tolerance for thin lines).
+ */
+export const getTrailFeatureAtEvent = (map, event, layerIds) => {
+  if (!map || !event?.point || !layerIds?.length) return null;
+
+  const { x, y } = event.point;
+  // Wider hit area at low zoom — overview trails are thin and hard to target.
+  const zoom = map.getZoom?.() ?? 12;
+  const padding = zoom < 11 ? 18 : zoom < 13 ? 14 : 10;
+
+  try {
+    const features = map.queryRenderedFeatures(
+      [
+        [x - padding, y - padding],
+        [x + padding, y + padding],
+      ],
+      { layers: layerIds }
+    );
+
+    const matching = features.filter((feature) => layerIds.includes(feature.layer?.id));
+    return matching[0] || null;
+  } catch (err) {
+    console.warn("Error querying trail feature at pointer:", err.message);
+    return null;
+  }
+};

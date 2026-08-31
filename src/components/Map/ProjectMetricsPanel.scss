@@ -1,6 +1,10 @@
 .ProjectMetricsPanel {
   position: absolute;
-  left: 280px; // Position after the control panel
+  left: calc(#{$control-panel-width} + 20px);
+
+  @media only screen and (max-height: 920px) and (min-width: 1000px) {
+    left: calc(#{$control-panel-width-lg} + 20px);
+  }
   top: 60px; // Below header
   width: 350px;
   height: calc(100vh - 60px);

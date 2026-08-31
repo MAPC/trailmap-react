@@ -1,11 +1,13 @@
 import React, { createContext, useState, useEffect } from "react";
 import "./styles/App.scss";
 import Header from "./components/Header";
-import IntroModal from "./components/Modals/IntroModal";
+import IntroModal, { isIntroModalDismissed } from "./components/Modals/IntroModal";
 import ContributeModal from "./components/Modals/ContributeModal";
 import AboutModal from "./components/Modals/AboutModal";
 import EditModal from "./components/Modals/EditModal";
+import GlossaryModal from "./components/Modals/GlossaryModal";
 import Map from "./components/Map";
+import Dashboard from "./components/Dashboard";
 import LayerData from "./data/LayerData";
 import { useLocation } from "react-router-dom";
 
@@ -19,14 +21,20 @@ const App = () => {
   const proposedTrails = LayerData.proposed;
   const landlines = LayerData.landline;
 
-  // Don't show intro modal if user navigates directly to communityTrailsProfile
-  const [showIntroModal, toggleIntroModal] = useState(
-    location.pathname !== '/communityTrailsProfile'
-  );
+  const shouldSkipIntro =
+    location.pathname === "/communityTrailsProfile" ||
+    location.pathname === "/projectTrailsProfile" ||
+    isIntroModalDismissed();
+
+  const [showIntroModal, toggleIntroModal] = useState(!shouldSkipIntro);
 
   // Update intro modal visibility when path changes
   useEffect(() => {
-    if (location.pathname === '/communityTrailsProfile' && showIntroModal) {
+    if (
+      (location.pathname === "/communityTrailsProfile" ||
+        location.pathname === "/projectTrailsProfile") &&
+      showIntroModal
+    ) {
       toggleIntroModal(false);
     }
   }, [location.pathname]);
@@ -47,29 +55,91 @@ const App = () => {
   const [showMaHouseDistricts, toggleMaHouseDistricts] = useState(false);
   const [showMaSenateDistricts, toggleMaSenateDistricts] = useState(false);
   const [showMunicipalities, toggleMunicipalities] = useState(false);
+  const [showMapcBoundary, toggleMapcBoundary] = useState(false);
   
   const [selectedMunicipality, setSelectedMunicipality] = useState(null);
   const [municipalityTrails, setMunicipalityTrails] = useState([]);
-  const [showMunicipalityView, setShowMunicipalityView] = useState(false);
-  const [showMunicipalityProfileMap, setShowMunicipalityProfileMap] = useState(false);
-  const [showProjectTrailsView, setShowProjectTrailsView] = useState(false);
-  const [showProjectTrailsProfileMap, setShowProjectTrailsProfileMap] = useState(false);
+
+  // Derive profile mode from URL so refresh on /communityTrailsProfile?muni=...
+  // (or /projectTrailsProfile) opens the correct map, not Regional Trail Map.
+  const isCommunityProfilePath = location.pathname === "/communityTrailsProfile";
+  const isProjectProfilePath = location.pathname === "/projectTrailsProfile";
+
+  const [showMunicipalityView, setShowMunicipalityView] = useState(isCommunityProfilePath);
+  const [showMunicipalityProfileMap, setShowMunicipalityProfileMap] = useState(
+    isCommunityProfilePath
+  );
+  const [showProjectTrailsView, setShowProjectTrailsView] = useState(isProjectProfilePath);
+  const [showProjectTrailsProfileMap, setShowProjectTrailsProfileMap] = useState(
+    isProjectProfilePath
+  );
+
+  // Keep profile flags in sync when the route changes (deep links / refresh)
+  useEffect(() => {
+    if (isCommunityProfilePath) {
+      setShowMunicipalityProfileMap(true);
+      setShowMunicipalityView(true);
+      setShowProjectTrailsProfileMap(false);
+      setShowProjectTrailsView(false);
+    } else if (isProjectProfilePath) {
+      setShowProjectTrailsProfileMap(true);
+      setShowProjectTrailsView(true);
+      setShowMunicipalityProfileMap(false);
+      setShowMunicipalityView(false);
+    }
+  }, [isCommunityProfilePath, isProjectProfilePath]);
   
   // Layer toggle states for municipality profile
   const [showCommuterRail, setShowCommuterRail] = useState(false);
   const [showStationLabels, setShowStationLabels] = useState(false);
   const [showBlueBikeStations, setShowBlueBikeStations] = useState(false);
+  const [showBlueBikeStationLabels, setShowBlueBikeStationLabels] = useState(false);
   const [showSubwayStations, setShowSubwayStations] = useState(false);
+  const [showSubwayStationLabels, setShowSubwayStationLabels] = useState(false);
   const [showEnvironmentalJustice, setShowEnvironmentalJustice] = useState(false);
   const [showOpenSpace, setShowOpenSpace] = useState(false);
+  const [showMuniOpenSpace, setShowMuniOpenSpace] = useState(false);
+  const [showProjectOpenSpace, setShowProjectOpenSpace] = useState(false);
   const [showLandlinesFeatureService, setShowLandlinesFeatureService] = useState(false);
-  const [showTrailsRegNameSync, setShowTrailsRegNameSync] = useState(false);
   const [showTransitLandStops, setShowTransitLandStops] = useState(false);
   
   // Project trails profile state
   const [projectRegNames, setProjectRegNames] = useState([]);
   const [selectedProjectRegName, setSelectedProjectRegName] = useState(null);
   const [projectColorPalette, setProjectColorPalette] = useState({});
+
+  const toggleHeaderModal = (modalId) => {
+    const isOpen = {
+      intro: showIntroModal,
+      about: showAboutModal,
+      contribute: showContributeModal,
+      glossary: showGlossaryModal,
+    }[modalId];
+
+    toggleIntroModal(false);
+    toggleAboutModal(false);
+    toggleContributeModal(false);
+    toggleGlossaryModal(false);
+
+    if (!isOpen) {
+      switch (modalId) {
+        case "intro":
+          toggleIntroModal(true);
+          break;
+        case "about":
+          toggleAboutModal(true);
+          break;
+        case "contribute":
+          toggleContributeModal(true);
+          break;
+        case "glossary":
+          toggleGlossaryModal(true);
+          break;
+        default:
+          break;
+      }
+    }
+  };
 
   return (
     <div className="App">
@@ -92,11 +162,12 @@ const App = () => {
             toggleSuccessModal,
             showFailModal,
             toggleFailModal,
+            toggleHeaderModal,
           }}
         >
-          <Header />
           <AboutModal />
           <ContributeModal />
+          <GlossaryModal />
           <LayerContext.Provider
             value={{
               trailLayers,
@@ -115,6 +186,8 @@ const App = () => {
               toggleMaSenateDistricts,
               showMunicipalities,
               toggleMunicipalities,
+              showMapcBoundary,
+              toggleMapcBoundary,
               selectedMunicipality,
               setSelectedMunicipality,
               municipalityTrails,
@@ -134,16 +207,22 @@ const App = () => {
               setShowStationLabels,
               showBlueBikeStations,
               setShowBlueBikeStations,
+              showBlueBikeStationLabels,
+              setShowBlueBikeStationLabels,
               showSubwayStations,
               setShowSubwayStations,
+              showSubwayStationLabels,
+              setShowSubwayStationLabels,
               showEnvironmentalJustice,
               setShowEnvironmentalJustice,
               showOpenSpace,
               setShowOpenSpace,
+              showMuniOpenSpace,
+              setShowMuniOpenSpace,
+              showProjectOpenSpace,
+              setShowProjectOpenSpace,
               showLandlinesFeatureService,
               setShowLandlinesFeatureService,
-              showTrailsRegNameSync,
-              setShowTrailsRegNameSync,
               showTransitLandStops,
               setShowTransitLandStops,
               projectRegNames,
@@ -158,8 +237,9 @@ const App = () => {
               landlines,
             }}
           >
+            <Header />
             <IntroModal />
-            <Map />
+            {location.pathname === "/dashboard" ? <Dashboard /> : <Map />}
           </LayerContext.Provider>
         </ModalContext.Provider>
       </div>

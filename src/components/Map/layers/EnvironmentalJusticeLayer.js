@@ -83,7 +83,12 @@ const EnvironmentalJusticeLayer = ({ showEnvironmentalJustice, showMunicipalityP
     }
   }, [showEnvironmentalJustice, showMunicipalityProfileMap, showProjectTrailsProfile, mapRef]);
 
-  if (!showEnvironmentalJustice || !showMunicipalityProfileMap || !imageUrl || !bounds) {
+  if (
+    !showEnvironmentalJustice ||
+    (!showMunicipalityProfileMap && !showProjectTrailsProfile) ||
+    !imageUrl ||
+    !bounds
+  ) {
     return null;
   }
 
@@ -103,7 +108,7 @@ const EnvironmentalJusticeLayer = ({ showEnvironmentalJustice, showMunicipalityP
         id="environmental-justice-layer"
         type="raster"
         paint={{
-          "raster-opacity": 0.7
+          "raster-opacity": 0.28
         }}
       />
     </Source>

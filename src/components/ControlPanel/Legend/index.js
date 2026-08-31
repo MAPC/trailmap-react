@@ -1,32 +1,35 @@
-import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import LegendItem from './LegendItem';
+import React, { useContext, useMemo } from "react";
 import { LayerContext } from "../../../App";
-
-const LANDLINE_LEGEND = process.env.REACT_APP_LANDLINE_LEGEND_URL;
+import { getLandlineLegendItems } from "../trailLayerConfig";
 
 const Legend = () => {
-  const { showLandlineLayer } = useContext(LayerContext);
-  const [legendItems, setLegendItems] = useState([]);
+  const { showLandlineLayer, landlines } = useContext(LayerContext);
 
-  useEffect(() => {
-    axios(LANDLINE_LEGEND)
-      .then((res) => {
-        const legendItems = res.data.layers[0].legend.map((legendItem, index) => {
-          return (<LegendItem
-            key={index}
-            imageSrc={legendItem.url}
-            label={legendItem.label} />);
-        });
-        setLegendItems(legendItems);
-      });
-  }, []);
+  const legendItems = useMemo(
+    () => getLandlineLegendItems(landlines),
+    [landlines]
+  );
+
+  if (!showLandlineLayer) {
+    return null;
+  }
 
   return (
-    <div className='Legend pb-4'
-      style={showLandlineLayer ? {} : { display: 'none' }}>
-      {legendItems}
-    </div>);
+    <div className="Legend pb-4">
+      {legendItems.map((item) => (
+        <div key={item.key} className="LegendItem d-flex align-items-start">
+          <span
+            className={`LegendItem__swatch${
+              item.dashed ? " LegendItem__swatch--dashed" : ""
+            }`}
+            style={{ "--swatch-color": item.color }}
+            aria-hidden="true"
+          />
+          <span className="LegendItem__label d-inline-flex">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
 };
 
 export default Legend;

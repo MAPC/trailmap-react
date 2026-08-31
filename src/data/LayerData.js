@@ -3,7 +3,7 @@ const LayerData = {
     {
       id: 'pavedPaths',
       'esri-id': 8,
-      label: 'Paved Shared Use',
+      label: 'Existing Paved Shared Use Paths',
       type: 'line',
       'source-layer': 'Existing Paved Shared Use Paths',
       layout: {
@@ -20,7 +20,7 @@ const LayerData = {
     {
       id: 'unimprovedPaths',
       'esri-id': 10,
-      label: 'Unimproved Shared Use',
+      label: 'Existing Unimproved Shared Use Paths',
       type: 'line',
       'source-layer': 'Existing Unimproved Shared Use Paths',
       layout: {
@@ -37,7 +37,7 @@ const LayerData = {
     {
       id: 'bikeLane',
       'esri-id': 2,
-      label: 'Bike Lanes',
+      label: 'Existing Bike Lanes',
       type: 'line',
       'source-layer': 'Existing Bike Lanes',
       layout: {
@@ -53,7 +53,7 @@ const LayerData = {
     {
       id: 'protectedBikeLane',
       'esri-id': 0,
-      label: 'Protected Bike Lanes',
+      label: 'Existing Protected Bike Lanes',
       type: 'line',
       'source-layer': 'Existing Protected Bike Lanes',
       layout: {
@@ -69,7 +69,7 @@ const LayerData = {
     {
       id: 'pavedFootway',
       'esri-id': 4,
-      label: 'Paved Foot Path',
+      label: 'Paved Footway',
       type: 'line',
       'source-layer': 'Paved Footway',
       layout: {
@@ -86,7 +86,7 @@ const LayerData = {
     {
       id: 'naturalSurfaceFootway',
       'esri-id': 6,
-      label: 'Natural Surface Path',
+      label: 'Natural Surface Footway',
       type: 'line',
       'source-layer': 'Natural Surface Footway',
       layout: {
@@ -105,7 +105,7 @@ const LayerData = {
     {
       id: 'pavedPathsProposed',
       'esri-id': 9,
-      label: 'Planned Paved Shared Use',
+      label: 'Proposed Paved Shared Use Paths',
       type: 'line',
       'source-layer': 'Proposed Paved Shared Use Paths',
       layout: {
@@ -122,7 +122,7 @@ const LayerData = {
     {
       id: 'unimprovedPathsProposed',
       'esri-id': 11,
-      label: 'Planned Unimproved Shared Use',
+      label: 'Proposed Unimproved Shared Use Paths',
       type: 'line',
       'source-layer': 'Proposed Unimproved Shared Use Paths',
       layout: {
@@ -139,7 +139,7 @@ const LayerData = {
     {
       id: 'bikeLaneProposed',
       'esri-id': 3,
-      label: 'Planned Bike Lanes',
+      label: 'Proposed Bike Lanes',
       type: 'line',
       'source-layer': 'Proposed Bike Lanes',
       layout: {
@@ -158,7 +158,7 @@ const LayerData = {
       'esri-id': 1,
       label: 'Planned Protected Bike Lanes',
       type: 'line',
-      'source-layer': 'Proposed Protected Bike Lanes',
+      'source-layer': 'Planned Protected Bike Lanes',
       layout: {
         'line-cap': 'butt',
         'line-join': 'miter'
@@ -173,7 +173,7 @@ const LayerData = {
     {
       id: 'pavedFootwayProposed',
       'esri-id': 5,
-      label: 'Planned Paved Foot Path',
+      label: 'Proposed Paved Footway',
       type: 'line',
       'source-layer': 'Proposed Paved Footway',
       layout: {
@@ -190,7 +190,7 @@ const LayerData = {
     {
       id: 'naturalSurfaceFootwayProposed',
       'esri-id': 7,
-      label: 'Planned Natural Surface Path',
+      label: 'Proposed Natural Surface Footway',
       type: 'line',
       'source-layer': 'Proposed Natural Surface Footway',
       layout: {
@@ -221,7 +221,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#00A884",
+        "line-color": "#00a884",
         "line-width": 3
       }
     },
@@ -261,7 +261,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#00A884",
+        "line-color": "#00a884",
         "line-width": 3
       }
     },
@@ -279,7 +279,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#00A884",
+        "line-color": "#00a884",
         "line-dasharray": [
           1.5,
           2
@@ -302,7 +302,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#C7D79E",
+        "line-color": "#c7d79e",
         "line-width": 3
       }
     },
@@ -340,7 +340,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#0070FF",
+        "line-color": "#0170ff",
         "line-width": 3
       }
     },
@@ -398,7 +398,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#0070FF",
+        "line-color": "#0170ff",
         "line-width": 3
       }
     },
@@ -417,7 +417,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#73B2FF",
+        "line-color": "#73b2ff",
         "line-width": 3
       }
     },
@@ -457,7 +457,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#73B2FF",
+        "line-color": "#73b2ff",
         "line-width": 3
       }
     },
@@ -495,7 +495,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#D7C29E",
+        "line-color": "#d7c29e",
         "line-width": 3
       }
     },
@@ -514,7 +514,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#D7C29E",
+        "line-color": "#d7c29e",
         "line-width": 3
       }
     },
@@ -532,7 +532,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#D7C29E",
+        "line-color": "#d7c29e",
         "line-dasharray": [
           1.66667,
           1
@@ -555,11 +555,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FFED7F",
-        "line-dasharray": [
-          2,
-          2
-        ],
+        "line-color": "#ffffcc",
         "line-width": 3
       }
     },
@@ -578,7 +574,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-width": 3
       }
     },
@@ -596,7 +592,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-dasharray": [
           2.5,
           1.5
@@ -618,7 +614,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-width": 1.5,
         "line-offset": 2.66667
       }
@@ -637,7 +633,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-width": 1.5,
         "line-offset": -1.73333
       }
@@ -656,7 +652,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-dasharray": [
           4.16667,
           4.16667
@@ -679,7 +675,7 @@ const LayerData = {
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#FF5500",
+        "line-color": "#ffcccc",
         "line-dasharray": [
           4.16667,
           4.16667
@@ -722,5 +718,6 @@ const LayerData = {
     }
   ]
 };
-
+// the style for the landline layer is at:
+// https://tiles.arcgis.com/tiles/c5WwApDsDjRhIVkH/arcgis/rest/services/land_lines/VectorTileServer/resources/styles/root.json
 export default LayerData;
