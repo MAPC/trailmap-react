@@ -16,6 +16,7 @@ import {
   COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS,
   findMunicipalityTrailMetricsByTownId,
   fetchAllMunicipalityTrailMetrics,
+  formatMiles,
   PLANNED_TRAILS_EXPLANATION,
   PROPOSED_TRAILS_EXPLANATION,
 } from "../../utils/trailMetricsDashboard";
@@ -35,7 +36,7 @@ const emptyTrailStats = () => ({
   plannedLength: 0,
   proposedLength: 0,
   byType: {},
-  density: 0,
+  density: null,
   area: 0,
 });
 
@@ -53,8 +54,7 @@ const buildTrailStatsFromMetricsRow = (row) => {
   stats.proposedLength = proposedLength;
   stats.totalLength = existingLength + plannedLength + proposedLength;
   stats.area = Number(row.areaSqMi) || 0;
-  stats.density =
-    row.density != null ? parseFloat(Number(row.density).toFixed(2)) : null;
+  stats.density = row.density != null ? Number(row.density) : null;
 
   mapcTrailLayers.forEach((layer) => {
     const key = COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS[layer.id];
@@ -687,7 +687,7 @@ const MunicipalityProfile = ({
               </OverlayTrigger>
             </div>
             <span className="MunicipalityProfile__trailDensityValue">
-              {stats.density != null ? `${stats.density} mi/mi²` : "—"}
+              {stats.density != null ? `${formatMiles(stats.density)} mi/mi²` : "—"}
             </span>
             <span className="MunicipalityProfile__trailOverviewHint">
               existing trails per sq mile
@@ -1542,7 +1542,7 @@ const MunicipalityProfile = ({
                   </OverlayTrigger>
                 </span>
                 <span className="CompletionRatesModal__summaryValue">
-                  {trailStats.density != null ? `${trailStats.density} mi/mi²` : "—"}
+                  {trailStats.density != null ? `${formatMiles(trailStats.density)} mi/mi²` : "—"}
                 </span>
                 <span className="CompletionRatesModal__summaryHint">
                   existing trails per sq mile

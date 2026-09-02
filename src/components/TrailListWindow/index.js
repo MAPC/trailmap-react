@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Button from 'react-bootstrap/Button';
-import * as turf from '@turf/turf';
 import '../../styles/TrailListWindow.scss';
 
 const TrailListWindow = ({ 
@@ -98,75 +97,6 @@ const TrailListWindow = ({
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     });
-  };
-
-  // Calculate trail density (total length / polygon area)
-  const calculateTrailDensity = () => {
-    if (!selectedMunicipality || !municipalityTrails || municipalityTrails.length === 0) {
-      return { totalLength: 0, density: 0, area: 0 };
-    }
-
-    try {
-      // Get municipality polygon
-      const muniPolygon = turf.polygon(selectedMunicipality.geometry.coordinates);
-      
-      // Calculate polygon area in square feet
-      const area = turf.area(muniPolygon) * 10.764; // Convert from sq meters to sq feet
-      
-      // Calculate total length of existing trails only
-      let totalExistingLength = 0;
-      let totalTrails = 0;
-
-      municipalityTrails.forEach(trail => {
-        const length = Number(trail.attributes?.length_ft || 
-                             trail.attributes?.['Facility Length in Feet'] || 
-                             trail.attributes?.Shape_Length || 0);
-        
-        if (length > 0) {
-          totalTrails++;
-          
-          // Check if trail geometry exists and intersects with municipality
-          if (trail.geometry && trail.geometry.coordinates) {
-            let trailFeature;
-            
-            if (trail.geometry.type === 'LineString') {
-              trailFeature = turf.lineString(trail.geometry.coordinates);
-            } else if (trail.geometry.type === 'MultiLineString') {
-              trailFeature = turf.multiLineString(trail.geometry.coordinates);
-            }
-            
-            if (trailFeature) {
-              // Calculate intersection
-              const intersection = turf.intersect(trailFeature, muniPolygon);
-              if (intersection) {
-                const intersectionLength = turf.length(intersection, { units: 'feet' });
-                totalExistingLength += intersectionLength;
-              } else {
-                // If no intersection, check if trail is completely within municipality
-                const isWithin = turf.booleanWithin(trailFeature, muniPolygon);
-                if (isWithin) {
-                  totalExistingLength += length;
-                }
-              }
-            }
-          }
-        }
-      });
-
-      // Calculate density: feet of trail per square mile
-      const areaInSqMiles = area / 27878400; // Convert sq feet to sq miles
-      const density = areaInSqMiles > 0 ? totalExistingLength / areaInSqMiles : 0;
-      
-      return {
-        totalLength: totalExistingLength,
-        totalTrails: totalTrails,
-        area: area,
-        density: Math.round(density * 10) / 10 // Round to 1 decimal place
-      };
-    } catch (error) {
-      console.error('Error calculating trail density:', error);
-      return { totalLength: 0, density: 0, area: 0 };
-    }
   };
 
   const capitalizeWords = (str) => {

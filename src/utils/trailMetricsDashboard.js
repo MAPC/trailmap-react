@@ -86,6 +86,12 @@ export const TRAIL_STATUS_EXPLANATIONS = {
 const sumKeys = (row, keys) =>
   keys.reduce((total, key) => total + (Number(row[key]) || 0), 0);
 
+const parseOptionalNumber = (value) => {
+  if (value == null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const getStatusKeys = (group, statusKey) => {
   if (statusKey === "existing") {
     return group.existingKeys;
@@ -194,8 +200,12 @@ export const enrichTrailMetricsRows = (rows, lookup) =>
     const plannedMiles = Number(row.total_planned_length_mi) || 0;
     const proposedMiles = Number(row.total_proposed_length_mi) || 0;
     const totalMiles = existingMiles + plannedMiles + proposedMiles;
-    const areaSqMi = lookup.areaByMuniId.get(Number(row.muni_id)) || 0;
-    const density = areaSqMi > 0 ? existingMiles / areaSqMi : null;
+    const areaFromApi = parseOptionalNumber(row.municipality_area_sq_mi);
+    const areaSqMi =
+      areaFromApi != null && areaFromApi > 0
+        ? areaFromApi
+        : lookup.areaByMuniId.get(Number(row.muni_id)) || 0;
+    const density = parseOptionalNumber(row.trail_density_mi_per_sq_mi);
 
     const byType = TRAIL_TYPE_GROUPS.map((group) => {
       const existing = sumKeys(row, group.existingKeys);
