@@ -51,9 +51,23 @@ export const ensureLengthFeet = (attributes, geojsonGeometry) => {
 };
 
 /**
- * Fetch all features for a layer with pagination support
+ * MassGIS municipal ID used on MapcTrails (`muni_id`) and municipal
+ * boundaries (`town_id`).
  */
-export const fetchAllFeaturesForLayer = async ({ layerId, esriPolygon }) => {
+export const getSelectedMunicipalityId = (municipality) => {
+  const raw =
+    municipality?.properties?.town_id ??
+    municipality?.properties?.muni_id ??
+    municipality?.muni_id ??
+    municipality?.town_id;
+  const muniId = Number(raw);
+  return Number.isFinite(muniId) && muniId > 0 ? muniId : null;
+};
+
+/**
+ * Fetch all features for a layer with pagination support, filtered by muni_id.
+ */
+export const fetchAllFeaturesForLayer = async ({ layerId, muniId }) => {
   if (!FEATURE_SERVER_BASE) {
     throw new Error("REACT_APP_TRAIL_MAP_FEATURE_SERVER_BASE is not set");
   }
@@ -64,11 +78,7 @@ export const fetchAllFeaturesForLayer = async ({ layerId, esriPolygon }) => {
 
   while (true) {
     const params = new URLSearchParams();
-    params.set("where", "1=1");
-    params.set("geometry", JSON.stringify(esriPolygon));
-    params.set("geometryType", "esriGeometryPolygon");
-    params.set("spatialRel", "esriSpatialRelIntersects");
-    params.set("inSR", "4326");
+    params.set("where", `muni_id = ${muniId}`);
     params.set("outSR", "4326");
     params.set("outFields", "*");
     params.set("returnGeometry", "true");
@@ -76,7 +86,6 @@ export const fetchAllFeaturesForLayer = async ({ layerId, esriPolygon }) => {
     params.set("resultOffset", String(offset));
     params.set("resultRecordCount", String(pageSize));
 
-    // Use POST to avoid "request too long" for large polygons (e.g., Boston)
     const url = `${FEATURE_SERVER_BASE}/${layerId}/query`;
     const res = await fetch(url, {
       method: "POST",
@@ -112,7 +121,8 @@ export const queryMunicipalityTrails = async ({
   setIntersectedTrails,
   lastQueriedMunicipality
 }) => {
-  if (!municipality || !municipality.geometry) {
+  const muniId = getSelectedMunicipalityId(municipality);
+  if (muniId == null) {
     setMunicipalityTrails([]);
     setIntersectedTrails([]);
     lastQueriedMunicipality.current = null;
@@ -130,20 +140,11 @@ export const queryMunicipalityTrails = async ({
   setIntersectedTrails([]);
   setLoadingProgress(0);
   setLoadingMessage("Loading trail data...");
-  console.log("Starting FeatureServer query for municipality:", municipality.name);
+  console.log("Starting FeatureServer query for municipality:", municipality.name, "muni_id:", muniId);
 
   try {
     const allTrailResults = [];
     const totalLayers = mapcTrailLayers.length;
-    const isCommunityTrailsProfile = location?.pathname === "/communityTrailsProfile";
-    const esriPolygon = geojsonPolygonToEsriPolygon(municipality.geometry);
-
-    if (!esriPolygon) {
-      console.error("Municipality geometry not supported for FeatureServer query");
-      setMunicipalityTrails([]);
-      setIntersectedTrails([]);
-      return;
-    }
 
     for (let i = 0; i < mapcTrailLayers.length; i++) {
       const layer = mapcTrailLayers[i];
@@ -153,7 +154,7 @@ export const queryMunicipalityTrails = async ({
       try {
         const features = await fetchAllFeaturesForLayer({
           layerId: layer.id,
-          esriPolygon,
+          muniId,
         });
 
         features.forEach((f) => {
