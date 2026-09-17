@@ -8,8 +8,10 @@ import EditModal from "./components/Modals/EditModal";
 import GlossaryModal from "./components/Modals/GlossaryModal";
 import Map from "./components/Map";
 import Dashboard from "./components/Dashboard";
+import CommunityProfileEmbed from "./components/Embed/CommunityProfileEmbed";
 import LayerData from "./data/LayerData";
 import { useLocation } from "react-router-dom";
+import { COMMUNITY_PROFILE_EMBED_PATH } from "./utils/trailMetricsDashboard";
 
 export const ModalContext = createContext();
 export const LayerContext = createContext();
@@ -21,9 +23,13 @@ const App = () => {
   const proposedTrails = LayerData.proposed;
   const landlines = LayerData.landline;
 
+  const isCommunityProfileEmbedPath =
+    location.pathname === COMMUNITY_PROFILE_EMBED_PATH;
+
   const shouldSkipIntro =
     location.pathname === "/communityTrailsProfile" ||
     location.pathname === "/projectTrailsProfile" ||
+    isCommunityProfileEmbedPath ||
     isIntroModalDismissed();
 
   const [showIntroModal, toggleIntroModal] = useState(!shouldSkipIntro);
@@ -32,12 +38,13 @@ const App = () => {
   useEffect(() => {
     if (
       (location.pathname === "/communityTrailsProfile" ||
-        location.pathname === "/projectTrailsProfile") &&
+        location.pathname === "/projectTrailsProfile" ||
+        isCommunityProfileEmbedPath) &&
       showIntroModal
     ) {
       toggleIntroModal(false);
     }
-  }, [location.pathname]);
+  }, [location.pathname, isCommunityProfileEmbedPath, showIntroModal]);
   const [showAboutModal, toggleAboutModal] = useState(false);
   const [showContributeModal, toggleContributeModal] = useState(false);
   const [showShareModal, toggleShareModal] = useState(false);
@@ -140,6 +147,10 @@ const App = () => {
       }
     }
   };
+
+  if (isCommunityProfileEmbedPath) {
+    return <CommunityProfileEmbed />;
+  }
 
   return (
     <div className="App">
