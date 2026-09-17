@@ -13,7 +13,6 @@ import { fetchOpenSpaceByTownId } from "../../utils/fetchOpenSpace";
 import { MASSGIS_OPEN_SPACE_URL } from "../../utils/openSpaceLabels";
 import { useMunicipalBoundaries } from "../../utils/fetchMunicipalBoundaries";
 import {
-  COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS,
   findMunicipalityTrailMetricsByTownId,
   fetchAllMunicipalityTrailMetrics,
   formatMiles,
@@ -21,55 +20,16 @@ import {
   PROPOSED_TRAILS_EXPLANATION,
 } from "../../utils/trailMetricsDashboard";
 import {
-  mapcTrailLayers,
+  emptyTrailStats,
+  buildTrailStatsFromMetricsRow,
+  formatFeetAsMiles,
+  getTrailTypeStatusRows,
+} from "../../utils/communityProfileStats";
+import {
   getTrailStatus,
-  mapcTrailFacilityPairs,
   TRAIL_STATUS,
 } from "../Map/constants/mapcTrailLayersConfig";
-
-const milesToFeet = (miles) => (Number(miles) || 0) * 5280;
-
-const emptyTrailStats = () => ({
-  totalTrails: 0,
-  totalLength: 0,
-  existingLength: 0,
-  plannedLength: 0,
-  proposedLength: 0,
-  byType: {},
-  density: null,
-  area: 0,
-});
-
-/** Build overview stats from the same trail-metrics API row the dashboard uses. */
-const buildTrailStatsFromMetricsRow = (row) => {
-  if (!row) return emptyTrailStats();
-
-  const stats = emptyTrailStats();
-  const existingLength = milesToFeet(row.existingMiles);
-  const plannedLength = milesToFeet(row.plannedMiles);
-  const proposedLength = milesToFeet(row.proposedMiles);
-
-  stats.existingLength = existingLength;
-  stats.plannedLength = plannedLength;
-  stats.proposedLength = proposedLength;
-  stats.totalLength = existingLength + plannedLength + proposedLength;
-  stats.area = Number(row.areaSqMi) || 0;
-  stats.density = row.density != null ? Number(row.density) : null;
-
-  mapcTrailLayers.forEach((layer) => {
-    const key = COMMUNITY_PROFILE_LAYER_LENGTH_MI_KEYS[layer.id];
-    const length = key ? milesToFeet(row[key]) : 0;
-    stats.byType[layer.name] = {
-      count: length > 0 ? 1 : 0,
-      length,
-      color: layer.color,
-      status: layer.status,
-      layerId: layer.id,
-    };
-  });
-
-  return stats;
-};
+import EmbedCommunityProfileModal from "../Modals/EmbedCommunityProfileModal";
 
 const Skeleton = ({ className = "", style = {} }) => (
   <span
@@ -113,6 +73,7 @@ const MunicipalityProfile = ({
   const [trailStats, setTrailStats] = useState(null);
   const [selectedTrailIndex, setSelectedTrailIndex] = useState(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showEmbedModal, setShowEmbedModal] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showTrailsInventoryModal, setShowTrailsInventoryModal] = useState(false);
   const [downloadOption, setDownloadOption] = useState('both'); // 'existing', 'planned', or 'both'
@@ -135,6 +96,7 @@ const MunicipalityProfile = ({
       setTrailStats(null);
       setSelectedTrailIndex(null);
       setShowCompletionModal(false);
+      setShowEmbedModal(false);
       setShowShareMenu(false);
       setShowTrailsInventoryModal(false);
       setOpenSpaceTotalAcres(0);
@@ -218,6 +180,7 @@ const MunicipalityProfile = ({
         setTrailStats(null);
         setSelectedTrailIndex(null);
         setShowCompletionModal(false);
+        setShowEmbedModal(false);
         setShowShareMenu(false);
         setShowTrailsInventoryModal(false);
         setOpenSpaceTotalAcres(0);
@@ -239,6 +202,7 @@ const MunicipalityProfile = ({
       setTrailStats(null);
       setSelectedTrailIndex(null);
       setShowCompletionModal(false);
+      setShowEmbedModal(false);
       setShowShareMenu(false);
       setShowTrailsInventoryModal(false);
       setOpenSpaceTotalAcres(0);
@@ -703,6 +667,15 @@ const MunicipalityProfile = ({
         >
           View Trail Network Details
         </Button>
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          className="w-100 MunicipalityProfile__summaryButton mt-2"
+          onClick={() => setShowEmbedModal(true)}
+        >
+          <i className="fas fa-code me-1" aria-hidden="true" />
+          Embed this profile
+        </Button>
       </div>
     );
   };
@@ -978,58 +951,7 @@ const MunicipalityProfile = ({
     </div>
   );
 
-  const formatLength = (feet) => {
-    // Convert feet to miles and format with 2 decimal places
-    const numFeet = Number(feet) || 0;
-    const miles = numFeet / 5280; // 1 mile = 5280 feet
-    return parseFloat(miles.toFixed(2)).toLocaleString('en-US', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
-    });
-  };
-
-  const getTrailTypeStatusRows = (stats) => {
-    if (!stats?.byType) return [];
-
-    return mapcTrailFacilityPairs
-      .map(({ existingId, otherIds, label }) => {
-        const layerIds = [existingId, ...otherIds];
-        const lengths = {
-          [TRAIL_STATUS.EXISTING]: 0,
-          [TRAIL_STATUS.PLANNED]: 0,
-          [TRAIL_STATUS.PROPOSED]: 0,
-        };
-        let color = "#888";
-
-        layerIds.forEach((layerId) => {
-          const layer = mapcTrailLayers.find((l) => l.id === layerId);
-          if (!layer) return;
-
-          const length = stats.byType[layer.name]?.length || 0;
-          lengths[layer.status] += length;
-          if (layer.status === TRAIL_STATUS.EXISTING || color === "#888") {
-            color = layer.color;
-          }
-        });
-
-        const total =
-          lengths[TRAIL_STATUS.EXISTING] +
-          lengths[TRAIL_STATUS.PLANNED] +
-          lengths[TRAIL_STATUS.PROPOSED];
-
-        return {
-          label,
-          color,
-          total,
-          existing: lengths[TRAIL_STATUS.EXISTING],
-          planned: lengths[TRAIL_STATUS.PLANNED],
-          proposed: lengths[TRAIL_STATUS.PROPOSED],
-          rate: total > 0 ? (lengths[TRAIL_STATUS.EXISTING] / total) * 100 : 0,
-        };
-      })
-      .filter((row) => row.total > 0)
-      .sort((a, b) => b.total - a.total);
-  };
+  const formatLength = formatFeetAsMiles;
 
   const trailTypeStatusRows = getTrailTypeStatusRows(trailStats);
 
@@ -1668,6 +1590,17 @@ const MunicipalityProfile = ({
           }
         />
       )}
+
+      <EmbedCommunityProfileModal
+        show={showEmbedModal}
+        onHide={() => setShowEmbedModal(false)}
+        municipalitySlug={selectedMunicipality?.name}
+        municipalityName={
+          selectedMunicipality?.name
+            ? capitalizeWords(selectedMunicipality.name)
+            : ""
+        }
+      />
 
     </div>
   );

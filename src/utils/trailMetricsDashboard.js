@@ -175,6 +175,19 @@ const EMPTY_MUNICIPALITY_LOOKUP = {
 
 let municipalityLookupCache = EMPTY_MUNICIPALITY_LOOKUP;
 
+export const COMMUNITY_PROFILE_PATH = "/communityTrailsProfile";
+export const COMMUNITY_PROFILE_EMBED_PATH = "/embed/communityTrailsProfile";
+
+export const getCommunityProfilePath = (slug) => {
+  if (!slug) return COMMUNITY_PROFILE_PATH;
+  return `${COMMUNITY_PROFILE_PATH}?muni=${encodeURIComponent(slug)}`;
+};
+
+export const getCommunityProfileEmbedPath = (slug) => {
+  if (!slug) return COMMUNITY_PROFILE_EMBED_PATH;
+  return `${COMMUNITY_PROFILE_EMBED_PATH}?muni=${encodeURIComponent(slug)}`;
+};
+
 export const getCommunityProfileUrl = (muniId, lookup) => {
   const normalizedMuniId = Number(muniId);
   if (!normalizedMuniId || normalizedMuniId <= 0) return null;
@@ -182,7 +195,19 @@ export const getCommunityProfileUrl = (muniId, lookup) => {
   const slug = lookup.slugByMuniId.get(normalizedMuniId);
   if (!slug) return null;
 
-  return `/communityTrailsProfile?muni=${encodeURIComponent(slug)}`;
+  return getCommunityProfilePath(slug);
+};
+
+export const buildCommunityProfileEmbedCode = ({
+  origin,
+  slug,
+  municipalityName,
+  width = "100%",
+  height = "640",
+}) => {
+  const src = `${origin}${getCommunityProfileEmbedPath(slug)}`;
+  const title = `${municipalityName || capitalizeWords(slug) || "Community"} trail profile`;
+  return `<iframe src="${src}" title="${title}" width="${width}" height="${height}" style="border:0; max-width:100%;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
 };
 
 export const getMunicipalityName = (muniId, lookup) => {
