@@ -79,6 +79,21 @@
   }
 }
 
+.CommunityProfileEmbed__disclaimer {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid #f0d9b8;
+  background: #fff6ea;
+  color: #6b4a1b;
+  font-size: 0.72rem;
+  line-height: 1.4;
+
+  strong {
+    font-weight: 700;
+  }
+}
+
 .CommunityProfileEmbed__body {
   display: flex;
   flex: 1;
