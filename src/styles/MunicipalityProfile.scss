@@ -224,6 +224,22 @@
     min-width: 0;
   }
 
+  &__disclaimer {
+    margin: 0.7rem 0 0;
+    padding: 0.55rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid #f0d9b8;
+    background: #fff6ea;
+    color: #6b4a1b;
+    font-family: $body-font;
+    font-size: 0.75rem;
+    line-height: 1.4;
+
+    strong {
+      font-weight: 700;
+    }
+  }
+
   &__rankBadge {
     flex-shrink: 0;
     margin-top: 0.3rem;

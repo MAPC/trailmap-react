@@ -30,6 +30,11 @@ import {
   TRAIL_STATUS,
 } from "../Map/constants/mapcTrailLayersConfig";
 import EmbedCommunityProfileModal from "../Modals/EmbedCommunityProfileModal";
+import {
+  isOutsideMapcRegion,
+  OUTSIDE_MAPC_DISCLAIMER,
+  OUTSIDE_MAPC_DISCLAIMER_LABEL,
+} from "../../utils/mapcBoundary";
 
 const Skeleton = ({ className = "", style = {} }) => (
   <span
@@ -1226,6 +1231,12 @@ const MunicipalityProfile = ({
                 {capitalizeWords(selectedMunicipality.name)}
               </h2>
             </div>
+            {isOutsideMapcRegion(selectedMunicipality.properties?.town_id) && (
+              <p className="MunicipalityProfile__disclaimer" role="note">
+                <strong>{OUTSIDE_MAPC_DISCLAIMER_LABEL}</strong>{" "}
+                {OUTSIDE_MAPC_DISCLAIMER}
+              </p>
+            )}
           </div>
 
           <div className="MunicipalityProfile__tabs" role="tablist">

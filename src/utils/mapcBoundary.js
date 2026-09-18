@@ -4,6 +4,17 @@ const MAPC_TOWN_IDS = new Set(
   maMuniKeys.filter((muni) => muni.mapc === 1).map((muni) => Number(muni.muni_id))
 );
 
+export const isMapcMunicipalityId = (muniId) =>
+  MAPC_TOWN_IDS.has(Number(muniId));
+
+export const isOutsideMapcRegion = (muniId) =>
+  !isMapcMunicipalityId(muniId);
+
+export const OUTSIDE_MAPC_DISCLAIMER_LABEL = "Data Disclaimer:";
+
+export const OUTSIDE_MAPC_DISCLAIMER =
+  "This community is located outside the MAPC region. Trailmap is MAPC’s regional walking and cycling map for Metro Boston, and trail data coverage and completeness may vary for communities outside the MAPC region. Please use this information as a reference and consult local or authoritative sources for the most current trail information.";
+
 export const EMPTY_FEATURE_COLLECTION = {
   type: "FeatureCollection",
   features: [],

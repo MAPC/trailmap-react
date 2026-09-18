@@ -24,6 +24,11 @@ import {
   getTrailTypeStatusRows,
 } from "../../utils/communityProfileStats";
 import TrailmapLogo from "../../assets/MAPC_logo.svg";
+import {
+  isOutsideMapcRegion,
+  OUTSIDE_MAPC_DISCLAIMER,
+  OUTSIDE_MAPC_DISCLAIMER_LABEL,
+} from "../../utils/mapcBoundary";
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_API_TOKEN;
 const LIGHT_MAP_STYLE = "mapbox://styles/mapbox/light-v10";
@@ -478,6 +483,13 @@ const CommunityProfileEmbed = () => {
           </a>
         )}
       </header>
+
+      {isOutsideMapcRegion(selectedMunicipality?.properties?.town_id) && (
+        <p className="CommunityProfileEmbed__disclaimer" role="note">
+          <strong>{OUTSIDE_MAPC_DISCLAIMER_LABEL}</strong>{" "}
+          {OUTSIDE_MAPC_DISCLAIMER}
+        </p>
+      )}
 
       {!muniSlug ? (
         <div className="CommunityProfileEmbed__empty">
