@@ -186,7 +186,7 @@ export const identifyLandlineAtPoint = async ({
   const lngPad =
     distanceMeters / (111320 * Math.max(0.01, Math.cos(toRad(lat))));
   const params = new URLSearchParams({
-    where: "reg_name IS NOT NULL",
+    where: "1=1",
     geometry: `${lng - lngPad},${lat - latPad},${lng + lngPad},${lat + latPad}`,
     geometryType: "esriGeometryEnvelope",
     inSR: "4326",
