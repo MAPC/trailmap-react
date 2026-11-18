@@ -18,7 +18,7 @@ const fetchAllLandlines = async () => {
 
   while (true) {
     const params = new URLSearchParams({
-      where: "reg_name IS NOT NULL",
+      where: "1=1",
       outFields: "*",
       outSR: "4326",
       f: "geojson",
